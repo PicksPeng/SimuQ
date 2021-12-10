@@ -827,11 +827,17 @@ if find_sol(qs, mach) :
     G = nx.DiGraph()
     G.add_nodes_from(range(len(boxes)))
     for edge in edges :
-        if edge[1] not in nx.ancestors(G, edge[0]) :
+        if not nx.has_path(G, edge[0], edge[1]) :
+        #if edge[1] not in nx.ancestors(G, edge[0]) :
             G.add_edge(*edge)
     s = 0
     while s < len(edges) :
         edge = edges[s]
+        G.remove_edge(*edge)
+        if nx.has_path(G, edge[0], edge[1]) :
+            del edges[s]
+            continue
+        G.add_edge(*edge)
         h1 = boxes[edge[0]][2]
         h2 = boxes[edge[1]][2]
         if TIHamiltonian.commutativity_test(h1, h2) :
@@ -845,6 +851,7 @@ if find_sol(qs, mach) :
                         G.add_edge(*new_edge)
             s -= 1
         s += 1
+        
     
     print()
     print(sol_gvars)

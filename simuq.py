@@ -814,7 +814,7 @@ if find_sol(qs, mach) :
                     box_ins = []
                     for j in range(len(list_ins)) :
                         box_ins.append(ins_set[list_ins[j]])
-                    boxes.append((box_ins, t / trotter_step, sumh[k]))
+                    boxes.append((box_ins, t / steps, sumh[k]))
                     for label in local_ending_boxes :
                         edges.append((label, box_label))
                     next_local_ending_boxes.append(box_label)

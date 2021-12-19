@@ -611,12 +611,20 @@ def solve_aligned(ali, qs, mach) :
         lbs += [var_lb for j in range(mach.num_lvars)]
         ubs += [var_ub for j in range(mach.num_lvars)]
 
+    global gsol
+    global gswitch
+    global alignment
+    alignment = ali
+    if len(initvars) == 0 :
+        gsol = np.array([])
+        gswitch = switch
+        if np.linalg.norm(f([])) > 1e-5 :
+            return False
+        return True
     sol_detail = opt.least_squares(f, initvars, bounds = (lbs, ubs))
     sol = sol_detail.x
 
-    global gsol
     gsol = sol
-    global gswitch
     gswitch = switch
     
     print(np.linalg.norm(f(sol)))
@@ -670,29 +678,87 @@ def align(i, ali, qs, mach) :
     return False
 
 
-def find_sol(qs, mach) :
-    return align(0, [0 for i in range(qs.num_sites)], qs, mach)
+def find_sol(qs, mach, ali = []) :
+    if ali == [] :
+        return align(0, [0 for i in range(qs.num_sites)], qs, mach)
+    else :
+        return solve_aligned(ali, qs, mach)
 
 
 qs = QSystem()
+q0 = qubit(qs)
 q1 = qubit(qs)
 q2 = qubit(qs)
-c = fock(qs)
-h = 0.5 * q2.X() * c.a() + 2 * q1.X() * c.c()
-qs.addEvolution(h, 1)
-h = 0.2 * q2.X() * c.a() + c.a() * c.c()
-qs.addEvolution(h, 1)
+#q3 = qubit(qs)
+h = q0.X() * q1.X() + q1.X() * q2.X() + q0.Y() * q1.Y() + q1.Y() * q2.Y() + q0.Z() * q1.Z() + q1.Z() * q2.Z()# + q2.X() * q3.X() + q2.Y() * q3.Y() + q2.Z() * q3.Z()
+qs.addEvolution(h, math.pi)
+#c = fock(qs)
+#h = 0.5 * q2.X() * c.a() + 2 * q1.X() * c.c()
+#qs.addEvolution(h, 1)
+#h = 0.2 * q2.X() * c.a() + c.a() * c.c()
+#qs.addEvolution(h, 1)
 
 
 mach = QMachine()
-c = fock(mach)
+#c = fock(mach)
+q0 = qubit(mach)
 q1 = qubit(mach)
 q2 = qubit(mach)
 q3 = qubit(mach)
+q4 = qubit(mach)
+q5 = qubit(mach)
+q6 = qubit(mach)
 
-L1 = SignalLine(mach)
+L01 = SignalLine(mach)
+ins = Instruction(L01, 'derived', 'L01_XX')
+ins.set_ham(q0.X() * q1.X())
+ins = Instruction(L01, 'derived', 'L01_YY')
+ins.set_ham(q0.Y() * q1.Y())
+ins = Instruction(L01, 'derived', 'L01_ZZ')
+ins.set_ham(q0.Z() * q1.Z())
 
-ins1 = Instruction(L1, 'native', 'L1_ins1')
+L12 = SignalLine(mach)
+ins = Instruction(L12, 'derived', 'L12_XX')
+ins.set_ham(q1.X() * q2.X())
+ins = Instruction(L12, 'derived', 'L12_YY')
+ins.set_ham(q1.Y() * q2.Y())
+ins = Instruction(L12, 'derived', 'L12_ZZ')
+ins.set_ham(q1.Z() * q2.Z())
+
+L13 = SignalLine(mach)
+ins = Instruction(L13, 'derived', 'L13_XX')
+ins.set_ham(q1.X() * q3.X())
+ins = Instruction(L13, 'derived', 'L13_YY')
+ins.set_ham(q1.Y() * q3.Y())
+ins = Instruction(L13, 'derived', 'L13_ZZ')
+ins.set_ham(q1.Z() * q3.Z())
+
+L35 = SignalLine(mach)
+ins = Instruction(L35, 'derived', 'L35_XX')
+ins.set_ham(q3.X() * q5.X())
+ins = Instruction(L35, 'derived', 'L35_YY')
+ins.set_ham(q3.Y() * q5.Y())
+ins = Instruction(L35, 'derived', 'L35_ZZ')
+ins.set_ham(q3.Z() * q5.Z())
+
+L45 = SignalLine(mach)
+ins = Instruction(L45, 'derived', 'L45_XX')
+ins.set_ham(q4.X() * q5.X())
+ins = Instruction(L45, 'derived', 'L45_YY')
+ins.set_ham(q4.Y() * q5.Y())
+ins = Instruction(L45, 'derived', 'L45_ZZ')
+ins.set_ham(q4.Z() * q5.Z())
+
+L56 = SignalLine(mach)
+ins = Instruction(L56, 'derived', 'L56_XX')
+ins.set_ham(q5.X() * q6.X())
+ins = Instruction(L56, 'derived', 'L56_YY')
+ins.set_ham(q5.Y() * q6.Y())
+ins = Instruction(L56, 'derived', 'L56_ZZ')
+ins.set_ham(q5.Z() * q6.Z())
+
+
+'''
 a = LocalVar(ins1)
 ins1.set_ham(Expression.cos(a) * c.a() * q2.X())
 
@@ -704,6 +770,7 @@ L2 = SignalLine(mach)
 
 ins3 = Instruction(L2, 'native', 'L2_ins1')
 ins3.set_ham(c.a() * c.c())
+'''
 
 
 if find_sol(qs, mach) :
@@ -826,10 +893,14 @@ if find_sol(qs, mach) :
     # Delete commutative edges
     G = nx.DiGraph()
     G.add_nodes_from(range(len(boxes)))
-    for edge in edges :
-        if not nx.has_path(G, edge[0], edge[1]) :
-        #if edge[1] not in nx.ancestors(G, edge[0]) :
-            G.add_edge(*edge)
+    s = 0
+    while s < len(edges) :
+        edge = edges[s]
+        if nx.has_path(G, edge[0], edge[1]) :
+            del edges[s]
+            continue
+        G.add_edge(*edge)
+        s += 1
     s = 0
     while s < len(edges) :
         edge = edges[s]
@@ -846,7 +917,7 @@ if find_sol(qs, mach) :
             for i in range(len(edges)) :
                 if edges[i][1] == edge[0] :
                     new_edge = (edges[i][0], edge[1])
-                    if new_edge[1] not in nx.ancestors(G, new_edge[0]) :
+                    if not nx.has_path(G, new_edge[0], new_edge[1]) :
                         edges.append(new_edge)
                         G.add_edge(*new_edge)
             s -= 1
@@ -854,6 +925,7 @@ if find_sol(qs, mach) :
         
     
     print()
+    print(alignment)
     print(sol_gvars)
     for box in boxes :
         print(([((i, j), ins_lvars) for ((i, j), ins, h, ins_lvars) in box[0]], box[1]))

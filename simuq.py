@@ -55,6 +55,15 @@ class Expression :
         exp = lambda gvars, lvars : math.cos(e.exp(gvars, lvars))
         return cls(e.mach, exp)
 
+    @classmethod
+    def sin(cls, e) :
+        if type(e) == int  or  type(e) == float  or  type(e) == complex :
+            return math.sin(e)
+        if isinstance(e, BaseVar) :
+            e = e.to_exp()
+        exp = lambda gvars, lvars : math.sin(e.exp(gvars, lvars))
+        return cls(e.mach, exp)
+
     def __neg__(self) :
         exp = lambda gvars, lvars : -self.exp(gvars, lvars)
         e = Expression(self.mach, exp)
@@ -336,7 +345,7 @@ class QSystem(BaseQuantumEnvironment) :
         super().__init__()
         self.evos = []
 
-    def addEvolution(self, h, t) :
+    def add_evolution(self, h, t) :
         self.evos.append((h, t))
 
 
@@ -389,7 +398,7 @@ omega_c = 0.01
 g = 0.001
 h = omega_a * atom.Z() / 2 + omega_c * cav.c() * cav.a() + g * (cav.a() + cav.c()) * atom.X()
 t = 0.1
-qs.addEvolution(h, t)
+qs.add_evolution(h, t)
 
 
 
@@ -471,6 +480,7 @@ class LocalVar(BaseVar) :
 
 
 
+'''
 Rydberg = QMachine()
 
 q1 = qubit(Rydberg)
@@ -490,6 +500,7 @@ ins1.set_ham((Expression.cos(a) + 2 / (x2 - x1) ** 4) * q1.X() * q2.X())
 ins2 = Instruction(L1, 'derived', 'ins2')
 a = LocalVar(ins2)
 ins2.set_ham((a * (x1 + x0)) * (q2.X() + q1.Y()))
+'''
 
 
 
@@ -684,19 +695,19 @@ def find_sol(qs, mach, ali = []) :
     else :
         return solve_aligned(ali, qs, mach)
 
-
+'''
 qs = QSystem()
 q0 = qubit(qs)
 q1 = qubit(qs)
 q2 = qubit(qs)
 #q3 = qubit(qs)
 h = q0.X() * q1.X() + q1.X() * q2.X() + q0.Y() * q1.Y() + q1.Y() * q2.Y() + q0.Z() * q1.Z() + q1.Z() * q2.Z()# + q2.X() * q3.X() + q2.Y() * q3.Y() + q2.Z() * q3.Z()
-qs.addEvolution(h, math.pi)
+qs.add_evolution(h, math.pi)
 #c = fock(qs)
 #h = 0.5 * q2.X() * c.a() + 2 * q1.X() * c.c()
 #qs.addEvolution(h, 1)
 #h = 0.2 * q2.X() * c.a() + c.a() * c.c()
-#qs.addEvolution(h, 1)
+#qs.add_evolution(h, 1)
 
 
 mach = QMachine()
@@ -756,6 +767,7 @@ ins = Instruction(L56, 'derived', 'L56_YY')
 ins.set_ham(q5.Y() * q6.Y())
 ins = Instruction(L56, 'derived', 'L56_ZZ')
 ins.set_ham(q5.Z() * q6.Z())
+'''
 
 
 '''
@@ -771,6 +783,29 @@ L2 = SignalLine(mach)
 ins3 = Instruction(L2, 'native', 'L2_ins1')
 ins3.set_ham(c.a() * c.c())
 '''
+
+qs = QSystem()
+q = qubit(qs)
+n_step = 5
+T = 1.
+omega0 = 0.1
+omega1 = 0.3
+omega = 0.2
+for step in range(n_step) :
+    t = step * T / n_step
+    h = -omega0 / 2 * q.Z() - omega1 / 2 * (math.cos(omega * t) * q.X() - math.sin(omega * t) * q.Y())
+    qs.add_evolution(h, T / n_step)
+
+mach = QMachine()
+q0 = qubit(mach)
+L0 = SignalLine(mach)
+ins1 = Instruction(L0, 'native', 'L0_XY')
+a = LocalVar(ins1)
+b = LocalVar(ins1)
+ins1.set_ham(b * (Expression.cos(a) * q0.X() + Expression.sin(a) * q0.Y()))
+ins2 = Instruction(L0, 'native', 'L0_Z')
+b = LocalVar(ins2)
+ins2.set_ham(b * q0.Z())
 
 
 if find_sol(qs, mach) :
@@ -813,8 +848,8 @@ if find_sol(qs, mach) :
                     ins = line.inss[j]
                     if switch[evo_index][i][j] == 1  and  coloring[first_touch[i][j]] == k :
                         ins_lvars = []
-                        for i in range(len(ins.vars_index)) :
-                            ins_lvars.append(sol_lvars[ins.vars_index[i]])
+                        for l in range(len(ins.vars_index)) :
+                            ins_lvars.append(sol_lvars[ins.vars_index[l]])
                         ins_set.append(((i, j), ins, ins.exp_eval(sol_gvars, sol_lvars), ins_lvars))
             if ins_set != [] :
                 color_part.append(ins_set)
@@ -931,3 +966,5 @@ if find_sol(qs, mach) :
         print(([((i, j), ins_lvars) for ((i, j), ins, h, ins_lvars) in box[0]], box[1]))
     for edge in edges :
         print(edge)
+else :
+    print('No solution is found.')

@@ -695,13 +695,18 @@ def find_sol(qs, mach, ali = []) :
     else :
         return solve_aligned(ali, qs, mach)
 
-'''
+
+
 qs = QSystem()
-q0 = qubit(qs)
-q1 = qubit(qs)
-q2 = qubit(qs)
-#q3 = qubit(qs)
-h = q0.X() * q1.X() + q1.X() * q2.X() + q0.Y() * q1.Y() + q1.Y() * q2.Y() + q0.Z() * q1.Z() + q1.Z() * q2.Z()# + q2.X() * q3.X() + q2.Y() * q3.Y() + q2.Z() * q3.Z()
+n = 7
+ql = [qubit(qs) for i in range(7)]
+link = [(0, 1), (1, 2), (1, 3), (3, 5), (4, 5), (5, 6)]
+T = np.pi
+h = TIHamiltonian.empty(n)
+for (q0, q1) in link :
+    h += ql[q0].X() * ql[q1].X()
+    h += ql[q0].Y() * ql[q1].Y()
+    h += ql[q0].Z() * ql[q1].Z()
 qs.add_evolution(h, math.pi)
 #c = fock(qs)
 #h = 0.5 * q2.X() * c.a() + 2 * q1.X() * c.c()
@@ -767,7 +772,7 @@ ins = Instruction(L56, 'derived', 'L56_YY')
 ins.set_ham(q5.Y() * q6.Y())
 ins = Instruction(L56, 'derived', 'L56_ZZ')
 ins.set_ham(q5.Z() * q6.Z())
-'''
+
 
 
 '''
@@ -784,6 +789,9 @@ ins3 = Instruction(L2, 'native', 'L2_ins1')
 ins3.set_ham(c.a() * c.c())
 '''
 
+
+# Rabi oscillation
+'''
 qs = QSystem()
 q = qubit(qs)
 n_step = 5
@@ -806,7 +814,7 @@ ins1.set_ham(b * (Expression.cos(a) * q0.X() + Expression.sin(a) * q0.Y()))
 ins2 = Instruction(L0, 'native', 'L0_Z')
 b = LocalVar(ins2)
 ins2.set_ham(b * q0.Z())
-
+'''
 
 if find_sol(qs, mach) :
     trotter_step = 4

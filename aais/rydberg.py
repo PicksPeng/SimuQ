@@ -1,6 +1,6 @@
-from ..simuq.environment import qubit, fock
-from ..simuq.qmachine import *
-from ..simuq.expression import Expression
+from simuq.environment import qubit, fock
+from simuq.qmachine import *
+from simuq.expression import Expression
 
 Rydberg = QMachine()
 

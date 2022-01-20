@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import deepcopy, copy
 from simuq.environment import BaseQuantumEnvironment
 from simuq.expression import BaseVar, Expression
 
@@ -35,7 +35,7 @@ class Instruction :
         self.name = name
 
     def set_ham(self, h) :
-        newh = deepcopy(h)
+        newh = copy(h)
         for i in range(len(h.ham)) :
             if not isinstance(h.ham[i][1], Expression) :
                 newh.ham[i] = (h.ham[i][0], h.ham[i][1] * Expression.unit(self.mach))

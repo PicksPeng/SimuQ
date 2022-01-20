@@ -3,58 +3,43 @@ from simuq.qmachine import *
 from simuq.expression import Expression
 
 mach = QMachine()
-q0 = qubit(mach)
-q1 = qubit(mach)
-q2 = qubit(mach)
-q3 = qubit(mach)
-q4 = qubit(mach)
-q5 = qubit(mach)
-q6 = qubit(mach)
+n = 7
+ql = [qubit(mach) for i in range(7)]
+link = [(0, 1), (1, 2), (1, 3), (3, 5), (4, 5), (5, 6)]
 
-L01 = SignalLine(mach)
-ins = Instruction(L01, 'derived', 'L01_XX')
-ins.set_ham(q0.X() * q1.X())
-ins = Instruction(L01, 'derived', 'L01_YY')
-ins.set_ham(q0.Y() * q1.Y())
-ins = Instruction(L01, 'derived', 'L01_ZZ')
-ins.set_ham(q0.Z() * q1.Z())
+for i in range(n) :
+    L = SignalLine(mach)
+    
+    ins1 = Instruction(L, 'native', 'L{}_X_Y'.format(i))
+    amp = LocalVar(ins1)
+    phase = LocalVar(ins1)
+    ins1.set_ham(amp * (Expression.cos(phase) * ql[i].X() + Expression.sin(phase) * ql[i].Y()))
+    
+    ins2 = Instruction(L, 'derived', 'L{}_Z'.format(i))
+    amp = LocalVar(ins2)
+    ins2.set_ham(amp * ql[i].Z())
 
-L12 = SignalLine(mach)
-ins = Instruction(L12, 'derived', 'L12_XX')
-ins.set_ham(q1.X() * q2.X())
-ins = Instruction(L12, 'derived', 'L12_YY')
-ins.set_ham(q1.Y() * q2.Y())
-ins = Instruction(L12, 'derived', 'L12_ZZ')
-ins.set_ham(q1.Z() * q2.Z())
+for (q0, q1) in link :
+    L = SignalLine(mach)
 
-L13 = SignalLine(mach)
-ins = Instruction(L13, 'derived', 'L13_XX')
-ins.set_ham(q1.X() * q3.X())
-ins = Instruction(L13, 'derived', 'L13_YY')
-ins.set_ham(q1.Y() * q3.Y())
-ins = Instruction(L13, 'derived', 'L13_ZZ')
-ins.set_ham(q1.Z() * q3.Z())
+    ins = Instruction(L, 'derived', 'L{}{}_ZX'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].Z() * ql[q1].X())
 
-L35 = SignalLine(mach)
-ins = Instruction(L35, 'derived', 'L35_XX')
-ins.set_ham(q3.X() * q5.X())
-ins = Instruction(L35, 'derived', 'L35_YY')
-ins.set_ham(q3.Y() * q5.Y())
-ins = Instruction(L35, 'derived', 'L35_ZZ')
-ins.set_ham(q3.Z() * q5.Z())
+    ins = Instruction(L, 'derived', 'L{}{}_XX'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].X() * ql[q1].X())
 
-L45 = SignalLine(mach)
-ins = Instruction(L45, 'derived', 'L45_XX')
-ins.set_ham(q4.X() * q5.X())
-ins = Instruction(L45, 'derived', 'L45_YY')
-ins.set_ham(q4.Y() * q5.Y())
-ins = Instruction(L45, 'derived', 'L45_ZZ')
-ins.set_ham(q4.Z() * q5.Z())
+    ins = Instruction(L, 'derived', 'L{}{}_YY'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].Y() * ql[q1].Y())
 
-L56 = SignalLine(mach)
-ins = Instruction(L56, 'derived', 'L56_XX')
-ins.set_ham(q5.X() * q6.X())
-ins = Instruction(L56, 'derived', 'L56_YY')
-ins.set_ham(q5.Y() * q6.Y())
-ins = Instruction(L56, 'derived', 'L56_ZZ')
-ins.set_ham(q5.Z() * q6.Z())
+    ins = Instruction(L, 'derived', 'L{}{}_ZZ'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].Z() * ql[q1].Z())
+
+    L = SignalLine(mach)
+    
+    ins = Instruction(L, 'derived', 'L{}{}_ZX'.format(q1, q0))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].X() * ql[q1].Z())

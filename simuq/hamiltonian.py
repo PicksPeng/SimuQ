@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy, deepcopy
 from simuq.expression import Expression
 
 class TIHamiltonian :
@@ -45,7 +45,7 @@ class TIHamiltonian :
             i += 1
 
     def __neg__(self) :
-        ham = deepcopy(self.ham)
+        ham = copy(self.ham)
         for i in range(len(ham)) :
             ham[i] = (ham[i][0], -ham[i][1])
         h = TIHamiltonian(self.num_sites, ham)
@@ -55,7 +55,7 @@ class TIHamiltonian :
         # need more typing restrictions
         if self.num_sites != other.num_sites :
             return NotImplemented
-        ham = deepcopy(self.ham)
+        ham = copy(self.ham)
         ham += other.ham
         h = TIHamiltonian(self.num_sites, ham)
         h.cleanHam()
@@ -64,7 +64,7 @@ class TIHamiltonian :
     def __sub__(self, other) :
         if self.num_sites != other.num_sites :
             return NotImplemented
-        ham = deepcopy(self.ham)
+        ham = copy(self.ham)
         ham += other.__neg__().ham
         h = TIHamiltonian(self.num_sites, ham)
         h.cleanHam()
@@ -100,7 +100,7 @@ class TIHamiltonian :
         return (c, coef)
 
     def scalar_mul(self, other) :
-        ham = deepcopy(self.ham)
+        ham = copy(self.ham)
         for i in range(len(ham)) :
             ham[i] = (ham[i][0], ham[i][1] * other)
         h = TIHamiltonian(self.num_sites, ham)
@@ -134,7 +134,7 @@ class TIHamiltonian :
             return NotImplemented
 
     def exp_eval(self, gvars, lvars) :
-        ham = deepcopy(self.ham)
+        ham = copy(self.ham)
         for i in range(len(ham)) :
             ham[i] = (ham[i][0], ham[i][1].exp_eval(gvars, lvars))
         h = TIHamiltonian(self.num_sites, ham)

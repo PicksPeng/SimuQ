@@ -35,10 +35,17 @@ def solve_aligned(ali, qs, mach) :
                     ins = line.inss[j]
                     for (mprod, mc) in ins.h.ham :
                         prod_match = True
+                        untouched = [True for j in range(mach.num_sites)]
                         for k in range(qs.num_sites) :
                             if tprod[k] != mprod[ali[k]] :
                                 prod_match = False
                                 break
+                            untouched[ali[k]] = False
+                        if prod_match :
+                            for k in range(mach.num_sites) :
+                                if untouched[k] and mprod[k] != '' :
+                                    prod_match = False
+                                    break
                         if prod_match :
                             eq = (lambda eq_, f_ : lambda x : eq_(x) + f_(x))(eq, switch_term(mach, evo_index, ins.index, mc))
                             mark[i][j] = 1
@@ -95,6 +102,7 @@ def solve_aligned(ali, qs, mach) :
         (h, t) = qs.evos[evo_index]
         for (tprod, tc) in h.ham :
             eq = (lambda c : lambda x : -c)(tc)
+            mark = [[0 for ins in line.inss] for line in mach.lines]
             for i in range(len(mach.lines)) :
                 line = mach.lines[i]
                 for j in range(len(line.inss)) :
@@ -102,12 +110,20 @@ def solve_aligned(ali, qs, mach) :
                     if switch[evo_index][i][j] == 1 :
                         for (mprod, mc) in ins.h.ham :
                             prod_match = True
+                            untouched = [True for j in range(mach.num_sites)]
                             for k in range(qs.num_sites) :
                                 if tprod[k] != mprod[ali[k]] :
                                     prod_match = False
                                     break
+                                untouched[ali[k]] = False
+                            if prod_match :
+                                for k in range(mach.num_sites) :
+                                    if untouched[k] and mprod[k] != '' :
+                                        prod_match = False
+                                        break
                             if prod_match :
                                 eq = (lambda eq_, f_ : lambda x : eq_(x) + f_(x))(eq, non_switch_term(mach, evo_index, ins.index, mc))
+                                mark[i][j] = 1
                                 break
             eqs.append(eq)
 

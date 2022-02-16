@@ -1,9 +1,25 @@
+'''
+The solver of SimuQ.
+
+The solver contains three steps:
+(1) find an alignment of target sites and machine sites.
+(2) synthesize the target Hamiltonian with instructions
+without considering mutually exclusiveness.
+(3) trotterize the resulting boxes of instructions.
+
+The detailed descriptions are left in the implementations.
+
+TODO: optimize synthesize procedure for cases without
+global variables.
+'''
+
 import scipy.optimize as opt
 import numpy as np
 import networkx as nx
 from simuq.hamiltonian import TIHamiltonian
 import math
 
+# Functions that locate a local variable.
 def locate_switch_evo(mach, evo_index) :
     return mach.num_gvars + evo_index * (mach.num_inss + mach.num_lvars)
 
@@ -19,9 +35,26 @@ def locate_nonswitch_evo(mach, evo_index) :
 def non_switch_term(mach, evo_index, ins_index, mc) :
     return (lambda x : mc.exp_eval(x[:mach.num_gvars], x[locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(mach, evo_index + 1)]))
 
+# Equation builder and solver when an alignment is supplied.
 def solve_aligned(ali, qs, mach) :
     print(ali)
-    
+
+    '''
+    Build equations. The equation variables are the global variables
+    and copies of local variables (# evolution of copies).
+
+    Each product term of the target Hamiltonian is used to build an
+    equation, as the constant side. The other side contains all the
+    possible contributor of this product in the machine's instructions.
+
+    Since a instruction is either selected or not, we represent it
+    by a switch variable for each instruction. Then it turns to a mixed
+    equation solving problem ({0, 1} variables and continuous varibales).
+
+    Currently, this is solved by first treating the switch variables as
+    continuous variables, truncating them and solving the equations 
+    again with switch variables set to 0 or 1.
+    '''
     eqs = []
     nvar = mach.num_gvars + len(qs.evos) * (mach.num_inss + mach.num_lvars)
     for evo_index in range(len(qs.evos)) :
@@ -77,6 +110,10 @@ def solve_aligned(ali, qs, mach) :
     print(np.linalg.norm(f(sol)))
     if np.linalg.norm(f(sol)) > 1e-3 :
         return False
+
+
+    # Solve it again, with initial value set as the previous solution.
+    
 
     lbs = [var_lb for i in range(mach.num_gvars)]
     ubs = [var_ub for i in range(mach.num_gvars)]
@@ -160,7 +197,12 @@ def solve_aligned(ali, qs, mach) :
     print(sol)
     return True
 
+'''
+The search of a valid alignemnt.
 
+Optimization used here: if the current alignment dooms a
+non-zero product term in the target Hamiltonian, then break.
+'''
 def align(i, ali, qs, mach) :
     if i == qs.num_sites :
         if solve_aligned(ali, qs, mach) :
@@ -210,6 +252,8 @@ def find_sol(qs, mach, ali = []) :
         return solve_aligned(ali, qs, mach)
 
 
+# The generation of abstract schedule
+# Trotterize the solution provided by the second step.
 def generate_as(qs, mach, trotter_step = 4) :
     if find_sol(qs, mach) :
         sol = gsol
@@ -224,6 +268,14 @@ def generate_as(qs, mach, trotter_step = 4) :
             coloring = [i for i in range(mach.num_sites)]
             sol_lvars = sol[locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(mach, evo_index + 1)].tolist()
             # Detach by touched sites
+            '''
+            Note that we assume that a derived instruction only 
+            affects those sites it touches (it commutes with any
+            instruction not touching these sites). We can separate 
+            the instructions in the box by the sites they touch.
+
+            Then we use a connectivity coloring to separate them first.
+            '''
             first_touch = [[-1 for i in range(len(line.inss))] for line in mach.lines]
             for i in range(len(mach.lines)) :
                 line = mach.lines[i]
@@ -256,6 +308,11 @@ def generate_as(qs, mach, trotter_step = 4) :
                 if ins_set != [] :
                     color_part.append(ins_set)
             # Detach if commute with all others
+            '''
+            If an instruction's Hamiltonian commutes with every
+            other ones in the box, then we can set itself as a
+            stand-alone box, detaching from the original box.
+            '''
             for i in range(len(color_part)) :
                 ins_set = color_part[i]
                 j = 0
@@ -274,6 +331,20 @@ def generate_as(qs, mach, trotter_step = 4) :
                         j -= 1
                     j += 1
             # Trotterization
+            '''
+            The mutually exclusiveness can be modeled as a graph
+            where vertices are instructions.
+
+            An edge is added either both vertices share the same
+            signal line, or they have shared sites and one of them
+            is an derivied instruction.
+
+            We use a coloring algorithm to minimize the number of
+            colors, such that no edge has two vertices in the same
+            color. With these coloring we can further divide a box
+            into multiple parallel boxes, repeated multiply times
+            (due to trotterization).
+            '''
             for ins_set in color_part :
                 local_ending_boxes = ending_boxes
                 n = len(ins_set)
@@ -328,6 +399,10 @@ def generate_as(qs, mach, trotter_step = 4) :
             ending_boxes = next_ending_boxes
 
         # Delete commutative edges
+        '''
+        Clean up the result.
+        Generate the minimal graph containing all relations.
+        '''
         G = nx.DiGraph()
         G.add_nodes_from(range(len(boxes)))
         s = 0

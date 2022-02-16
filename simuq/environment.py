@@ -1,3 +1,18 @@
+'''
+The classes describing quantum environments.
+
+A quantum environment is a container of sites. Either target quantum
+systems or quantum machines are described by its children classes.
+
+A site is the basic unit describing a quantized physics entity. It
+includes qubit / fork states, or other customized types like qutrit
+or qudit. One should provide sites with their supported operators.
+These operators will be used in the construction of Hamiltonians.
+
+Currently operators are stored as strings. In future these may be
+substituted by operator classes.
+'''
+
 from simuq.hamiltonian import TIHamiltonian
 
 class BaseQuantumEnvironment :

@@ -1,3 +1,26 @@
+'''
+The class file for quantum machines.
+
+One can implement an AAIS in a QMachine. Signal lines
+and instructions are supported inside it.
+
+A quantum machine is essentially a container of signal
+lines, instructions and (local or global) variables.
+
+A signal line contains multiple instructions. Instructions
+sharing a signal line cannot be called simultaneously.
+
+Global variables are defined for the QMachine as a
+globally tunable parameter. They will be fixed for the
+whole experiment.
+
+An instruction may contain several local variables. Local
+variables can be tuned for each call of the instruction.
+Both variables can be used in the description of its
+Hamiltonian.
+TODO: Add API for variables' bounds.
+'''
+
 from copy import deepcopy, copy
 from simuq.environment import BaseQuantumEnvironment
 from simuq.expression import BaseVar, Expression

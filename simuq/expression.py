@@ -1,3 +1,11 @@
+'''
+The class file describing expressions with variables.
+
+These expressions will be used when describing Hamiltonians.
+
+The basic operations are overloaded.
+'''
+
 import math
 
 class BaseVar :

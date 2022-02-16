@@ -1,3 +1,20 @@
+'''
+The class file for time independent Hamiltonian.
+
+A TIHamiltonian is stored as a sum of product terms:
+a coefficient times a product of basic operators.
+The products of basic operators are stored as a list
+of operators (currently strings).
+
+In the worst case, this representation may take
+exponential resources. In practice, it is enough for
+nowadays machines.
+
+Natural computation operations are overloaded. 
+Pauli basis products are symbolically calculated, so
+that commutativity test is possible.
+'''
+
 from copy import copy, deepcopy
 from simuq.expression import Expression
 

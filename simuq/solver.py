@@ -36,7 +36,7 @@ def non_switch_term(mach, evo_index, ins_index, mc) :
     return (lambda x : mc.exp_eval(x[:mach.num_gvars], x[locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(mach, evo_index + 1)]))
 
 # Equation builder and solver when an alignment is supplied.
-def solve_aligned(ali, qs, mach) :
+def solve_aligned(ali, qs, mach, tol = 1e-3) :
     print(ali)
 
     '''
@@ -55,44 +55,59 @@ def solve_aligned(ali, qs, mach) :
     continuous variables, truncating them and solving the equations 
     again with switch variables set to 0 or 1.
     '''
-    eqs = []
     nvar = mach.num_gvars + len(qs.evos) * (mach.num_inss + mach.num_lvars)
-    for evo_index in range(len(qs.evos)) :
-        (h, t) = qs.evos[evo_index]
-        mark = [[0 for ins in line.inss] for line in mach.lines]
-        for (tprod, tc) in h.ham :
-            eq = (lambda c : lambda x : -c)(tc)
-            for i in range(len(mach.lines)) :
-                line = mach.lines[i]
-                for j in range(len(line.inss)) :
-                    ins = line.inss[j]
-                    for (mprod, mc) in ins.h.ham :
-                        prod_match = True
-                        untouched = [True for j in range(mach.num_sites)]
-                        for k in range(qs.num_sites) :
-                            if tprod[k] != mprod[ali[k]] :
-                                prod_match = False
+    def match_prod(tprod, mprod) :
+        untouched = [True for j in range(mach.num_sites)]
+        for k in range(qs.num_sites) :
+            if tprod[k] != mprod[ali[k]] :
+                return False
+            untouched[ali[k]] = False
+        for k in range(mach.num_sites) :
+            if untouched[k] and mprod[k] != '' :
+                return False
+        return True
+        
+    def build_eqs(ins_locator, switch_locator = None) :
+        eqs = []
+        for evo_index in range(len(qs.evos)) :
+            (h, t) = qs.evos[evo_index]
+            mark = [[0 for ins in line.inss] for line in mach.lines]
+            targ_terms = [x for x in h.ham]
+            ind = 0
+            while ind < len(targ_terms) :
+                tprod, tc = targ_terms[ind]
+                eq = (lambda c : lambda x : -c)(tc)
+                for i in range(len(mach.lines)) :
+                    line = mach.lines[i]
+                    for j in range(len(line.inss)) :
+                        ins = line.inss[j]
+                        for (mprod, mc) in ins.h.ham :
+                            if match_prod(tprod, mprod) :
+                                eq = (lambda eq_, f_ : lambda x : eq_(x) + f_(x))(eq, ins_locator(mach, evo_index, ins.index, mc))
+                                mark[i][j] = 1
+                                # Check if other terms of machine instruction exists in targer Ham terms.
+                                for (mprod_prime, _) in ins.h.ham :
+                                    exists_in_targ_terms = False
+                                    for (tprod_prime, _) in targ_terms :
+                                        if match_prod(tprod_prime, mprod_prime) :
+                                            exists_in_targ_terms = True
+                                            break
+                                    if not exists_in_targ_terms :
+                                        targ_terms.append((mprod_prime, 0))
                                 break
-                            untouched[ali[k]] = False
-                        if prod_match :
-                            for k in range(mach.num_sites) :
-                                if untouched[k] and mprod[k] != '' :
-                                    prod_match = False
-                                    break
-                        if prod_match :
-                            eq = (lambda eq_, f_ : lambda x : eq_(x) + f_(x))(eq, switch_term(mach, evo_index, ins.index, mc))
-                            mark[i][j] = 1
-                            break
-            eqs.append(eq)
-        for i in range(len(mach.lines)) :
-            line = mach.lines[i]
-            for j in range(len(line.inss)) :
-                ins = line.inss[j]
-                if mark[i][j] == 0 :
-                    eqs.append(switch_fun(mach, evo_index, ins.index))
+                eqs.append(eq)
+                ind += 1
+            if switch_locator != None :
+                for i in range(len(mach.lines)) :
+                    line = mach.lines[i]
+                    for j in range(len(line.inss)) :
+                        ins = line.inss[j]
+                        if mark[i][j] == 0 :
+                            eqs.append(switch_locator(mach, evo_index, ins.index))
+        return eqs
 
-    #if len(eqs) < nvar :
-    #    eqs = eqs + [(lambda x : 0) for i in range(nvar - len(eqs))]
+
+    eqs = build_eqs(switch_term, switch_fun)
     f = (lambda eqs_ : lambda x : [(lambda i_ : eqs_[i_](x))(i) for i in range(len(eqs_))])(eqs)
     var_lb = -np.inf
     var_ub = np.inf
@@ -108,7 +123,7 @@ def solve_aligned(ali, qs, mach) :
     sol = sol_detail.x
 
     print(np.linalg.norm(f(sol)))
-    if np.linalg.norm(f(sol)) > 1e-3 :
+    if np.linalg.norm(f(sol)) > tol :
         return False
 
 
@@ -121,7 +136,6 @@ def solve_aligned(ali, qs, mach) :
         lbs += [var_lb for j in range(mach.num_lvars)]
         ubs += [var_ub for j in range(mach.num_lvars)]
 
-    eqs = []
     nvar = mach.num_gvars + len(qs.evos) * mach.num_lvars
     initvars = sol[:mach.num_gvars].tolist()
     switch = [[[0 for ins in line.inss] for line in mach.lines] for evo_index in range(len(qs.evos))]
@@ -135,6 +149,7 @@ def solve_aligned(ali, qs, mach) :
                 else :
                     switch[evo_index][i][j] = 1
         initvars += sol[locate_switch_evo(mach, evo_index) + mach.num_inss : locate_switch_evo(mach, evo_index + 1)].tolist()
+    '''
     for evo_index in range(len(qs.evos)) :
         (h, t) = qs.evos[evo_index]
         for (tprod, tc) in h.ham :
@@ -163,7 +178,9 @@ def solve_aligned(ali, qs, mach) :
                                 mark[i][j] = 1
                                 break
             eqs.append(eq)
+    '''
 
+    eqs = build_eqs(non_switch_term)
     f = (lambda eqs_ : lambda x : [(lambda i_ : eqs_[i_](x))(i) for i in range(len(eqs_))])(eqs)
     var_lb = -np.inf
     var_ub = np.inf
@@ -180,7 +197,7 @@ def solve_aligned(ali, qs, mach) :
     if len(initvars) == 0 :
         gsol = np.array([])
         gswitch = switch
-        if np.linalg.norm(f([])) > 1e-5 :
+        if np.linalg.norm(f([])) > tol :
             return False
         return True
     sol_detail = opt.least_squares(f, initvars, bounds = (lbs, ubs))
@@ -190,7 +207,7 @@ def solve_aligned(ali, qs, mach) :
     gswitch = switch
     
     print(np.linalg.norm(f(sol)))
-    if np.linalg.norm(f(sol)) > 1e-5 :
+    if np.linalg.norm(f(sol)) > tol :
         return False
 
     print(switch)

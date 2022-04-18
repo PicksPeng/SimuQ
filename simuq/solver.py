@@ -57,6 +57,8 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
     '''
     nvar = mach.num_gvars + len(qs.evos) * (mach.num_inss + mach.num_lvars)
     def match_prod(tprod, mprod) :
+        return tprod == mprod
+        '''
         untouched = [True for j in range(mach.num_sites)]
         for k in range(qs.num_sites) :
             if tprod[k] != mprod[ali[k]] :
@@ -66,13 +68,20 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
             if untouched[k] and mprod[k] != '' :
                 return False
         return True
+        '''
+
+    def to_mprod(tprod) :
+        ret = ['' for j in range(mach.num_sites)]
+        for k in range(qs.num_sites) :
+            ret[ali[k]] = tprod[k]
+        return ret
         
     def build_eqs(ins_locator, switch_locator = None) :
         eqs = []
         for evo_index in range(len(qs.evos)) :
             (h, t) = qs.evos[evo_index]
             mark = [[0 for ins in line.inss] for line in mach.lines]
-            targ_terms = [x for x in h.ham]
+            targ_terms = [(to_mprod(ham), c) for (ham, c) in h.ham]
             ind = 0
             while ind < len(targ_terms) :
                 tprod, tc = targ_terms[ind]
@@ -149,36 +158,6 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
                 else :
                     switch[evo_index][i][j] = 1
         initvars += sol[locate_switch_evo(mach, evo_index) + mach.num_inss : locate_switch_evo(mach, evo_index + 1)].tolist()
-    '''
-    for evo_index in range(len(qs.evos)) :
-        (h, t) = qs.evos[evo_index]
-        for (tprod, tc) in h.ham :
-            eq = (lambda c : lambda x : -c)(tc)
-            mark = [[0 for ins in line.inss] for line in mach.lines]
-            for i in range(len(mach.lines)) :
-                line = mach.lines[i]
-                for j in range(len(line.inss)) :
-                    ins = line.inss[j]
-                    if switch[evo_index][i][j] == 1 :
-                        for (mprod, mc) in ins.h.ham :
-                            prod_match = True
-                            untouched = [True for j in range(mach.num_sites)]
-                            for k in range(qs.num_sites) :
-                                if tprod[k] != mprod[ali[k]] :
-                                    prod_match = False
-                                    break
-                                untouched[ali[k]] = False
-                            if prod_match :
-                                for k in range(mach.num_sites) :
-                                    if untouched[k] and mprod[k] != '' :
-                                        prod_match = False
-                                        break
-                            if prod_match :
-                                eq = (lambda eq_, f_ : lambda x : eq_(x) + f_(x))(eq, non_switch_term(mach, evo_index, ins.index, mc))
-                                mark[i][j] = 1
-                                break
-            eqs.append(eq)
-    '''
 
     eqs = build_eqs(non_switch_term)
     f = (lambda eqs_ : lambda x : [(lambda i_ : eqs_[i_](x))(i) for i in range(len(eqs_))])(eqs)

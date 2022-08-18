@@ -35,6 +35,20 @@ class QMachine(BaseQuantumEnvironment) :
         self.num_lines = 0
         self.lines = []
         self.num_inss = 0
+        self.sys_ham = 0
+        self.with_sys_ham = False
+        self.instantiated = False
+
+    def set_sys_ham(self, h) :
+        self.sys_ham = h
+        self.with_sys_ham = True
+
+    def instantiate_sys_ham(self) :
+        if self.with_sys_ham  and  not self.instantiated :
+            SysLine = SignalLine(self)
+            SysIns = Instruction(SysLine, 'native', 'System Hamiltonian')
+            SysIns.set_ham(self.sys_ham)
+            self.instantiated = True
 
 
 class SignalLine :

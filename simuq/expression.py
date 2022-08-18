@@ -148,12 +148,16 @@ class Expression :
 
     def __rtruediv__(self, other) :
         if type(other) == int  or  type(other) == float  or  type(other) == complex :
-            return self.__mul__(other)
-        elif isinstance(other, BaseVar) :
+            exp = lambda gvars, lvars : other / self.exp(gvars, lvars)
+            e = Expression(self.mach, exp)
+            return e
+        if isinstance(other, BaseVar) :
             other = other.to_exp()
-            return self.__mul__(other)
-        else :
+        if not hasattr(other, "exp") :
             return NotImplemented
+        exp = lambda gvars, lvars : other.exp(gvars, lvars) / self.exp(gvars, lvars)
+        e = Expression(self.mach, exp)
+        return e
 
     def exp_eval(self, gvars, lvars) :
         return self.exp(gvars, lvars)

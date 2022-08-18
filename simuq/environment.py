@@ -53,6 +53,9 @@ class qubit(BaseSite) :
     def Z(self) :
         return self.createOp("Z")
 
+    def I(self) :
+        return self.createOp("")
+
 class fock(BaseSite) :
     def __init__(self, qs) :
         super().__init__(qs)

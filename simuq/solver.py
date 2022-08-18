@@ -122,11 +122,16 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
     var_ub = np.inf
     lbs = [var_lb for i in range(mach.num_gvars)]
     ubs = [var_ub for i in range(mach.num_gvars)]
-    init = [0 for i in range(mach.num_gvars)]
+    init = [np.random.normal() for i in range(mach.num_gvars)]
     for i in range(len(qs.evos)) :
-        lbs += [0 for j in range(mach.num_inss)] + [var_lb for j in range(mach.num_lvars)]
-        ubs += [1 for j in range(mach.num_inss)] + [var_ub for j in range(mach.num_lvars)]
-        init += [0.5 for j in range(mach.num_inss)] + [0 for j in range(mach.num_lvars)]
+        if mach.with_sys_ham :
+            lbs += [0 for j in range(mach.num_inss - 1)] + [1] + [var_lb for j in range(mach.num_lvars)]
+            ubs += [1 for j in range(mach.num_inss - 1)] + [1 + tol] + [var_ub for j in range(mach.num_lvars)]
+            init += [0.5 for j in range(mach.num_inss - 1)] + [1 + tol / 2] + [np.random.normal() for j in range(mach.num_lvars)]
+        else :
+            lbs += [0 for j in range(mach.num_inss)] + [var_lb for j in range(mach.num_lvars)]
+            ubs += [1 for j in range(mach.num_inss)] + [var_ub for j in range(mach.num_lvars)]
+            init += [0.5 for j in range(mach.num_inss)] + [np.random.normal() for j in range(mach.num_lvars)]
 
     sol_detail = opt.least_squares(f, init, bounds = (lbs, ubs))
     sol = sol_detail.x
@@ -199,9 +204,9 @@ The search of a valid alignemnt.
 Optimization used here: if the current alignment dooms a
 non-zero product term in the target Hamiltonian, then break.
 '''
-def align(i, ali, qs, mach) :
+def align(i, ali, qs, mach, tol) :
     if i == qs.num_sites :
-        if solve_aligned(ali, qs, mach) :
+        if solve_aligned(ali, qs, mach, tol) :
             return True
         return False
     for x in range(mach.num_sites) :
@@ -236,22 +241,23 @@ def align(i, ali, qs, mach) :
             if not available :
                 break
         if available :
-            if align(i + 1, ali, qs, mach) :
+            if align(i + 1, ali, qs, mach, tol) :
                 return True
     return False
 
 
-def find_sol(qs, mach, ali = []) :
+def find_sol(qs, mach, ali = [], tol = 1e-3) :
     if ali == [] :
-        return align(0, [0 for i in range(qs.num_sites)], qs, mach)
+        return align(0, [0 for i in range(qs.num_sites)], qs, mach, tol)
     else :
-        return solve_aligned(ali, qs, mach)
+        return solve_aligned(ali, qs, mach, tol)
 
 
 # The generation of abstract schedule
 # Trotterize the solution provided by the second step.
-def generate_as(qs, mach, trotter_step = 4) :
-    if find_sol(qs, mach) :
+def generate_as(qs, mach, trotter_step = 4, solver_tol = 1e-1) :
+    mach.instantiate_sys_ham()
+    if find_sol(qs, mach, tol = solver_tol) :
         sol = gsol
         switch = gswitch
         sol_gvars = sol[:mach.num_gvars]
@@ -309,6 +315,7 @@ def generate_as(qs, mach, trotter_step = 4) :
             other ones in the box, then we can set itself as a
             stand-alone box, detaching from the original box.
             '''
+            print(color_part)
             for i in range(len(color_part)) :
                 ins_set = color_part[i]
                 j = 0
@@ -317,6 +324,8 @@ def generate_as(qs, mach, trotter_step = 4) :
                     for k in range(len(ins_set)) :
                         if j == k :
                             continue
+                        print(j, k)
+                        print(ins_set[j][2].ham, ins_set[k][2].ham)
                         if not TIHamiltonian.commutativity_test(ins_set[j][2], ins_set[k][2], \
                                                                 ins_set[j][1].prop == 'derived' or ins_set[k][1].prop == 'derived') :
                             all_commute = False

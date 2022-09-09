@@ -264,6 +264,35 @@ def generate_as(qs, mach, trotter_step = 4, solver_tol = 1e-1) :
         boxes = []
         edges = []
         ending_boxes = []
+
+        # Deal with machines with system Hamiltonian first.
+        if mach.with_sys_ham :
+            for evo_index in range(len(qs.evos)) :
+                (h, t) = qs.evos[evo_index]
+                sol_lvars = sol[locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(mach, evo_index + 1)].tolist()
+                box = ([], t)
+                for i in range(len(mach.lines)) :
+                    line = mach.lines[i]
+                    for j in range(len(line.inss)) :
+                        ins = line.inss[j]
+                        if switch[evo_index][i][j] == 1  and  not ins.is_sys_ham :
+                            ins_lvars = []
+                            for l in range(len(ins.vars_index)) :
+                                ins_lvars.append(sol_lvars[ins.vars_index[l]])
+                            box[0].append(((i, j), ins, ins.exp_eval(sol_gvars, sol_lvars), ins_lvars))
+                if box != [] :
+                    boxes.append(box)
+
+            print(alignment)
+            print(sol_gvars)
+            for box in boxes :
+                print(([((i, j), ins_lvars) for ((i, j), ins, h, ins_lvars) in box[0]], box[1]))
+            for idx in range(len(qs.evos) - 1) :
+                print((idx, idx + 1))
+            
+            return (alignment, sol_gvars, boxes)
+
+        # Then deal with other cases
         for evo_index in range(len(qs.evos)) :
             (h, t) = qs.evos[evo_index]
             next_ending_boxes = []

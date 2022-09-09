@@ -48,6 +48,7 @@ class QMachine(BaseQuantumEnvironment) :
             SysLine = SignalLine(self)
             SysIns = Instruction(SysLine, 'native', 'System Hamiltonian')
             SysIns.set_ham(self.sys_ham)
+            SysIns.is_sys_ham = True
             self.instantiated = True
 
 
@@ -70,6 +71,7 @@ class Instruction :
         self.vars_index = []
         self.prop = prop
         self.name = name
+        self.is_sys_ham = False
 
     def set_ham(self, h) :
         newh = copy(h)

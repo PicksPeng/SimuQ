@@ -9,7 +9,7 @@ Rydberg = QMachine()
 #C6 = 862690 * 2 * np.pi
 C6 = 4
 
-n = 3
+n = 6
 
 q = [qubit(Rydberg) for i in range(n)]
 
@@ -30,5 +30,6 @@ for i in range(n) :
 for i in range(n) :
     L = SignalLine(Rydberg)
     ins = Instruction(L, 'native', f'Rabi of site {i}')
-    d = LocalVar(ins)
-    ins.set_ham(d / 2 * q[i].X())
+    o = LocalVar(ins)
+    p = LocalVar(ins)
+    ins.set_ham(o / 2 * (Expression.cos(p) * q[i].X() - Expression.sin(p) * q[i].Y()))

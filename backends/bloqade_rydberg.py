@@ -24,9 +24,7 @@ def gen_clocks(times) :
     return clocks
 
 def clean_as(alignment, sol_gvars, boxes) :
-    print(sol_gvars)
     pos = [0, *sol_gvars]
-    print(pos)
     n = len(pos)
     m = len(boxes)
     times = []
@@ -35,7 +33,6 @@ def clean_as(alignment, sol_gvars, boxes) :
         box = boxes[evo_idx]
         times.append(box[1])
         for ((i, j), ins, h, ins_lvars) in box[0] :
-            print((i, j), n, ins_lvars)
             if i < n :
                 pulse[0][i][evo_idx] = ins_lvars[0]
             else :

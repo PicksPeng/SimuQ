@@ -24,6 +24,7 @@ TODO: Add API for variables' bounds.
 from copy import deepcopy, copy
 from simuq.environment import BaseQuantumEnvironment
 from simuq.expression import BaseVar, Expression
+import numpy as np
 
 class QMachine(BaseQuantumEnvironment) :
     def __init__(self) :
@@ -85,11 +86,14 @@ class Instruction :
 
 
 class GlobalVar(BaseVar) :
-    def __init__(self, mach) :
+    def __init__(self, mach, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
         super().__init__(mach)
         self.index = mach.num_gvars
         mach.num_gvars += 1
         mach.gvars.append(self)
+        self.init_value = init_value
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
 
     def to_exp(self) :
         e = Expression.id_gvar(self.mach, self.index)
@@ -97,14 +101,17 @@ class GlobalVar(BaseVar) :
         
 
 class LocalVar(BaseVar) :
-    def __init__(self, ins) :
+    def __init__(self, ins, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
         mach = ins.mach
         super().__init__(mach)
         self.index = mach.num_lvars
         ins.vars_index.append(self.index)
         mach.num_lvars += 1
         mach.lvars.append(self)
-
+        self.init_value = init_value
+        self.lower_bound = lower_bound
+        self.upper_bound = upper_bound
+    
     def to_exp(self) :
         e = Expression.id_lvar(self.mach, self.index)
         return e

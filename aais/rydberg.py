@@ -13,7 +13,7 @@ n = 3
 
 q = [qubit(Rydberg) for i in range(n)]
 
-x = [0] + [GlobalVar(Rydberg) for i in range(n - 1)]
+x = [0] + [GlobalVar(Rydberg, init_value = i + 1) for i in range(n - 1)]
 
 sys_h = TIHamiltonian.empty(n)
 for i in range(n) :

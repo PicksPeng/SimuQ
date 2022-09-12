@@ -19,5 +19,4 @@ from aais.rydberg import Rydberg as mach
 
 #generate_as(qs, mach, 1, tol = 1e-1)
 
-print()
 print(transpile(*generate_as(qs, mach, 1, 1e-1)))

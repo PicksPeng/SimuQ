@@ -7,10 +7,14 @@ The basic operations are overloaded.
 '''
 
 import math
+import numpy as np
 
 class BaseVar :
     def __init__(self, mach) :
         self.mach = mach
+        self.init_value = 0
+        self.lower_bound = -np.inf
+        self.upper_bound = np.inf
 
     def to_exp(self) :
         pass

@@ -130,21 +130,20 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
 
     eqs = build_eqs(switch_term, switch_fun)
     f = (lambda eqs_ : lambda x : [(lambda i_ : eqs_[i_](x))(i) for i in range(len(eqs_))])(eqs)
-    var_lb = -np.inf
-    var_ub = np.inf
-    lbs = [var_lb for i in range(mach.num_gvars)]
-    ubs = [var_ub for i in range(mach.num_gvars)]
-    init = [np.random.normal() for i in range(mach.num_gvars)]
+    lbs = [mach.gvars[j].lower_bound for j in range(mach.num_gvars)]
+    ubs = [mach.gvars[j].upper_bound for j in range(mach.num_gvars)]
+    init = [mach.gvars[j].init_value for j in range(mach.num_gvars)]
     for i in range(len(qs.evos)) :
         if mach.with_sys_ham :
-            lbs += [0 for j in range(mach.num_inss - 1)] + [1] + [var_lb for j in range(mach.num_lvars)]
-            ubs += [1 for j in range(mach.num_inss - 1)] + [1 + tol] + [var_ub for j in range(mach.num_lvars)]
-            init += [0.5 for j in range(mach.num_inss - 1)] + [1 + tol / 2] + [np.random.normal() for j in range(mach.num_lvars)]
+            lbs += [0 for j in range(mach.num_inss - 1)] + [1] + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)]
+            ubs += [1 for j in range(mach.num_inss - 1)] + [1 + tol] + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)]
+            init += [0.5 for j in range(mach.num_inss - 1)] + [1 + tol / 2] + [mach.lvars[j].init_value for j in range(mach.num_lvars)]
         else :
-            lbs += [0 for j in range(mach.num_inss)] + [var_lb for j in range(mach.num_lvars)]
-            ubs += [1 for j in range(mach.num_inss)] + [var_ub for j in range(mach.num_lvars)]
-            init += [0.5 for j in range(mach.num_inss)] + [np.random.normal() for j in range(mach.num_lvars)]
+            lbs += [0 for j in range(mach.num_inss)] + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)]
+            ubs += [1 for j in range(mach.num_inss)] + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)]
+            init += [0.5 for j in range(mach.num_inss)] + [mach.lvars[j].init_value for j in range(mach.num_lvars)]
 
+    print("Init values: ", init)
     sol_detail = opt.least_squares(f, init, bounds = (lbs, ubs))
     sol = sol_detail.x
 
@@ -156,11 +155,11 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
     # Solve it again, with initial value set as the previous solution.
     
 
-    lbs = [var_lb for i in range(mach.num_gvars)]
-    ubs = [var_ub for i in range(mach.num_gvars)]
+    lbs = [mach.gvars[j].lower_bound for j in range(mach.num_gvars)]
+    ubs = [mach.gvars[j].upper_bound for j in range(mach.num_gvars)]
     for i in range(len(qs.evos)) :
-        lbs += [var_lb for j in range(mach.num_lvars)]
-        ubs += [var_ub for j in range(mach.num_lvars)]
+        lbs += [mach.lvars[j].lower_bound for j in range(mach.num_lvars)]
+        ubs += [mach.lvars[j].upper_bound for j in range(mach.num_lvars)]
 
     nvar = mach.num_gvars + len(qs.evos) * mach.num_lvars
     initvars = sol[:mach.num_gvars].tolist()

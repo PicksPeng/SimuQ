@@ -75,6 +75,15 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
         for k in range(qs.num_sites) :
             ret[ali[k]] = tprod[k]
         return ret
+
+    def is_id(tprod) :
+        ret = True
+        for i in range(qs.num_sites) :
+            if not tprod[i] == '' :
+                ret = False
+                break
+        return ret
+        
         
     def build_eqs(ins_locator, switch_locator = None) :
         eqs = []
@@ -85,6 +94,9 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
             ind = 0
             while ind < len(targ_terms) :
                 tprod, tc = targ_terms[ind]
+                if is_id(tprod) :
+                    ind += 1
+                    continue
                 eq = (lambda c : lambda x : -c)(tc)
                 for i in range(len(mach.lines)) :
                     line = mach.lines[i]

@@ -123,8 +123,13 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
                     line = mach.lines[i]
                     for j in range(len(line.inss)) :
                         ins = line.inss[j]
-                        if mark[i][j] == 0 :
+                        if mark[i][j] == 0 and not ins.is_sys_ham :
                             eqs.append(switch_locator(mach, evo_index, ins.index))
+            if mach.with_sys_ham and mark[-1][0] == 0 :
+                line = mach.lines[-1]
+                ins = line.inss[0]
+                for (mprod, mc) in ins.h.ham :
+                    eqs.append(ins_locator(mach, evo_index, ins.index, mc))
         return eqs
 
 
@@ -144,10 +149,13 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
             init += [0.5 for j in range(mach.num_inss)] + [mach.lvars[j].init_value for j in range(mach.num_lvars)]
 
     print("Init values: ", init)
+    #print("Upper bound: ", ubs)
+    #print("Lower bound: ", lbs)
     sol_detail = opt.least_squares(f, init, bounds = (lbs, ubs))
     sol = sol_detail.x
 
     print(np.linalg.norm(f(sol)))
+    #print(sol)
     if np.linalg.norm(f(sol)) > tol :
         return False
 

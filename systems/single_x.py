@@ -4,10 +4,12 @@ from simuq.environment import qubit
 from simuq.hamiltonian import TIHamiltonian
 
 qs = QSystem()
-n = 7
-ql = [qubit(qs) for i in range(7)]
-link = [(0, 1), (1, 2), (1, 3), (3, 5), (4, 5), (5, 6)]
-T = 2 * np.pi
+n = 3
+ql = [qubit(qs) for i in range(n)]
+link = [(i, i + 1) for i in range(n - 1)]
+T = 1.
+scaler = 1000
 h = TIHamiltonian.empty(n)
-h += ql[0].X()
-qs.add_evolution(h, T)
+for i in range(n) :
+    h += scaler * ql[i].X()
+qs.add_evolution(h, T / scaler)

@@ -41,7 +41,7 @@ def clean_as(alignment, sol_gvars, boxes) :
 
     return (pos, gen_clocks(times), pulse)
 
-def transpile(alignment, sol_gvars, boxes) :
+def transpile(alignment, sol_gvars, boxes, edges) :
     code = gen_bloqade_code(*clean_as(alignment, sol_gvars, boxes))
     with open('transpiled.jl', 'w') as f :
         print(code, file = f)

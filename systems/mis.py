@@ -10,6 +10,6 @@ link = [(i, i + 1) for i in range(n - 1)]
 T = 1
 h = TIHamiltonian.empty(n)
 for (q0, q1) in link :
-    #h += (ql[q0].I() - ql[q0].Z()) * (ql[q1].I() - ql[q1].Z())
-    h += ql[q0].Z() * ql[q1].Z()
+    h += (ql[q0].I() - ql[q0].Z()) * (ql[q1].I() - ql[q1].Z())
+    #h += ql[q0].Z() * ql[q1].Z()
 qs.add_evolution(h, T)

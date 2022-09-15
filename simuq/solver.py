@@ -306,10 +306,11 @@ def generate_as(qs, mach, trotter_step = 4, solver_tol = 1e-1) :
             print(sol_gvars)
             for box in boxes :
                 print(([((i, j), ins_lvars) for ((i, j), ins, h, ins_lvars) in box[0]], box[1]))
+            edges = [(i, i + 1) for i in range(len(qs.evos) - 1)]
             for idx in range(len(qs.evos) - 1) :
                 print((idx, idx + 1))
             
-            return (alignment, sol_gvars, boxes)
+            return (alignment, sol_gvars, boxes, edges)
 
         # Then deal with other cases
         for evo_index in range(len(qs.evos)) :
@@ -492,10 +493,13 @@ def generate_as(qs, mach, trotter_step = 4, solver_tol = 1e-1) :
         print()
         print(alignment)
         print(sol_gvars)
+        output_boxes = []
         for box in boxes :
-            print(([((i, j), ins_lvars) for ((i, j), ins, h, ins_lvars) in box[0]], box[1]))
+            output_boxes.append(([((i, j), ins_lvars) for ((i, j), ins, h, ins_lvars) in box[0]], box[1]))
+            print(output_boxes[-1])
         for edge in edges :
             print(edge)
+        return (alignment, sol_gvars, output_boxes, edges)
     else :
         print('No solution is found.')
 

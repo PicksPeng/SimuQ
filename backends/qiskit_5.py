@@ -40,5 +40,5 @@ def clean_as(n, boxes, edges) :
 
 
 def transpile(alignment, sol_gvars, boxes, edges) :
-    circ = clean_as(6, boxes, edges)
+    circ = clean_as(5, boxes, edges)
     return circ

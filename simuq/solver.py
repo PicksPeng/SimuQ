@@ -224,6 +224,16 @@ Optimization used here: if the current alignment dooms a
 non-zero product term in the target Hamiltonian, then break.
 '''
 def align(i, ali, qs, mach, tol) :
+    
+    def is_id(tprod) :
+        ret = True
+        for i in range(qs.num_sites) :
+            if not tprod[i] == '' :
+                ret = False
+                break
+        return ret
+    
+    print(ali)
     if i == qs.num_sites :
         if solve_aligned(ali, qs, mach, tol) :
             return True
@@ -239,6 +249,8 @@ def align(i, ali, qs, mach, tol) :
             continue
         for (h, t) in qs.evos :
             for (tprod, tc) in h.ham :
+                if is_id(tprod) :
+                    continue
                 found = False
                 for line in mach.lines :
                     for ins in line.inss :

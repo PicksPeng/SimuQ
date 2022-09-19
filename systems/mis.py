@@ -3,11 +3,11 @@ from simuq.environment import qubit
 from simuq.hamiltonian import TIHamiltonian
 from simuq.qsystem import QSystem
 
-T = 1
+T = 30
 
 def adiabatic(h0, h1) :
     def f(t) :
-        return h0 + (-2 + 2. * t / T) * h1
+        return h0 + (-1 + 2. * t / T) * h1
     return f
 m = 5
 
@@ -23,7 +23,7 @@ for (q0, q1) in link :
 for i in range(n) :
     h0 += Omega / 2 * ql[i].X()
 
-Delta = 1
+Delta = 5
 h1 = TIHamiltonian.empty(n)
 for i in range(n) :
     h1 += - Delta * (ql[i].I() - ql[i].Z())

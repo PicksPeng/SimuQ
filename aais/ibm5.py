@@ -3,9 +3,9 @@ from simuq.expression import Expression
 from simuq.qmachine import *
 
 mach = QMachine()
-n = 6
+n = 5
 ql = [qubit(mach) for i in range(n)]
-link = [(0, 1), (1, 2), (2, 3), (3, 4),(4,5)]
+link = [(i, i + 1) for i in range(n - 1)]
 
 for i in range(n) :
     L = SignalLine(mach)

@@ -1,5 +1,5 @@
-import numpy as np
 import networkx as nx
+import numpy as np
 from qiskit import QuantumCircuit
 
 
@@ -18,15 +18,15 @@ def clean_as(n, boxes, edges) :
             if line < n :
                 if ins == 0 :
                     q = line
-                    theta = 2 * params[0] * t
-                    lamb = - params[1]
-                    phi = params[1] + np.pi
-                    circ.u(theta, lamb, phi, q)
+                    circ.rz(-params[1],q)
+                    circ.rx(2 * params[0] * t,q)
+                    circ.rz(params[1],q)
                 else :
                     q = line
                     lamb = 2 * params[0] * t
                     circ.rz(lamb, q)
             else :
+                print(line)
                 (q0, q1) = link[line - n]
                 theta = 2 * params[0] * t
                 if ins == 0 :

@@ -3,13 +3,32 @@ from simuq.qsystem import QSystem
 from simuq.environment import qubit
 from simuq.hamiltonian import TIHamiltonian
 
-qs = QSystem()
-n = 3
-ql = [qubit(qs) for i in range(n)]
-link = [(i, i + 1) for i in range(n - 1)]
 T = 1
-h = TIHamiltonian.empty(n)
+
+def adiabatic(h0, h1) :
+    def f(t) :
+        return h0 + (-2 + 2. * t / T) * h1
+    return f
+m = 5
+
+qs = QSystem()
+n = 5
+ql = [qubit(qs) for i in range(n)]
+link = [(i, (i + 1) % n) for i in range(n-1)]
+
+Omega = 1
+
+h0 = TIHamiltonian.empty(n)
 for (q0, q1) in link :
-    h += (ql[q0].I() - ql[q0].Z()) * (ql[q1].I() - ql[q1].Z())
+    h0 += (ql[q0].I() - ql[q0].Z()) * (ql[q1].I() - ql[q1].Z())
     #h += ql[q0].Z() * ql[q1].Z()
-qs.add_evolution(h, T)
+for i in range(n) :
+    h0 += Omega / 2 * ql[i].X()
+
+Delta = 1
+h1 = TIHamiltonian.empty(n)
+for i in range(n) :
+    h1 += - Delta * (ql[i].I() - ql[i].Z())
+
+
+qs.add_time_dependent_evolution(adiabatic(h0, h1), np.linspace(0, T, m))

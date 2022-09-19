@@ -116,7 +116,7 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
                                     if not exists_in_targ_terms :
                                         targ_terms.append((mprod_prime, 0))
                                 break
-                eqs.append(eq)
+                eqs.append((lambda eq_ : lambda x : t * eq_(x))(eq))
                 ind += 1
             if switch_locator != None :
                 for i in range(len(mach.lines)) :
@@ -129,7 +129,7 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
                 line = mach.lines[-1]
                 ins = line.inss[0]
                 for (mprod, mc) in ins.h.ham :
-                    eqs.append(ins_locator(mach, evo_index, ins.index, mc))
+                    eqs.append((lambda eq_ : lambda x : t * eq_(x))(ins_locator(mach, evo_index, ins.index, mc)))
         return eqs
 
 

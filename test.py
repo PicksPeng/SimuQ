@@ -11,13 +11,12 @@ from simuq.solver import generate_as
 
 
 
-#from systems.mis import qs
-#from aais.rydberg import Rydberg as mach
-#from backends.bloqade_rydberg import transpile
+from systems.mis import qs
+from aais.rydberg1d import Rydberg as mach
+#from aais.rydberg2d import Rydberg as mach
+from backends.bloqade_rydberg import transpile
+#from backends.bloqade_rydberg2d import transpile
 
-from systems.mis2d import qs
-from aais.rydberg2d import Rydberg as mach
-from backends.bloqade_rydberg2d import transpile
 
 #from systems.mis import qs
 #from aais.iontrap import mach

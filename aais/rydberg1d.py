@@ -6,14 +6,15 @@ import numpy as np
 
 Rydberg = QMachine()
 
-#C6 = 862690 * 2 * np.pi
-C6 = 4
+C6 = 862690 * 2 * np.pi
+#C6 = 4
 
-n = 3
+n = 5
 
 q = [qubit(Rydberg) for i in range(n)]
 
-x = [0] + [GlobalVar(Rydberg, init_value = i + 1) for i in range(n - 1)]
+l = (C6 / 4) ** (1. / 6)
+x = [0] + [GlobalVar(Rydberg, init_value = l * i) for i in range(1, n)]
 
 sys_h = TIHamiltonian.empty(n)
 for i in range(n) :

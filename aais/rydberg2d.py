@@ -9,7 +9,7 @@ Rydberg = QMachine()
 C6 = 862690 * 2. * np.pi
 #C6 = 4.
 
-n = 10
+n = 3
 
 q = [qubit(Rydberg) for i in range(n)]
 

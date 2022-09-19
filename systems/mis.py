@@ -1,7 +1,7 @@
 import numpy as np
-from simuq.qsystem import QSystem
 from simuq.environment import qubit
 from simuq.hamiltonian import TIHamiltonian
+from simuq.qsystem import QSystem
 
 T = 1
 
@@ -15,9 +15,7 @@ qs = QSystem()
 n = 5
 ql = [qubit(qs) for i in range(n)]
 link = [(i, (i + 1) % n) for i in range(n-1)]
-
 Omega = 1
-
 h0 = TIHamiltonian.empty(n)
 for (q0, q1) in link :
     h0 += (ql[q0].I() - ql[q0].Z()) * (ql[q1].I() - ql[q1].Z())

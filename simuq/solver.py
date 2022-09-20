@@ -233,7 +233,6 @@ def align(i, ali, qs, mach, tol) :
                 break
         return ret
     
-    print(ali)
     if i == qs.num_sites :
         if solve_aligned(ali, qs, mach, tol) :
             return True

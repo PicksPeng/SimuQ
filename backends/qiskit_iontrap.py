@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
 from qiskit import QuantumCircuit
+from qiskit.circuit.library import RGate
 
 
 def clean_as(n, boxes, edges) :
@@ -18,9 +19,12 @@ def clean_as(n, boxes, edges) :
             if line < n :
                 if ins == 0 :
                     q = line
+                    circ.append(RGate(2 * params[0] * t, params[1]), [q])
+                    '''
                     circ.rz(-params[1],q)
                     circ.rx(2 * params[0] * t,q)
                     circ.rz(params[1],q)
+                    '''
                 else :
                     q = line
                     lamb = 2 * params[0] * t

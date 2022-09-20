@@ -27,7 +27,7 @@ for i in range(n) :
     L = SignalLine(Rydberg)
     ins = Instruction(L, 'native', f'Detuning of site {i}')
     d = LocalVar(ins)
-    ins.set_ham(d / 2 * (q[i].I() - q[i].Z()))
+    ins.set_ham(- d * (q[i].I() - q[i].Z()))
 
 for i in range(n) :
     L = SignalLine(Rydberg)

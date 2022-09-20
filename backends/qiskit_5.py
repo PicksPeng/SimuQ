@@ -15,14 +15,13 @@ def clean_as(n, boxes, edges) :
         idx = topo_order[i]
         t = boxes[idx][1]
         for ((line, ins), params) in boxes[idx][0] :
-            print(line)
             if line < n :
                 if ins == 0 :
                     q = line
-                    theta = 2 * params[0] * t
-                    lamb = - params[1]
-                    phi = params[1] + np.pi
-                    circ.u(theta, lamb, phi, q)
+                    #circ.rgate(2 * params[0] * t, params[1], q)
+                    circ.rz(-params[1],q)
+                    circ.rx(2 * params[0] * t,q)
+                    circ.rz(params[1],q)
                 else :
                     q = line
                     lamb = 2 * params[0] * t

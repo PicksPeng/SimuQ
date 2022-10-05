@@ -1,0 +1,3 @@
+[submodule "Analog_Hamiltonian_Simulation"]
+	path = Analog_Hamiltonian_Simulation
+	url = git@github.com:firstdwarf/Analog_Hamiltonian_Simulation.git

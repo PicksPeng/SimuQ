@@ -7,7 +7,7 @@ from simuq.qsystem import QSystem
 qs = QSystem()
 n = 12
 ql = [qubit(qs) for i in range(n)]
-link = [(i, (i + 1) % n) for i in range(n - 1)]
+link = [(i, (i + 1) % n) for i in range(n)]
 
 h0 = TIHamiltonian.empty(n)
 for (q0, q1) in link:

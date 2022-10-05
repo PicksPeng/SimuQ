@@ -78,7 +78,7 @@ def solve_aligned(ali, qs, mach, tol = 1e-3) :
 
     def is_id(tprod) :
         ret = True
-        for i in range(qs.num_sites) :
+        for i in range(mach.num_sites) :
             if not tprod[i] == '' :
                 ret = False
                 break
@@ -384,8 +384,8 @@ def generate_as(qs, mach, trotter_step = 4, solver_tol = 1e-1) :
                     for k in range(len(ins_set)) :
                         if j == k :
                             continue
-                        print(j, k)
-                        print(ins_set[j][2].ham, ins_set[k][2].ham)
+                        #print(j, k)
+                        #print(ins_set[j][2].ham, ins_set[k][2].ham)
                         if not TIHamiltonian.commutativity_test(ins_set[j][2], ins_set[k][2], \
                                                                 ins_set[j][1].prop == 'derived' or ins_set[k][1].prop == 'derived') :
                             all_commute = False

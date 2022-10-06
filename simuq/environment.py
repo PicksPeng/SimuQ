@@ -43,26 +43,32 @@ class qubit(BaseSite) :
     def __init__(self, qs) :
         super().__init__(qs)
         qs.sites_type.append('qubit')
+        self.X = self.gen_X()
+        self.Y = self.gen_Y()
+        self.Z = self.gen_Z()
+        self.I = self.gen_I()
 
-    def X(self) :
+    def gen_X(self) :
         return self.createOp("X")
 
-    def Y(self) :
+    def gen_Y(self) :
         return self.createOp("Y")
 
-    def Z(self) :
+    def gen_Z(self) :
         return self.createOp("Z")
 
-    def I(self) :
+    def gen_I(self) :
         return self.createOp("")
 
 class fock(BaseSite) :
     def __init__(self, qs) :
         super().__init__(qs)
         qs.sites_type.append('fock')
+        self.a = self.gen_a()
+        self.c = self.gen_c()
 
-    def a(self) :
+    def gen_a(self) :
         return self.createOp("a")
 
-    def c(self) :
+    def gen_c(self) :
         return self.createOp("c")

@@ -1,7 +1,7 @@
 import numpy as np
 
 from simuq.environment import qubit
-from simuq.hamiltonian import TIHamiltonian
+from simuq.hamiltonian import Empty
 from simuq.qsystem import QSystem
 
 qs = QSystem()
@@ -22,19 +22,19 @@ parameter_list = (
     / 2
 )
 for i in range(3):
-    h0 = TIHamiltonian.empty(n)
+    h0 = Empty
     for (q0, q1) in link:
-        h0 += parameter_list[2 * i] * ql[q0].Z() * ql[q1].Z()
+        h0 += parameter_list[2 * i] * ql[q0].Z * ql[q1].Z
     qs.add_evolution(h0, 1)
-    h0 = TIHamiltonian.empty(n)
+    h0 = Empty
     for q0 in range(n):
-        h0 += parameter_list[2 * i + 1] * ql[q0].X()
+        h0 += parameter_list[2 * i + 1] * ql[q0].X
     qs.add_evolution(h0, 1)
 
 
-# h1 = TIHamiltonian.empty(n)
+# h1 = Empty
 # for i in range(n):
-#     h1 += ql[i].X()
+#     h1 += ql[i].X
 
 
 # qs.add_evolution(h1, 1)

@@ -52,6 +52,11 @@ class QMachine(BaseQuantumEnvironment) :
             SysIns.is_sys_ham = True
             self.instantiated = True
 
+    def extend_instruction_sites(self) :
+        for line in self.lines :
+            for ins in line.inss :
+                ins.h.extend_sites(self.num_sites)
+
 
 class SignalLine :
     def __init__(self, mach) :

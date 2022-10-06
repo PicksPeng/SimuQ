@@ -1,7 +1,7 @@
 from simuq.environment import qubit, fock
 from simuq.qmachine import *
 from simuq.expression import Expression
-from simuq.hamiltonian import TIHamiltonian
+from simuq.hamiltonian import Empty
 import numpy as np
 
 FluxSCMach = QMachine()
@@ -18,18 +18,18 @@ for i in range(L) :
     ins1 = Instruction(Line, 'native', 'L{}_X_Y'.format(i))
     amp = LocalVar(ins1)
     phase = LocalVar(ins1)
-    ins1.set_ham(amp * (Expression.cos(phase) * ql[i].X() + Expression.sin(phase) * ql[i].Y()))
+    ins1.set_ham(amp * (Expression.cos(phase) * ql[i].X + Expression.sin(phase) * ql[i].Y))
     
     ins2 = Instruction(Line, 'derived', 'L{}_Z'.format(i))
     amp = LocalVar(ins2)
-    ins2.set_ham(amp * ql[i].Z())
+    ins2.set_ham(amp * ql[i].Z)
 
 Line = SignalLine(mach)
 
 ins = Instruction(Line, 'native', 'L_int')
 amp = LocalVar(ins)
-hint = TIHamiltonian.empty(L)
+hint = Empty
 for j in range(1, l + 1) :
     for i in range(L - j) :
-        hint += Js[j-1] / 2 * (ql[i].X() * ql[i+j].X() + ql[i].Y() * ql[i+j].Y())
+        hint += Js[j-1] / 2 * (ql[i].X * ql[i+j].X + ql[i].Y * ql[i+j].Y)
 ins.set_ham(amp * hint)

@@ -287,6 +287,7 @@ def find_sol(qs, mach, ali = [], tol = 1e-3) :
 # Trotterize the solution provided by the second step.
 def generate_as(qs, mach, trotter_step = 4, solver_tol = 1e-1) :
     mach.instantiate_sys_ham()
+    mach.extend_instruction_sites()
     if find_sol(qs, mach, tol = solver_tol) :
         sol = gsol
         switch = gswitch
@@ -430,7 +431,7 @@ def generate_as(qs, mach, trotter_step = 4, solver_tol = 1e-1) :
                 # Check if the partitions are pair-wise commute
                 sumh = []
                 for i in range(len(nodes_of_color)) :
-                    h = TIHamiltonian.empty(mach.num_sites)
+                    h = TIHamiltonian.empty()
                     for j in range(len(nodes_of_color[i])) :
                         h = h + ins_set[nodes_of_color[i][j]][2]
                     sumh.append(h)

@@ -1,8 +1,8 @@
 # from aais.rydberg1d import Rydberg as mach
-from aais.ibm import mach
-from backends.bloqade_rydberg import transpile
+from aais.rydberg1d_aws import Rydberg
+from backends.bloqade_rydberg_aws import transpile
 from simuq.solver import generate_as
-from systems.qaoa import qs
+from systems.mis import qs
 
 # from systems.mis import qs
 # from aais.iontrap import mach
@@ -26,7 +26,7 @@ from systems.qaoa import qs
 
 # generate_as(qs, mach, 1, tol = 1e-1)
 
-print(generate_as(qs, mach, 1))
+print(transpile(*generate_as(qs, Rydberg, 1)))
 
 """
 circ=transpile(*generate_as(qs, mach, 1, 0.5))

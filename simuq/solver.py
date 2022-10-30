@@ -272,6 +272,29 @@ def solve_aligned(ali, qs, mach, tol=1e-3):
     logger.info(sol)
     return True
 
+def solve_aligned_wrapper(ali, qs, mach, tol) :
+    if mach.num_gvars != 0 or mach.with_sys_ham :
+        return solve_aligned(ali, qs, mach, tol)
+    else :
+        switch = []
+        sol = np.zeros(mach.num_lvars * len(qs.evos))
+        evos = qs.evos
+        global gswitch
+        global gsol
+        for evo_index in range(len(evos)) :
+            qs.evos = [evos[evo_index]]
+            if not solve_aligned(ali, qs, mach, tol) :
+                return False
+            switch.append(gswitch[0])
+            sol[
+                locate_nonswitch_evo(mach, evo_index) :
+                locate_nonswitch_evo(mach, evo_index + 1)
+            ] = gsol
+        qs.evos = evos
+        gswitch = switch
+        gsol = sol
+        return True
+
 
 """
 The search of a valid alignemnt.
@@ -291,7 +314,7 @@ def align(i, ali, qs, mach, tol):
         return ret
 
     if i == qs.num_sites:
-        if solve_aligned(ali, qs, mach, tol):
+        if solve_aligned_wrapper(ali, qs, mach, tol):
             return True
         return False
     for x in range(mach.num_sites):
@@ -337,7 +360,7 @@ def find_sol(qs, mach, ali=[], tol=1e-3):
     if ali == []:
         return align(0, [0 for i in range(qs.num_sites)], qs, mach, tol)
     else:
-        return solve_aligned(ali, qs, mach, tol)
+        return solve_aligned_wrapper(ali, qs, mach, tol)
 
 
 # The generation of abstract schedule
@@ -348,6 +371,9 @@ def generate_as(qs, mach, trotter_step=4, solver_tol=1e-1):
     if find_sol(qs, mach, tol=solver_tol):
         sol = gsol
         switch = gswitch
+        #print(gswitch)
+        #print(gsol)
+
         sol_gvars = sol[: mach.num_gvars]
         boxes = []
         edges = []

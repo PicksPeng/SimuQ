@@ -3,7 +3,7 @@ from simuq.qmachine import *
 from simuq.expression import Expression
 
 mach = QMachine()
-n = 5
+n = 3
 ql = [qubit(mach) for i in range(n)]
 link = [(i, j) for i in range(n) for j in range(i + 1, n)]
 

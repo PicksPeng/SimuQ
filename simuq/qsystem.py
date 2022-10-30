@@ -19,3 +19,5 @@ class QSystem(BaseQuantumEnvironment) :
         for i in range(len(ts) - 1) :
             self.add_evolution(ht(ts[i]), ts[i + 1] - ts[i])
 
+    def clear_evos(self) :
+        self.evos = []

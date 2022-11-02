@@ -20,11 +20,10 @@ def GenQS(topo = 'Chain', k = 3, dis_num = 10, dis_partial = None, Delta = 1, Om
         link = [(i, (i + 1) % n) for i in range(n - 1)]
     elif topo == 'Cycle' :
         # Cycle
-        n = 3
+        n = k
         link = [(i, (i + 1) % n) for i in range(n)]
     elif topo == 'Grid' :
         # Grid
-        k = 2
         n = k * k
         link = []
         for i in range(k) :

@@ -4,36 +4,53 @@ from simuq.environment import qubit
 from simuq.hamiltonian import Empty
 from simuq.qsystem import QSystem
 
-T = 1
 
+def GenQS(topo = 'Chain', k = 3, dis_num = 10, dis_partial = None, Delta = 1, Omega = 4, alpha = 4, T = 1) :
 
-def adiabatic(h0, h1):
-    def f(t):
-        return h0 + (-1 + 2.0 * t / T) * h1
+    def adiabatic(h0, h1):
+        def f(t):
+            return h0 + (-1 + 2.0 * t / T) * h1
+        return f
+    
+    qs = QSystem()
 
-    return f
+    if topo == 'Chain' :
+        # Chain
+        n = k
+        link = [(i, (i + 1) % n) for i in range(n - 1)]
+    elif topo == 'Cycle' :
+        # Cycle
+        n = 3
+        link = [(i, (i + 1) % n) for i in range(n)]
+    elif topo == 'Grid' :
+        # Grid
+        k = 2
+        n = k * k
+        link = []
+        for i in range(k) :
+            for j in range(k) :
+                if i < k - 1 :
+                    link.append((i * k + j, i * k + j + 1))
+                if j < k - 1 :
+                    link.append((i * k + j, (i + 1) * k + j))
 
-qs = QSystem()
-n = 3
-ql = [qubit(qs) for i in range(n)]
-link = [(i, (i + 1) % n) for i in range(n - 1)]
-noper = [(ql[i].I - ql[i].Z) / 2 for i in range(n)]
-Omega = 5
-alpha = 4
-h0 = Empty
-for (q0, q1) in link:
-    h0 += alpha * noper[q0] * noper[q1]
-    # h += ql[q0].Z * ql[q1].Z
-for i in range(n):
-    h0 += Omega / 2 * ql[i].X
+    ql = [qubit(qs) for i in range(n)]
+    noper = [(ql[i].I - ql[i].Z) / 2 for i in range(n)]
+    Omega = 4
+    alpha = 4
+    h0 = Empty
+    for (q0, q1) in link:
+        h0 += alpha * noper[q0] * noper[q1]
+    for i in range(n):
+        h0 += Omega / 2 * ql[i].X
 
-Delta = 4
-h1 = Empty
-for i in range(n):
-    h1 += -Delta * noper[i]
+    Delta = 1
+    h1 = Empty
+    for i in range(n):
+        h1 += -Delta * noper[i]
 
-def set_qs(m = 10, step = 10) :
-    qs.clear_evos()
-    qs.add_time_dependent_evolution(adiabatic(h0, h1), np.linspace(0, T, m + 1)[:step + 1])
-
-set_qs()
+    if dis_partial == None :
+        dis_partial = dis_num
+    qs.add_time_dependent_evolution(adiabatic(h0, h1), np.linspace(0, T, dis_num + 1)[:dis_partial + 1])
+    
+    return qs

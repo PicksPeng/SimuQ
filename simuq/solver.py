@@ -258,7 +258,7 @@ def solve_aligned(ali, qs, mach, tol=1e-3):
         if np.linalg.norm(f([])) > tol:
             return False
         return True
-    sol_detail = opt.least_squares(f, initvars, bounds=(lbs, ubs))
+    sol_detail = opt.least_squares(f, initvars, bounds=(lbs, ubs), )
     sol = sol_detail.x
 
     gsol = sol
@@ -585,6 +585,13 @@ def generate_as(qs, mach, trotter_step=4, solver_tol=1e-1):
                         boxes.append((box_ins, t / steps, sumh[k]))
                         for label in local_ending_boxes:
                             edges.append((label, box_label))
+
+                        #'''
+                        # 1st order Trotter
+                        if k > 0 :
+                            edges.append((box_label - 1, box_label))
+                        #'''
+                        
                         next_local_ending_boxes.append(box_label)
                     local_ending_boxes = next_local_ending_boxes
                 next_ending_boxes += next_local_ending_boxes

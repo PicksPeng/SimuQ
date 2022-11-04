@@ -17,7 +17,7 @@ def get_mach(backend):
 
     def get_control_qubit(q1, q2):  # Control performs Z
         cx_sched = instruction_schedule_map.get("cx", qubits=(q1, q2))
-
+        supported = False
         for time, inst in cx_sched.instructions:
             if isinstance(inst.channel, DriveChannel) and not isinstance(
                 inst, ShiftPhase
@@ -25,6 +25,9 @@ def get_mach(backend):
                 if isinstance(inst.pulse, GaussianSquare):
                     target = inst.channel.index
                     control = q1 if target == q2 else q2
+                    supported = True
+        if not supported:
+            raise ValueError("This machine is not supported!")
         return control
 
     ql = [qubit(mach) for i in range(n)]

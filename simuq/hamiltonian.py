@@ -80,6 +80,8 @@ class TIHamiltonian :
 
     def __add__(self, other) :
         # need more typing restrictions
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            other = other * TIHamiltonian.empty()
         if self.num_sites != other.num_sites :
             self.extend_sites(other.num_sites)
             other.extend_sites(self.num_sites)
@@ -90,7 +92,16 @@ class TIHamiltonian :
         h.cleanHam()
         return h
 
+    def __radd__(self, other) :
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            return self.__add__(other * TIHamiltonian.empty())
+        else :
+            return NotImplemented
+
     def __sub__(self, other) :
+        # need more typing restrictions
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            other = other * TIHamiltonian.empty()
         if self.num_sites != other.num_sites :
             self.extend_sites(other.num_sites)
             other.extend_sites(self.num_sites)
@@ -100,6 +111,12 @@ class TIHamiltonian :
         h = TIHamiltonian(self.num_sites, ham)
         h.cleanHam()
         return h
+
+    def __rsub__(self, other) :
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            return (other * TIHamiltonian.empty()) - self
+        else :
+            return NotImplemented
 
     @staticmethod
     def strlist_mul(a, b) :

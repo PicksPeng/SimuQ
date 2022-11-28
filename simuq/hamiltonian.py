@@ -25,9 +25,9 @@ class TIHamiltonian :
         self.saved_t_sites = None
 
     @classmethod
-    def empty(cls, num_sites) :
+    def empty(cls) :
         ham = []
-        return cls(num_sites, ham)
+        return cls(0, ham)
 
     @classmethod
     def identity(cls, num_sites) :
@@ -61,6 +61,16 @@ class TIHamiltonian :
                 continue
             i += 1
 
+    def extend_sites(self, new_num_sites) :
+        if new_num_sites <= self.num_sites :
+            return
+        add_num = new_num_sites - self.num_sites
+        new_ham = [(self.ham[i][0] + ['' for j in range(add_num)], self.ham[i][1]) for i in range(len(self.ham))]
+        self.num_sites = new_num_sites
+        self.ham = new_ham
+        if self.saved_t_sites is not None :
+            self.saved_t_sites += [0 for j in range(add_num)]            
+
     def __neg__(self) :
         ham = copy(self.ham)
         for i in range(len(ham)) :
@@ -70,22 +80,43 @@ class TIHamiltonian :
 
     def __add__(self, other) :
         # need more typing restrictions
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            other = other * TIHamiltonian.empty()
         if self.num_sites != other.num_sites :
-            return NotImplemented
+            self.extend_sites(other.num_sites)
+            other.extend_sites(self.num_sites)
+            #return NotImplemented
         ham = copy(self.ham)
         ham += other.ham
         h = TIHamiltonian(self.num_sites, ham)
         h.cleanHam()
         return h
 
-    def __sub__(self, other) :
-        if self.num_sites != other.num_sites :
+    def __radd__(self, other) :
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            return self.__add__(other * TIHamiltonian.empty())
+        else :
             return NotImplemented
+
+    def __sub__(self, other) :
+        # need more typing restrictions
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            other = other * TIHamiltonian.empty()
+        if self.num_sites != other.num_sites :
+            self.extend_sites(other.num_sites)
+            other.extend_sites(self.num_sites)
+            #return NotImplemented
         ham = copy(self.ham)
         ham += other.__neg__().ham
         h = TIHamiltonian(self.num_sites, ham)
         h.cleanHam()
         return h
+
+    def __rsub__(self, other) :
+        if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
+            return (other * TIHamiltonian.empty()) - self
+        else :
+            return NotImplemented
 
     @staticmethod
     def strlist_mul(a, b) :
@@ -128,7 +159,9 @@ class TIHamiltonian :
         if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
             return self.scalar_mul(other)
         if self.num_sites != other.num_sites :
-            return NotImplemented
+            self.extend_sites(other.num_sites)
+            other.extend_sites(self.num_sites)
+            #return NotImplemented
         ham = []
         for (prod1, coef1) in self.ham :
             for (prod2, coef2) in other.ham :
@@ -187,3 +220,5 @@ class TIHamiltonian :
                     ret[i] = 1
         self.saved_t_sites = ret
         return ret
+
+Empty = TIHamiltonian.empty()

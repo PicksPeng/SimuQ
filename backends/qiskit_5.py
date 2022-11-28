@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 from qiskit import QuantumCircuit
 
+n = 3
 
 def clean_as(n, boxes, edges) :
     link = [(0, 1), (1, 2), (2, 3), (3, 4)]
@@ -35,9 +36,10 @@ def clean_as(n, boxes, edges) :
                     circ.ryy(theta, q0, q1)
                 else :
                     circ.rzz(theta, q0, q1)
+    circ.measure_all()
     return circ
 
 
 def transpile(alignment, sol_gvars, boxes, edges) :
-    circ = clean_as(5, boxes, edges)
+    circ = clean_as(n, boxes, edges)
     return circ

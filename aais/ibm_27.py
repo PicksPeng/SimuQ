@@ -5,7 +5,18 @@ from simuq.expression import Expression
 mach = QMachine()
 n = 7
 ql = [qubit(mach) for i in range(27)]
-link = [(0, 1), (1, 2), (2, 3), (3, 5), (5, 8), (8, 9), (8, 11), (11, 14), (1, 4), (4, 7), (6, 7), (7, 10), (10, 12), (12, 13), (13, 14), (12, 15), (15, 18), (17, 18), (18, 21), (21, 23), (23, 24), (14, 16), (16, 19), (19, 20), (19, 22), (22, 25), (24, 25), (25, 26)]
+
+IBMQ.load_account()
+        
+provider = IBMQ.get_provider(hub='ibm-q-ornl', group='ornl', project='phy147')
+backend = provider.get_backend('ibm_auckland')
+
+control_line_by_system = {tuple(v['operates']['qubits']): int(k.strip("u")) for k, v in backend.configuration().channels.items() if v['purpose'] == 'cross-resonance'}
+
+link = list(self.control_line_by_system.keys())
+print("New list of connected pairs for IBM system: " + str(link))
+
+# link = [(0, 1), (1, 2), (2, 3), (3, 5), (5, 8), (8, 9), (8, 11), (11, 14), (1, 4), (4, 7), (6, 7), (7, 10), (10, 12), (12, 13), (13, 14), (12, 15), (15, 18), (17, 18), (18, 21), (21, 23), (23, 24), (14, 16), (16, 19), (19, 20), (19, 22), (22, 25), (24, 25), (25, 26)]
 
 for i in range(n) :
     L = SignalLine(mach)
@@ -38,9 +49,9 @@ for (q0, q1) in link :
     amp = LocalVar(ins)
     ins.set_ham(amp * ql[q0].Z() * ql[q1].Z())
 
-    L = SignalLine(mach)
+#     L = SignalLine(mach)
     
-    ins = Instruction(L, 'derived', 'L{}{}_ZX'.format(q1, q0))
-    amp = LocalVar(ins)
-    ins.set_ham(amp * ql[q0].X() * ql[q1].Z())
+#     ins = Instruction(L, 'derived', 'L{}{}_ZX'.format(q1, q0))
+#     amp = LocalVar(ins)
+#     ins.set_ham(amp * ql[q0].X() * ql[q1].Z())
 

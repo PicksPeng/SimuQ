@@ -1,14 +1,24 @@
 import time
 from simuq.solver import generate_as
 
-N = 20
+K = 40
+#N = K * K
+N = K
+
+Repetition = 5
+
+D = 20
+
 
 qsys = 'MIS'
 if qsys == 'MIS' :
     from systems.mis import GenQS
-    qs = GenQS('Chain', k = N, dis_num = 1)
+    qs = GenQS('Chain', k = K, dis_num = D)
 elif qsys == 'Heis' :
-    from system.heis5 import qs
+    from systems.heis7 import qs
+elif qsys == 'QAOA' :
+    from systems.qaoa import GenQS
+    qs = GenQS(n = K, p = D)
 
 # from systems.heis5 import qs
 # from systems.single_x import qs
@@ -22,30 +32,36 @@ if mode == 'Circuit' :
     from backends.qiskit_iontrap import transpile
     n_mach = N
     start_time = time.time()
-    mach = GenMach(n_mach)
-    circ = transpile(n_mach, *generate_as(qs, mach, 1, 0.5))
+    for r in range(Repetition) :
+        mach = GenMach(n_mach)
+        circ = transpile(n_mach, *generate_as(qs, mach, 1, 0.5))
+        print(f'finishing {r}')
     end_time = time.time()
-    print(f'Time consumption: {end_time - start_time} s')
+    print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
 elif mode == 'Rydberg1d Bloqade' :
     # Bloqade Rydberg Setting
     from aais.rydberg1d import GenMach
     from backends.bloqade_rydberg import transpile
     n_mach = N
     start_time = time.time()
-    mach = GenMach(n_mach)
-    code = transpile(*generate_as(qs, mach, 1, 0.5))
+    for r in range(Repetition) :
+        mach = GenMach(n_mach)
+        code = transpile(*generate_as(qs, mach, 1, 0.5))
+        print(f'finishing {r}')
     end_time = time.time()
-    print(f'Time consumption: {end_time - start_time} s')
+    print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
 elif mode == 'Rydberg2d Bloqade' :
     # Bloqade Rydberg Setting
     from aais.rydberg2d import GenMach
-    from backends.bloqade_rydberg import transpile
+    from backends.bloqade_rydberg2d import transpile
     n_mach = N
     start_time = time.time()
-    mach = GenMach(n_mach)
-    code = transpile(*generate_as(qs, mach, 1, 0.5))
+    for r in range(Repetition) :
+        mach = GenMach(n_mach)
+        code = transpile(*generate_as(qs, mach, 1, 0.5))
+        print(f'finishing {r}')
     end_time = time.time()
-    print(f'Time consumption: {end_time - start_time} s')
+    print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
 elif mode == 'Rydberg QuEra' :
     # Braket QuEra Rydberg Setting
     from aais.rydberg1d_aws import GenMach
@@ -55,46 +71,51 @@ elif mode == 'Rydberg QuEra' :
     code = transpile(*generate_as(qs, mach, 1))
 elif mode == 'IBM OpenPulse' :
     # IBM Qiskit OpenPulse Setting
-    from qiskit.providers.fake_provider import FakeGuadalupe, FakeToronto, FakeWashington
+    from qiskit.providers.fake_provider import FakeJakarta, FakeGuadalupe, FakeToronto, FakeWashington
 
     from aais.ibm import get_mach
     from qiskit import IBMQ
+    from backends.Analog_Hamiltonian_Simulation.Analog_Hamiltonian_Simulator.IBM_Machine_new import IBM_Machine
+    from backends.Analog_Hamiltonian_Simulation.Analog_Hamiltonian_Simulator.Program import Program
     
     start_time = time.time()
-    
-    #backend=FakeGuadalupe()
-    backend=FakeWashington()
-    mach=get_mach(backend)
-    assembly=generate_as(qs, mach, 1)
-    with open("qaoa.as","w+") as f:
-        f.write(str(assembly[1])+"\n")
-        for item in assembly[2]:
-            f.write(str(item)+"\n")
-        for item in assembly[3]:
-            f.write(str(item)+"\n")
 
-    from Analog_Hamiltonian_Simulation.Analog_Hamiltonian_Simulator.IBM_Machine_new import IBM_Machine
-    from Analog_Hamiltonian_Simulation.Analog_Hamiltonian_Simulator.Program import Program
+    for r in range(Repetition) :
 
-    machine = IBM_Machine(backend)
-    program = Program(machine)
-    program.init_from_file("qaoa.as")
+        #backend=FakeJakarta()
+        #backend=FakeGuadalupe()
+        #backend=FakeToronto()
+        backend=FakeWashington()
+        mach=get_mach(backend)
+        assembly=generate_as(qs, mach, 1)
+        with open("qaoa.as","w+") as f:
+            f.write(str(assembly[1])+"\n")
+            for item in assembly[2]:
+                f.write(str(item)+"\n")
+            for item in assembly[3]:
+                f.write(str(item)+"\n")
 
-    #Schedule the instructions greedily using the sorted DAG
-    program.schedule()
+        machine = IBM_Machine(backend)
+        program = Program(machine)
+        program.init_from_file("qaoa.as")
 
-    # program.concrete_schedule.draw()
-    # program.concrete_schedule.simulate()
+        #Schedule the instructions greedily using the sorted DAG
+        program.schedule()
 
-    # generate the pulse schedule
-    program.transpile()
-    # program.pulse_schedule.draw()
+        # program.concrete_schedule.draw()
+        # program.concrete_schedule.simulate()
 
-    program.pulse_schedule.generate_external_schedule()
-    # program.pulse_schedule.draw_external_schedule()
+        # generate the pulse schedule
+        program.transpile()
+        # program.pulse_schedule.draw()
+
+        program.pulse_schedule.generate_external_schedule()
+        # program.pulse_schedule.draw_external_schedule()
+        
+        print(f'finishing {r}')
     
     end_time = time.time()
-    print(f'Time consumption: {end_time - start_time} s')
+    print(f'Avg Time consumption: {(end_time - start_time) / 5} s')
     
     
 

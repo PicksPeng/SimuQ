@@ -15,7 +15,8 @@ elif qsys == 'Heis' :
 # from systems.annealing import qs
 
 
-mode = 'IBM OpenPulse'
+#mode = 'IBM OpenPulse'
+mode = 'Rigetti'
 if mode == 'Circuit' :
     # Circuit / Ion Trap Setting
     from aais.iontrap import GenMach
@@ -95,32 +96,41 @@ elif mode == 'IBM OpenPulse' :
     
     end_time = time.time()
     print(f'Time consumption: {end_time - start_time} s')
+elif mode == 'Rigetti' :
+    from aais.rigetti import get_mach
+    mach = get_mach()
+    assembly = generate_as(qs, mach, 1)
+    with open("qaoa_rigetti.as","w+") as f:
+        f.write(str(assembly[1])+"\n")
+        for item in assembly[2]:
+            f.write(str(item)+"\n")
+        for item in assembly[3]:
+            f.write(str(item)+"\n")
     
     
-
-# IBM Qiskit 5qubit Setting
-'''
-from aais.ibm5 import mach
-from backends.qiskit_5 import transpile
-circ=transpile(*generate_as(qs, mach, 1, 0.5))
-'''
-
+# # IBM Qiskit 5qubit Setting
+# '''
+# from aais.ibm5 import mach
+# from backends.qiskit_5 import transpile
+# circ=transpile(*generate_as(qs, mach, 1, 0.5))
+# '''
 
 
-# generate_as(FloquetQS, FluxSCMach)
-# generate_as(qs, mach, 1)
+
+# # generate_as(FloquetQS, FluxSCMach)
+# # generate_as(qs, mach, 1)
 
 
-# from aais.rydberg2d import Rydberg as mach
-# from backends.bloqade_rydberg2d import transpile
+# # from aais.rydberg2d import Rydberg as mach
+# # from backends.bloqade_rydberg2d import transpile
 
 
-#assembly=generate_as(qs, mach, 1)
+# #assembly=generate_as(qs, mach, 1)
 
-"""
-circ=transpile(*generate_as(qs, mach, 1, 0.5))
-import pickle
+# """
+# circ=transpile(*generate_as(qs, mach, 1, 0.5))
+# import pickle
 
-with open('circ.pickle', 'wb') as f:
-    pickle.dump(circ, f)
-"""
+# with open('circ.pickle', 'wb') as f:
+#     pickle.dump(circ, f)
+# """

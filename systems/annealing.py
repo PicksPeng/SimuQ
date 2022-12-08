@@ -3,24 +3,21 @@ from simuq.qsystem import QSystem
 from simuq.environment import qubit
 from simuq.hamiltonian import Empty
 
-def anneal01(h0, h1) :
+def anneal(h0, h1, T) :
     def f(t) :
-        return t * h0 + (1 - t) * h1
+        return (1 - t / T) * h0 + t / T * h1
     return f
 
 n = 3 # num of qubits
 m = 3 # discretization
+T = 1 # evolution time
 
 qs = QSystem()
-
-ql = [qubit(qs) for i in range(n)]
-
-h0 = Empty
+q = [qubit(qs) for i in range(n)]
+h0, h1 = 0, 0
 for i in range(n) :
     h0 += ql[i].X
-
-h1 = Empty
 for i in range(n - 1) :
     h1 += ql[i].Z * ql[i + 1].Z
 
-qs.add_time_dependent_evolution(anneal01(h0, h1), np.linspace(0, 1, m))
+qs.add_time_dependent_evolution(anneal(h0, h1, T), np.linspace(0, T, m))

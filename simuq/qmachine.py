@@ -55,7 +55,7 @@ class QMachine(BaseQuantumEnvironment) :
     def extend_instruction_sites(self) :
         for line in self.lines :
             for ins in line.inss :
-                ins.h.extend_sites(self.num_sites)
+                ins.h.extend_sites(self.sites_type)
 
 
 class SignalLine :

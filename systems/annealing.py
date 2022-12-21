@@ -1,7 +1,6 @@
 import numpy as np
 from simuq.qsystem import QSystem
 from simuq.environment import qubit
-from simuq.hamiltonian import Empty
 
 def anneal(h0, h1, T) :
     def f(t) :

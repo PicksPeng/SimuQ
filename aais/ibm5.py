@@ -1,4 +1,4 @@
-from simuq.environment import fock, qubit
+from simuq.environment import qubit
 from simuq.expression import Expression
 from simuq.qmachine import *
 

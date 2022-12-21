@@ -1,16 +1,16 @@
 import time
 from simuq.solver import generate_as
 
-K = 20
+K = 12
 #N = K * K
 N = K
 
-Repetition = 5
+Repetition = 1
 
-D = 20
+D = 5
 
 
-qsys = 'MIS'
+qsys = 'QAOA'
 
 if qsys == 'MIS' :
     from systems.mis import GenQS
@@ -23,7 +23,7 @@ elif qsys == 'QAOA' :
 
 
 
-mode = 'Rigetti'
+mode = 'IBM OpenPulse'
 
 if mode == 'Circuit' :
     # Circuit / Ion Trap Setting
@@ -90,9 +90,9 @@ elif mode == 'IBM OpenPulse' :
     for r in range(Repetition) :
 
         #backend=FakeJakarta()
-        #backend=FakeGuadalupe()
+        backend=FakeGuadalupe()
         #backend=FakeToronto()
-        backend=FakeWashington()
+        #backend=FakeWashington()
         mach=get_mach(backend)
         assembly=generate_as(qs, mach, 1)
         with open("qaoa.as","w+") as f:
@@ -122,7 +122,7 @@ elif mode == 'IBM OpenPulse' :
         print(f'finishing {r}')
     
     end_time = time.time()
-    print(f'Avg Time consumption: {(end_time - start_time) / 5} s')
+    print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
 
 
 elif mode == 'Rigetti' :

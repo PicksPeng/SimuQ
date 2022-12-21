@@ -1,5 +1,5 @@
 from simuq.qsystem import QSystem
-from simuq.environment import qubit, fock
+from simuq.environment import qubit
 from simuq.qmachine import *
 import math
 

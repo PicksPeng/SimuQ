@@ -17,15 +17,15 @@ from simuq.hamiltonian import TIHamiltonian
 
 class BaseQuantumEnvironment :
     def __init__(self) :
-        self.num_sites = 0
         self.sites = []
         self.sites_type = []
+        self.num_sites = 0
 
     def identity(self) :
-        return TIHamiltonian.identity(self.num_sites)
+        return TIHamiltonian.identity(self.sites_type)
 
     def singletonOp(self, index, op) :
-        return TIHamiltonian.op(self.num_sites, index, op)
+        return TIHamiltonian.op(self.sites_type, index, op)
 
 class BaseSite :
     def __init__(self, qs) :
@@ -60,15 +60,33 @@ class qubit(BaseSite) :
     def gen_I(self) :
         return self.createOp("")
 
-class fock(BaseSite) :
+
+class BaseParticle(BaseSite) :
     def __init__(self, qs) :
         super().__init__(qs)
-        qs.sites_type.append('fock')
+        qs.sites_type.append('particle')
         self.a = self.gen_a()
         self.c = self.gen_c()
+        self.I = self.gen_I()
 
     def gen_a(self) :
         return self.createOp("a")
 
     def gen_c(self) :
         return self.createOp("c")
+
+    def gen_I(self) :
+        return self.createOp("")
+
+
+class fermion(BaseParticle) :
+    def __init__(self, qs) :
+        super().__init__(qs)
+        qs.sites_type[-1] = 'fermion'
+
+
+class boson(BaseParticle) :
+    def __init__(self, qs) :
+        super().__init__(qs)
+        qs.sites_type[-1] = 'boson'
+    

@@ -163,6 +163,9 @@ def solve_aligned(ali, qs, mach, tol=1e-3):
         return eqs
 
     eqs = build_eqs(switch_term, switch_fun)
+    
+    logger.info('Number of vars and equations', nvar, len(eqs))
+    
     f = (
         lambda eqs_: lambda x: [(lambda i_: eqs_[i_](x))(i) for i in range(len(eqs_))]
     )(eqs)
@@ -371,8 +374,6 @@ def generate_as(qs, mach, trotter_step=4, solver_tol=1e-1):
     if find_sol(qs, mach, tol=solver_tol):
         sol = gsol
         switch = gswitch
-        #print(gswitch)
-        #print(gsol)
 
         sol_gvars = sol[: mach.num_gvars]
         boxes = []
@@ -558,7 +559,7 @@ def generate_as(qs, mach, trotter_step=4, solver_tol=1e-1):
                 # Check if the partitions are pair-wise commute
                 sumh = []
                 for i in range(len(nodes_of_color)):
-                    h = TIHamiltonian.empty()
+                    h = 0
                     for j in range(len(nodes_of_color[i])):
                         h = h + ins_set[nodes_of_color[i][j]][2]
                     sumh.append(h)
@@ -651,3 +652,4 @@ def generate_as(qs, mach, trotter_step=4, solver_tol=1e-1):
         return (alignment, sol_gvars, output_boxes, edges)
     else:
         logger.info("No solution is found.")
+        raise Exception("No solution is found.")

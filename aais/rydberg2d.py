@@ -1,7 +1,6 @@
-from simuq.environment import qubit, fock
+from simuq.environment import qubit
 from simuq.qmachine import *
 from simuq.expression import Expression
-from simuq.hamiltonian import Empty
 import numpy as np
 
 def GenMach(n = 3) :
@@ -11,11 +10,11 @@ def GenMach(n = 3) :
 
     q = [qubit(Rydberg) for i in range(n)]
 
-    l = C6 ** (1. / 6) / (2 - 2 * np.cos(2 * np.pi / n)) ** 0.5
+    l = (C6 / 4) ** (1. / 6) / (2 - 2 * np.cos(2 * np.pi / n)) ** 0.5
     x = [(0, 0.)] + [(GlobalVar(Rydberg, init_value = l * (np.cos(i * 2 * np.pi / n) - 1)), GlobalVar(Rydberg, init_value = l * np.sin(i * 2 * np.pi / n))) for i in range(1, n)]
     noper = [(q[i].I - q[i].Z) / 2 for i in range(n)]
 
-    sys_h = Empty
+    sys_h = 0
     for i in range(n) :
         for j in range(i) :
             dsqr = (x[i][0] - x[j][0])**2 + (x[i][1] - x[j][1])**2

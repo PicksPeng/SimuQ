@@ -1,7 +1,6 @@
-from simuq.environment import qubit, fock
+from simuq.environment import qubit
 from simuq.qmachine import *
 from simuq.expression import Expression
-from simuq.hamiltonian import Empty
 import numpy as np
 
 FluxSCMach = QMachine()
@@ -28,7 +27,7 @@ Line = SignalLine(mach)
 
 ins = Instruction(Line, 'native', 'L_int')
 amp = LocalVar(ins)
-hint = Empty
+hint = 0
 for j in range(1, l + 1) :
     for i in range(L - j) :
         hint += Js[j-1] / 2 * (ql[i].X * ql[i+j].X + ql[i].Y * ql[i+j].Y)

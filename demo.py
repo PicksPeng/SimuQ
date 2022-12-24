@@ -9,6 +9,8 @@ Repetition = 1
 
 D = 5
 
+Trot = 1
+
 
 qsys = 'QAOA'
 
@@ -33,7 +35,7 @@ if mode == 'Circuit' :
     start_time = time.time()
     for r in range(Repetition) :
         mach = GenMach(n_mach)
-        circ = transpile(n_mach, *generate_as(qs, mach, 1, 0.5))
+        circ = transpile(n_mach, *generate_as(qs, mach, Trot, 0.5))
         print(f'finishing {r}')
     end_time = time.time()
     print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
@@ -47,7 +49,7 @@ elif mode == 'Rydberg1d Bloqade' :
     start_time = time.time()
     for r in range(Repetition) :
         mach = GenMach(n_mach)
-        code = transpile(*generate_as(qs, mach, 1, 0.5))
+        code = transpile(*generate_as(qs, mach, Trot, 0.5))
         print(f'finishing {r}')
     end_time = time.time()
     print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
@@ -61,7 +63,7 @@ elif mode == 'Rydberg2d Bloqade' :
     start_time = time.time()
     for r in range(Repetition) :
         mach = GenMach(n_mach)
-        code = transpile(*generate_as(qs, mach, 1, 0.5))
+        code = transpile(*generate_as(qs, mach, Trot, 0.5))
         print(f'finishing {r}')
     end_time = time.time()
     print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
@@ -73,7 +75,7 @@ elif mode == 'Rydberg QuEra' :
     from backends.bloqade_rydberg_aws import transpile
     n_mach = N
     mach = GenMach(n_mach)
-    code = transpile(*generate_as(qs, mach, 1))
+    code = transpile(*generate_as(qs, mach, Trot))
 
 
 elif mode == 'IBM OpenPulse' :

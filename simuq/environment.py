@@ -5,9 +5,9 @@ A quantum environment is a container of sites. Either target quantum
 systems or quantum machines are described by its children classes.
 
 A site is the basic unit describing a quantized physics entity. It
-includes qubit / fork states, or other customized types like qutrit
-or qudit. One should provide sites with their supported operators.
-These operators will be used in the construction of Hamiltonians.
+includes qubit / bosonic / fermionic states, or other customized 
+types of sites. Each site contains a set of site operators. These 
+operators will be used in the construction of Hamiltonians.
 
 Currently operators are stored as strings. In future these may be
 substituted by operator classes.
@@ -16,6 +16,13 @@ substituted by operator classes.
 from simuq.hamiltonian import TIHamiltonian
 
 class BaseQuantumEnvironment :
+    """ The basic quantum environment.
+    
+    It models a system to which quantum sites belong to.
+    
+    The sites are stored in a sequence, where their types are stored in
+    list sites_type.
+    """
     def __init__(self) :
         self.sites = []
         self.sites_type = []
@@ -28,6 +35,8 @@ class BaseQuantumEnvironment :
         return TIHamiltonian.op(self.sites_type, index, op)
 
 class BaseSite :
+    """ The basic quantum site.
+    """
     def __init__(self, qs) :
         self.index = qs.num_sites
         self.qs = qs
@@ -40,6 +49,11 @@ class BaseSite :
         
 
 class qubit(BaseSite) :
+    """ The qubit site.
+
+    By default, there are X, Y, Z, I defined as site operators
+    of a qubit site.
+    """
     def __init__(self, qs) :
         super().__init__(qs)
         qs.sites_type.append('qubit')
@@ -62,6 +76,11 @@ class qubit(BaseSite) :
 
 
 class BaseParticle(BaseSite) :
+    """ The basic particle site.
+
+    By default, there are annihilation and creation operators.
+    Additionally, to be consistent with qubit, I represents the identity.
+    """
     def __init__(self, qs) :
         super().__init__(qs)
         qs.sites_type.append('particle')
@@ -80,12 +99,16 @@ class BaseParticle(BaseSite) :
 
 
 class fermion(BaseParticle) :
+    """ The fermionic site
+    """
     def __init__(self, qs) :
         super().__init__(qs)
         qs.sites_type[-1] = 'fermion'
 
 
 class boson(BaseParticle) :
+    """ The bosonic site
+    """
     def __init__(self, qs) :
         super().__init__(qs)
         qs.sites_type[-1] = 'boson'

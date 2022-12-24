@@ -8,6 +8,14 @@ constant evolution.
 from simuq.environment import BaseQuantumEnvironment
 
 class QSystem(BaseQuantumEnvironment) :
+    """ A target quantum system.
+
+    It contains a list of evolutions (h, t), which 
+    represents evolving under h for time duration t.
+
+    We also provide a syntax sugar to discretize
+    a continuous-time Hamiltonian.
+    """
     def __init__(self) :
         super().__init__()
         self.evos = []

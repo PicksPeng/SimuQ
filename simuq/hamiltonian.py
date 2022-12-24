@@ -19,6 +19,22 @@ from copy import copy, deepcopy
 from simuq.expression import Expression
 
 class TIHamiltonian :
+    """ The time-independent Hamiltonian
+
+    The underlying data-structure to store it is a list of
+    tuples (h, c). Here h is a product Hamiltonian, 
+    represented by a list of site operators on the sites. 
+    c is the coefficient corresponding to h, and can either
+    be a real number or an Expression. 
+
+    The site operator algebras are symbolically dealt with 
+    here, since fermionic operators' algebra is position-related.
+
+    We can also test commutativity of Hamiltonians, and 
+    calculate the sites the Hamiltonian is acting non-
+    trivially on.
+    """
+    
     def __init__(self, sites_type, ham) :
         self.sites_type = sites_type
         self.ham = ham
@@ -45,7 +61,7 @@ class TIHamiltonian :
         ham = [(prod, 1)]
         return cls(sites_type, ham)
 
-    def cleanHam(self, tol = 1e-10) :
+    def operAlgebra(self) :
         self.extend_ham_by_sites()
         
         i = 0
@@ -94,6 +110,10 @@ class TIHamiltonian :
             self.ham[i] = (h, coef)
             i += 1
 
+
+    def cleanHam(self, tol = 1e-10) :
+        self.operAlgebra()
+        
         i = 0
         while i < len(self.ham) :
             for j in range(i) :

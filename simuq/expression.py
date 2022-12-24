@@ -1,7 +1,15 @@
 '''
 The class file describing expressions with variables.
 
-These expressions will be used when describing Hamiltonians.
+Expressions are effectively functions taking a valuation of
+variables and generating (real) results. We support the
+natural construction of expressions, where users write 
++, -, *, / naturally on expressions.
+
+These expressions will be used in representing the 
+coefficients in machine's instruction Hamiltonians, where 
+variables belonging to the instruction have effects on
+the Hamiltonian.
 
 The basic operations are overloaded.
 '''
@@ -10,6 +18,11 @@ import math
 import numpy as np
 
 class BaseVar :
+    """ The basic variables.
+
+    The constrainsts specific to the variables are stored here,
+    like the initial value, lower and upper bounds of them.
+    """
     def __init__(self, mach) :
         self.mach = mach
         self.init_value = 0
@@ -35,6 +48,11 @@ class BaseVar :
         return self.to_exp() / other
 
 class Expression :
+    """ The expressions.
+    
+    It is effectively a function taking a valuation of global variables
+    and local variables and generating a number.
+    """
     def __init__(self, mach, exp) :
         self.mach = mach
         self.exp = exp

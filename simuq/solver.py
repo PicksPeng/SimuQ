@@ -8,9 +8,6 @@ without considering mutually exclusiveness.
 (3) trotterize the resulting boxes of instructions.
 
 The detailed descriptions are left in the implementations.
-
-TODO: optimize synthesize procedure for cases without
-global variables.
 """
 
 import logging
@@ -25,6 +22,7 @@ from simuq.hamiltonian import TIHamiltonian
 logging.basicConfig(level=logging.CRITICAL)
 
 logger = logging.getLogger()
+
 # Functions that locate a local variable.
 def locate_switch_evo(mach, evo_index):
     return mach.num_gvars + evo_index * (mach.num_inss + mach.num_lvars)
@@ -275,6 +273,9 @@ def solve_aligned(ali, qs, mach, tol=1e-3):
     logger.info(sol)
     return True
 
+
+# If the system has no global variable nor system
+# Hamiltonian, then we can solve it piece by piece.
 def solve_aligned_wrapper(ali, qs, mach, tol) :
     if mach.num_gvars != 0 or mach.with_sys_ham :
         return solve_aligned(ali, qs, mach, tol)

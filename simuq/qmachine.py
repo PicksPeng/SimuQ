@@ -27,6 +27,11 @@ from simuq.expression import BaseVar, Expression
 import numpy as np
 
 class QMachine(BaseQuantumEnvironment) :
+    """ A quantum device described by its AAIS.
+
+    It stores the signal lines, instructions, local 
+    variables and global variables.
+    """
     def __init__(self) :
         super().__init__()
         self.num_gvars = 0
@@ -59,6 +64,10 @@ class QMachine(BaseQuantumEnvironment) :
 
 
 class SignalLine :
+    """ A signal line.
+
+    It contains all instructions belonging to it.
+    """
     def __init__(self, mach) :
         self.mach = mach
         self.index = mach.num_lines
@@ -68,6 +77,11 @@ class SignalLine :
 
 
 class Instruction :
+    """ An instruction.
+
+    It contains the local variables belonging to it, its
+    property, and its instruction Hamiltonian.
+    """
     def __init__(self, line, prop, name = 'ins') :
         self.mach = line.mach
         self.line = line
@@ -91,6 +105,11 @@ class Instruction :
 
 
 class GlobalVar(BaseVar) :
+    """ A global variable, belonging to a QMachine.
+
+    One can set its initial value, lower and upper bounds
+    when declaring it.
+    """
     def __init__(self, mach, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
         super().__init__(mach)
         self.index = mach.num_gvars
@@ -106,6 +125,11 @@ class GlobalVar(BaseVar) :
         
 
 class LocalVar(BaseVar) :
+    """ A local vabiable, belonging to an instruction.
+
+    One can set its initial value, lower and upper bounds
+    when declaring it.
+    """
     def __init__(self, ins, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
         mach = ins.mach
         super().__init__(mach)

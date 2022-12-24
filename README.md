@@ -1,48 +1,66 @@
-# Requirements
+# SimuQ
 
-Tested SimuQ environment :
+SimuQ is a domain-specific language for quantum simulation with analog compilation.
 
-Python 3.9
+## Requirements
 
-NetworkX 2.8.7
+Basic environment requirements for SimuQ:
 
-NumPy 1.23.4
+* Python 3.9
 
-SciPy 1.9.3
+* NetworkX 2.8.7
 
-Qiskit 0.39.0
+* NumPy 1.23.4
 
-Qiskit-Terra 0.22.0
+* SciPy 1.9.3
 
+To generate IBM machine AAIS for specific machines, programs in Qiskit Pulses or circuits in Qiskit, SimuQ also needs:
 
+* Qiskit 0.39.0
 
-# Project Structure
+* Qiskit-Terra 0.22.0
 
-simuq/: The core compiler and language implementation of SimuQ.
+To run the generated Bloqade program, you will need:
 
-systems/: Hamiltonian evolution implemented in Hamiltonian Modeling Language.
+* Julia 1.7.2
 
-aais/: AAIS of many backends in AAPSI Specification Language.
-
-backends/: The transpilation to API languages of different machine backends.
-
-Analog_Hamiltonian_Simulation/: Necessary components dealing with pulses on IBM Qiskit Pulse.
-
-demo.py: A demo file.
+* Bloqade 0.1.13
 
 
+## Demo
 
-# Demo
+The file `demo.py` contains basic settings to generate a quantum system `qs` in HML, an AAIS `mach` in AAIS Specification Language, and sends the compilation intermediate results to corresponding backend. Running `python demo.py` produces the averaged time consumption of compilation.
 
-demo.py contains basic settings to generate a quantum system in HML, an AAIS in AAIS Specification Language, and send the compilation intermediate results to corresponding backend. Running 'python demo.py' produces the averaged time consumption of compilation. The compilation results are stored in variables corresponding to the backends. Quantum circuits are stored in 'circ', Bloqade code is stored in 'code', and IBM pulse schedules are stored in 'program.pulse_schedule'.
+The compilation results are stored in variables corresponding to the backends. Quantum circuits are stored in 'circ', Bloqade code is stored in 'code', and IBM pulse schedules are stored in 'program.pulse_schedule'.
 
-qsys represents the evolution to simulate, with options MIS, Heis, and QAOA.
+The settings are mainly:
 
-mode represents the machine backends, with options Circuit, Rydberg1d Bloqade, Rydberg2d Bloqade, and IBM Qiskit Pulse 
+* `qsys`: the target system. Options: `MIS`, `Heis`, and `QAOA`, representing respectively the maximal-independent-set Hamitlonian evolution, the Heisenberg model, and the max-cut Hamiltonian evolution.
 
-N and K represent the size of the quantum system.
+* `mode`: the machine backend. Options: `Rydberg1d Bloqade`, `IBM Qiskit Pulse`, `Circuit`, `Rydberg2d Bloqade`, and `Rydberg QuEra`, representing respectively 1d Rydberg atom arrays with local controls, IBM's transmon qubit system, quantum circuits supporting rotation along XX, YY, and ZZ, 2d Rydberg atom arrays with local controls, 2d Rydberg atom arrays without local controls (and transpilation to AWS's API for QuEra machines).
 
-Repetition represents the number of repetition the compilation runs over. The time consumption is averaged over these repetitions.
+* `N` and `K`: the size of the target system. For detailed explanation please check the referred files in `aais/`.
 
-D represents the discretization number for continuous systems.
+* `Repetition`: the number of repetition that the compilation runs over. The time consumption is averaged over them.
+
+* `D`: the discretization number for continuous systems.
+
+* `Trot`: the Trotterization number in conflict resolve.
+
+
+## Project Structure
+
+`aais/`: AAIS of many backends in AAPSI Specification Language.
+
+`backends/`: The transpilation to API languages of different machine backends.
+
+`scripts/`: Utility scripts.
+
+`simuq/`: The core compiler and language implementation of SimuQ.
+
+`systems/`: Hamiltonian evolution implemented in Hamiltonian Modeling Language.
+
+`demo.py`: A demo file.
+
+
 

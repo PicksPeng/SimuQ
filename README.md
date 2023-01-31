@@ -16,9 +16,9 @@ Basic environment requirements for SimuQ:
 
 To generate IBM machine AAIS for specific machines, programs in Qiskit Pulses or circuits in Qiskit, SimuQ also needs:
 
-* Qiskit 0.39.0
+* Qiskit 0.38.0
 
-* Qiskit-Terra 0.22.0
+* Qiskit-Terra 0.21.2
 
 To run the generated Bloqade program, you will need:
 

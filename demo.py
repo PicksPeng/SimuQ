@@ -1,18 +1,18 @@
 import time
 from simuq.solver import generate_as
 
-K = 12
+K = 5
 #N = K * K
 N = K
 
 Repetition = 1
 
-D = 5
+D = 1
 
 Trot = 1
 
 
-qsys = 'QAOA'
+qsys = 'MIS'
 
 if qsys == 'MIS' :
     from systems.mis import GenQS
@@ -81,6 +81,29 @@ elif mode == 'Rydberg QuEra' :
 elif mode == 'IBM OpenPulse' :
     # IBM Qiskit OpenPulse Setting
     from qiskit.providers.fake_provider import FakeJakarta, FakeGuadalupe, FakeToronto, FakeWashington
+    backend=FakeJakarta()
+    #backend=FakeGuadalupe()
+    #backend=FakeToronto()
+    #backend=FakeWashington()
+
+    from aais.ibm import get_mach
+    from backends.qiskit_pulse_ibm import transpile
+    
+    start_time = time.time()
+
+    for r in range(Repetition) :
+        mach = get_mach(backend)
+
+        schedule = transpile(backend, *generate_as(qs, mach, Trot))
+        
+        print(f'finishing {r}')
+    
+    end_time = time.time()
+    print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
+
+    ''' old version 
+    # IBM Qiskit OpenPulse Setting
+    from qiskit.providers.fake_provider import FakeJakarta, FakeGuadalupe, FakeToronto, FakeWashington
 
     from aais.ibm import get_mach
     from qiskit import IBMQ
@@ -95,18 +118,13 @@ elif mode == 'IBM OpenPulse' :
         backend=FakeGuadalupe()
         #backend=FakeToronto()
         #backend=FakeWashington()
-        mach=get_mach(backend)
-        assembly=generate_as(qs, mach, 1)
-        with open("qaoa.as","w+") as f:
-            f.write(str(assembly[1])+"\n")
-            for item in assembly[2]:
-                f.write(str(item)+"\n")
-            for item in assembly[3]:
-                f.write(str(item)+"\n")
 
-        machine = IBM_Machine(backend)
-        program = Program(machine)
-        program.init_from_file("qaoa.as")
+        mach=get_mach(backend)
+
+        assembly=generate_as(qs, mach, 1)
+        
+        program = Program(IBM_Machine(backend))
+        program.init_from_as(assembly)
 
         #Schedule the instructions greedily using the sorted DAG
         program.schedule()
@@ -125,6 +143,7 @@ elif mode == 'IBM OpenPulse' :
     
     end_time = time.time()
     print(f'Avg Time consumption: {(end_time - start_time) / Repetition} s')
+    '''
 
 
 elif mode == 'Rigetti' :

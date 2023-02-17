@@ -1,0 +1,12 @@
+- label: Getting Started
+  items:
+    - name: Installation
+      link: /docs/getting-started/installation/
+    - name: Program Target Evolution
+      link: /docs/getting-started/qsystem/
+    - name: Compile to Qiskit Pulse Schedules
+      link: /docs/getting-started/compilation/
+- label: API References
+  items:
+    - name: SimuQ Online Docs
+      link: /refs/index.html

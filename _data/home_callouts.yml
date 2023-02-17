@@ -1,0 +1,12 @@
+style: is-light
+height: is-small
+items:
+  - title: Model Quantum Systems
+    subtitle: Program evolution in Hamiltonian Modeling Language
+    icon: fa-atom
+  - title: Describe Quantum Devices
+    subtitle: Program Abstract Analog Instruction Sets in AAIS Specification Language
+    icon: fa-microchip
+  - title: Pulse-level Compilation
+    subtitle: Automatically generate pulse schedules according to hardware providers
+    icon: fa-wave-square

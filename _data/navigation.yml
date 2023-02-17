@@ -1,0 +1,30 @@
+- name: Examples
+  link: /examples/
+  dropdown:
+    - name: Quantum System
+      link: /examples/qs/
+      dropdown:
+        - name: Heisenberg model
+          link: /examples/qs/heisenberg/
+        - name: Jaynes-Cumming model
+          link: /examples/qs/jaynes-cumming/
+    - name: Abstract Analog Instruction Sets
+      link: /examples/aais/
+      dropdown:
+        - name: Rydberg AAIS
+          link: /examples/aais/rydberg/
+        - name: Heisenberg-like AAIS
+          link: /examples/aais/heisenberg/
+    - name: Backend
+      link: /examples/backend/
+      dropdown:
+        - name: QuEra backend
+          link: /examples/backend/quera/
+        - name: IBM backend
+          link: /examples/backend/ibm/
+- name: Documentation
+  link: /docs/
+- name: Posts
+  link: /blog/
+- name: About
+  link: /about/

@@ -1,0 +1,20 @@
+- label: Examples
+  items:
+    - name: Quantum System
+      link: /qs/
+      items:
+        - name: Heisenberg model
+          link: /qs/heisenberg/
+        - name: Jaynes-Cumming model
+          link: /qs/jaynes-cumming/
+    - name: AAIS
+      link: /aais/
+      items:
+        - name: Rydberg atom arrays
+          link: /aais/rydberg/
+        - name: IBM superconducting machines
+          link: /aais/ibm/
+        - name: Quantum circuits
+          link: /aais/circuit/
+    - name: Backend
+      link: /backend/

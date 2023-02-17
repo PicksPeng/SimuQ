@@ -1,0 +1,8 @@
+- name: Home
+  link: /
+- name: Posts
+  link: /blog/
+- name: API References
+  link: /refs/
+- name: About Us
+  link: /about/

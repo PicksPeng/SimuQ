@@ -5,7 +5,7 @@ tagline: A DSL for Quantum Simulation
 email: ypeng15@umd.edu
 description: >
   The site for SimuQ, a DSL for quantum simulation with analog compilation
-baseurl: "/QWIRE"
+baseurl: "/SimuQ"
 #url: "https://www.csrhymes.com"
 permalink: pretty
 favicon: /path/to/favicon.png

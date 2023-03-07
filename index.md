@@ -14,6 +14,15 @@ SimuQ is a domain-specific language designed for quantum simulation problem on n
 <a href="https://github.com/PicksPeng/SimuQ/archive/refs/heads/main.zip" class="button is-primary">Download .zip</a>
 </div>
 
+# SimuQ Framework
+
+The framework of SimuQ contains:
+* Target system programmed by front-end users via Hamiltonian Modeling Language.
+* Abstract analog instruction set (AAIS) of the programmable analog devices programmed by hardware developers via AAIS Specification Language (supporting multiple platforms).
+* SimuQ compiler generates pulse schedules from the programmed target system and AAIS.
+
+![SimuQ framework](img/framework.png)
+
 # Supported Backends
 
 We currently support the following backends:
@@ -36,7 +45,8 @@ If you are using SimuQ in your work, please cite:
 @article{peng2023simuq,
   title         = {SimuQ: A Domain-Specific Language for Quantum Simulation with Analog Compilation}
   author        = {Peng, Yuxiang and Young, Jacob and Liu, Pengyu and Wu, Xiaodi},
+  journal       = {arXiv preprint arXiv:2303.02775},
   year          = {2023},
-  month         = jan,
+  month         = mar,
 }
 ```

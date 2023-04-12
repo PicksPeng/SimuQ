@@ -2,10 +2,14 @@ from simuq.environment import qubit
 from simuq.qmachine import *
 from simuq.expression import Expression
 
-def GenMach(n = 3) :
+def GenMach(n = 3, E = None) :
     mach = QMachine()
     ql = [qubit(mach) for i in range(n)]
-    link = [(i, j) for i in range(n) for j in range(i + 1, n)]
+    
+    if E == None :
+        link = [(i, j) for i in range(n) for j in range(i + 1, n)]
+    else :
+        link = E
 
     for i in range(n) :
         L = SignalLine(mach)

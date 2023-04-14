@@ -12,6 +12,7 @@ SimuQ is a domain-specific language designed for quantum simulation problem on n
 <div class="has-text-centered">
 <a href="https://github.com/PicksPeng/SimuQ" class="button is-primary">View on GitHub</a>
 <a href="https://github.com/PicksPeng/SimuQ/archive/refs/heads/main.zip" class="button is-primary">Download .zip</a>
+<a href="https://https://arxiv.org/abs/2303.02775" class="button is-primary">Check on arXiv</a>
 </div>
 
 # SimuQ Framework
@@ -40,7 +41,7 @@ For full instructions, please check [Documentation](/QWIRE/docs/).
 
 # Citations
 
-If you are using SimuQ in your work, please cite:
+If you are using SimuQ in your work, please cite [our arXiv paper](https://arxiv.org/abs/2303.02775) :
 ```
 @article{peng2023simuq,
   title         = {SimuQ: A Domain-Specific Language for Quantum Simulation with Analog Compilation}

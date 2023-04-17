@@ -25,34 +25,40 @@ circ = Circuit()'''
                     #circ.rz(-params[1],q)
                     #circ.rx(2 * params[0] * t,q)
                     #circ.rz(params[1],q)
-                    bk_c += f'.rz({q}, {-params[1]})'
-                    bk_c += f'.rx({q}, {2 * params[0] * t})'
-                    bk_c += f'.rz({q}, {params[1]})'
+                    if abs(params[1]) > 1e-5 :
+                        bk_c += f'.rz({q}, {-params[1]})'
+                    if abs(2 * params[0] * t) > 1e-5 :
+                        bk_c += f'.rx({q}, {2 * params[0] * t})'
+                    if abs(params[1]) > 1e-5 :
+                        bk_c += f'.rz({q}, {params[1]})'
+                    
                 else :
                     q = line
                     lamb = 2 * params[0] * t
-                    circ.rz(lamb, q)
-                    bk_c += f'.rz({q}, {lamb})'
+                    if abs(lamb) > 1e-5 :
+                        circ.rz(lamb, q)
+                        bk_c += f'.rz({q}, {lamb})'
             else :
                 #print(line)
                 (q0, q1) = link[line - n]
                 theta = 2 * params[0] * t
                 if ins == 0 :
-                    circ.rxx(theta, q0, q1)
-                    circ.barrier()
-                    bk_c += f'.xx({q0}, {q1}, {theta})'
+                    if abs(theta) > 1e-5 :
+                        circ.rxx(theta, q0, q1)
+                        circ.barrier()
+                        bk_c += f'.xx({q0}, {q1}, {theta})'
                 elif ins == 1 :
-                    circ.ryy(theta, q0, q1)
-                    circ.barrier()
-                    bk_c += f'.yy({q0}, {q1}, {theta})'
+                    if abs(theta) > 1e-5 :
+                        circ.ryy(theta, q0, q1)
+                        circ.barrier()
+                        bk_c += f'.yy({q0}, {q1}, {theta})'
                 else :
-                    circ.rzz(theta, q0, q1)
-                    circ.barrier()
-                    bk_c += f'.zz({q0}, {q1}, {theta})'
-    with open('ionq.braket', 'w') as f :
-        print(bk_c, file = f)
+                    if abs(theta) > 1e-5 :
+                        circ.rzz(theta, q0, q1)
+                        circ.barrier()
+                        bk_c += f'.zz({q0}, {q1}, {theta})'
     circ.measure_all()
-    return circ
+    return circ, bk_c
 
 
 def transpile(n, alignment, sol_gvars, boxes, edges) :

@@ -272,56 +272,208 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
 
         return f, lbs, ubs, init
 
-    eqs = build_eqs(switch_term, switch_fun)
-    
-    f = (
-        lambda eqs_: lambda x: [(lambda i_: eqs_[i_](x))(i) for i in range(len(eqs_))]
-    )(eqs)
-    lbs = [mach.gvars[j].lower_bound for j in range(mach.num_gvars)]
-    ubs = [mach.gvars[j].upper_bound for j in range(mach.num_gvars)]
-    is_switch = [False for j in range(mach.num_gvars)]
-    init = [mach.gvars[j].init_value for j in range(mach.num_gvars)]
-    for i in range(len(qs.evos)):
-        if mach.with_sys_ham:
-            lbs += (
-                [0 for j in range(mach.num_inss - 1)]
-                + [1]
-                + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)])
-            ubs += (
-                [1 for j in range(mach.num_inss - 1)]
-                + [1 + 0.01]
-                + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)])
-            is_switch += (
-                [True for j in range(mach.num_inss - 1)]
-                + [True]
-                + [False for j in range(mach.num_lvars)])
-            init += (
-                [0.5 for j in range(mach.num_inss - 1)]
-                + [1 + 0.005]
-                + [mach.lvars[j].init_value for j in range(mach.num_lvars)])
-        else:
-            lbs += (
-                [0 for j in range(mach.num_inss)]
-                + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)])
-            ubs += (
-                [1 for j in range(mach.num_inss)]
-                + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)])
-            is_switch += (
-                [True for j in range(mach.num_inss)]
-                + [False for j in range(mach.num_lvars)])
-            init += (
-                [0.5 for j in range(mach.num_inss)]
-                + [mach.lvars[j].init_value for j in range(mach.num_lvars)])
-
-    nvar = len(lbs)
-    logger.info('Number of vars and equations', nvar, len(eqs))
-    logger.info("Init values: ", init)
-    logger.info("Upper bound: ", ubs)
-    logger.info("Lower bound: ", lbs)
-
     if solver == 'least_squares' :
         logger.info("Using Scipy's Least Square Solver.")
         import scipy.optimize as opt
+
+        nvar = mach.num_gvars + len(qs.evos) * (mach.num_inss + mach.num_lvars)
+        eqs, fixed_values = build_eqs_new([None for i in range(nvar)])
+        f, lbs, ubs, init = build_obj(eqs, fixed_values)
+
+        import time
+        start_time = time.time()
+        sol_detail = opt.least_squares(f, init, bounds=(lbs, ubs))
+        end_time = time.time()
+        print("First round time: ", end_time - start_time)
+        sol = sol_detail.x
+
+        logger.info(np.linalg.norm(f(sol)))
+        # logger.info(sol)
+        if np.linalg.norm(f(sol)) > tol:
+            return False
+
+        map_var = []
+        map_var_revert = [None for i in range(nvar)]
+        new_fixed_values = [fixed_values[i] for i in range(len(fixed_values))]
+        new_init = []
+        for i in range(nvar) :
+            if fixed_values[i] == None :
+                label = len(map_var)
+                map_var_revert[i] = len(map_var)
+                map_var.append(i)
+                if (i - mach.num_gvars) % (mach.num_inss + mach.num_lvars) < mach.num_inss :
+                    if abs(sol[label]) < 1e-3 :
+                        new_fixed_values[i] = 0
+                    else :
+                        new_fixed_values[i] = 1
+                else :
+                    new_init.append(sol[label])
+
+        eqs, fixed_values = build_eqs_new(new_fixed_values)
+        f, lbs, ubs, _ = build_obj(eqs, fixed_values)
+
+        start_time = time.time()
+        sol_detail = opt.least_squares(f, new_init, bounds=(lbs, ubs))
+        end_time = time.time()
+        print("Second round time: ", end_time - start_time)
+        sol = sol_detail.x
+
+        logger.info(np.linalg.norm(f(sol)))
+        # logger.info(sol)
+        if np.linalg.norm(f(sol)) > tol:
+            return False
+
+        alignment = ali
+        gswitch = [
+            [
+                [fixed_values[locate_switch(mach, evo_index, ins.index)]
+                 for ins in line.inss]
+                for line in mach.lines
+            ]
+            for evo_index in range(len(qs.evos))
+        ]
+        gsol = []
+        map_var = []
+        for i in range(nvar) :
+            value = fixed_values[i]
+            if fixed_values[i] == None :
+                value = sol[len(map_var)]
+                map_var.append(i)
+            if i < mach.num_gvars  or  (i - mach.num_gvars) % (mach.num_inss + mach.num_lvars) >= mach.num_inss :
+                gsol.append(value)
+        gsol = np.array(gsol)
+        
+        return True
+
+    
+    elif solver == 'dreal' :
+        logger.info("Using dReal4 Solver.")
+        import dreal as dr
+
+        eqs = build_eqs(switch_term, switch_fun)
+        
+        lbs = [mach.gvars[j].lower_bound for j in range(mach.num_gvars)]
+        ubs = [mach.gvars[j].upper_bound for j in range(mach.num_gvars)]
+        is_switch = [False for j in range(mach.num_gvars)]
+        init = [mach.gvars[j].init_value for j in range(mach.num_gvars)]
+        for i in range(len(qs.evos)):
+            if mach.with_sys_ham:
+                lbs += (
+                    [0 for j in range(mach.num_inss - 1)]
+                    + [1]
+                    + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)])
+                ubs += (
+                    [1 for j in range(mach.num_inss - 1)]
+                    + [1 + 0.01]
+                    + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)])
+                is_switch += (
+                    [True for j in range(mach.num_inss - 1)]
+                    + [True]
+                    + [False for j in range(mach.num_lvars)])
+            else:
+                lbs += (
+                    [0 for j in range(mach.num_inss)]
+                    + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)])
+                ubs += (
+                    [1 for j in range(mach.num_inss)]
+                    + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)])
+                is_switch += (
+                    [True for j in range(mach.num_inss)]
+                    + [False for j in range(mach.num_lvars)])
+                
+        nvar = len(lbs)
+        logger.info('Number of vars and equations', nvar, len(eqs))
+        logger.info("Upper bound: ", ubs)
+        logger.info("Lower bound: ", lbs)
+
+        Vars = [dr.Variable("var"+str(i), dr.Variable.Real) if not is_switch[i]
+                else dr.Variable("var"+str(i), dr.Variable.Binary)
+                for i in range(nvar)]
+
+        sats = []
+        for i in range(nvar) :
+            if is_switch[i] :
+                if lbs[i] > 0 :
+                    sats.append(lbs[i] <= Vars[i])
+                if ubs[i] < 1 :
+                    sats.append(Vars[i] <= ubs[i])
+            else :
+                if lbs[i] != -np.inf :
+                    sats.append(lbs[i] <= Vars[i])
+                if ubs[i] != np.inf :
+                    sats.append(Vars[i] <= ubs[i])
+        for i in range(len(eqs)) :
+            sats.append(eqs[i](Vars) == 0)
+
+        f_sat = dr.And(*sats)
+        res = dr.CheckSatisfiability(f_sat, tol)
+        if res == None :
+            return False
+
+        sol = [res[Vars[i]].mid() for i in range(mach.num_gvars)]
+        switch = [
+            [[0 for ins in line.inss] for line in mach.lines]
+            for evo_index in range(len(qs.evos))
+        ]
+        for evo_index in range(len(qs.evos)) :
+            for i in range(len(mach.lines)) :
+                line = mach.lines[i]
+                for j in range(len(line.inss)) :
+                    ins = line.inss[j]
+                    switch[evo_index][i][j] = res[
+                        Vars[locate_switch_evo(mach, evo_index) + ins.index]].lb()
+            sol += [res[Vars[i]].mid() for i in range(
+                locate_switch_evo(mach, evo_index) + mach.num_inss, 
+                locate_switch_evo(mach, evo_index + 1))]
+
+        alignment = ali
+        gsol = sol
+        gswitch = switch
+        return True
+
+    elif solver == 'old_least_squares' :
+        logger.info("Using Scipy's Least Square Solver.")
+        import scipy.optimize as opt
+        
+        eqs = build_eqs(switch_term, switch_fun)
+        
+        f = (
+            lambda eqs_: lambda x: [(lambda i_: eqs_[i_](x))(i) for i in range(len(eqs_))]
+        )(eqs)
+        lbs = [mach.gvars[j].lower_bound for j in range(mach.num_gvars)]
+        ubs = [mach.gvars[j].upper_bound for j in range(mach.num_gvars)]
+        is_switch = [False for j in range(mach.num_gvars)]
+        init = [mach.gvars[j].init_value for j in range(mach.num_gvars)]
+        for i in range(len(qs.evos)):
+            if mach.with_sys_ham:
+                lbs += (
+                    [0 for j in range(mach.num_inss - 1)]
+                    + [1]
+                    + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)])
+                ubs += (
+                    [1 for j in range(mach.num_inss - 1)]
+                    + [1 + 0.01]
+                    + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)])
+                init += (
+                    [0.5 for j in range(mach.num_inss - 1)]
+                    + [1 + 0.005]
+                    + [mach.lvars[j].init_value for j in range(mach.num_lvars)])
+            else:
+                lbs += (
+                    [0 for j in range(mach.num_inss)]
+                    + [mach.lvars[j].lower_bound for j in range(mach.num_lvars)])
+                ubs += (
+                    [1 for j in range(mach.num_inss)]
+                    + [mach.lvars[j].upper_bound for j in range(mach.num_lvars)])
+                init += (
+                    [0.5 for j in range(mach.num_inss)]
+                    + [mach.lvars[j].init_value for j in range(mach.num_lvars)])
+                
+        nvar = len(lbs)
+        logger.info('Number of vars and equations', nvar, len(eqs))
+        logger.info("Init values: ", init)
+        logger.info("Upper bound: ", ubs)
+        logger.info("Lower bound: ", lbs)
 
         import time
         start_time = time.time()
@@ -398,127 +550,6 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
 
         logger.info(switch)
         logger.info(sol)
-        return True
-
-    
-    elif solver == 'dreal' :
-        logger.info("Using dReal4 Solver.")
-        import dreal as dr
-
-        Vars = [dr.Variable("var"+str(i), dr.Variable.Real) if not is_switch[i]
-                else dr.Variable("var"+str(i), dr.Variable.Binary)
-                for i in range(nvar)]
-
-        sats = []
-        for i in range(nvar) :
-            if is_switch[i] :
-                if lbs[i] > 0 :
-                    sats.append(lbs[i] <= Vars[i])
-                if ubs[i] < 1 :
-                    sats.append(Vars[i] <= ubs[i])
-            else :
-                if lbs[i] != -np.inf :
-                    sats.append(lbs[i] <= Vars[i])
-                if ubs[i] != np.inf :
-                    sats.append(Vars[i] <= ubs[i])
-        for i in range(len(eqs)) :
-            sats.append(eqs[i](Vars) == 0)
-
-        f_sat = dr.And(*sats)
-        res = dr.CheckSatisfiability(f_sat, tol)
-        if res == None :
-            return False
-
-        sol = [res[Vars[i]].mid() for i in range(mach.num_gvars)]
-        switch = [
-            [[0 for ins in line.inss] for line in mach.lines]
-            for evo_index in range(len(qs.evos))
-        ]
-        for evo_index in range(len(qs.evos)) :
-            for i in range(len(mach.lines)) :
-                line = mach.lines[i]
-                for j in range(len(line.inss)) :
-                    ins = line.inss[j]
-                    switch[evo_index][i][j] = res[
-                        Vars[locate_switch_evo(mach, evo_index) + ins.index]].lb()
-            sol += [res[Vars[i]].mid() for i in range(
-                locate_switch_evo(mach, evo_index) + mach.num_inss, 
-                locate_switch_evo(mach, evo_index + 1))]
-
-        alignment = ali
-        gsol = sol
-        gswitch = switch
-        return True
-
-    elif solver == 'new_least_squares' :
-        logger.info("Using Scipy's Least Square Solver.")
-        import scipy.optimize as opt
-
-        eqs, fixed_values = build_eqs_new([None for i in range(nvar)])
-        f, lbs, ubs, init = build_obj(eqs, fixed_values)
-
-        import time
-        start_time = time.time()
-        sol_detail = opt.least_squares(f, init, bounds=(lbs, ubs))
-        end_time = time.time()
-        print("First round time: ", end_time - start_time)
-        sol = sol_detail.x
-
-        logger.info(np.linalg.norm(f(sol)))
-        # logger.info(sol)
-        if np.linalg.norm(f(sol)) > tol:
-            return False
-
-        map_var = []
-        map_var_revert = [None for i in range(nvar)]
-        new_fixed_values = [fixed_values[i] for i in range(len(fixed_values))]
-        new_init = []
-        for i in range(nvar) :
-            if fixed_values[i] == None :
-                label = len(map_var)
-                map_var_revert[i] = len(map_var)
-                map_var.append(i)
-                if (i - mach.num_gvars) % (mach.num_inss + mach.num_lvars) < mach.num_inss :
-                    if abs(sol[label]) < 1e-3 :
-                        new_fixed_values[i] = 0
-                    else :
-                        new_fixed_values[i] = 1
-                else :
-                    new_init.append(sol[label])
-
-        eqs, fixed_values = build_eqs_new(new_fixed_values)
-        f, lbs, ubs, _ = build_obj(eqs, fixed_values)
-
-        start_time = time.time()
-        sol_detail = opt.least_squares(f, new_init, bounds=(lbs, ubs))
-        end_time = time.time()
-        print("Second round time: ", end_time - start_time)
-        sol = sol_detail.x
-
-        logger.info(np.linalg.norm(f(sol)))
-        # logger.info(sol)
-        if np.linalg.norm(f(sol)) > tol:
-            return False
-
-        alignment = ali
-        gswitch = [
-            [
-                [fixed_values[locate_switch(mach, evo_index, ins.index)]
-                 for ins in line.inss]
-                for line in mach.lines
-            ]
-            for evo_index in range(len(qs.evos))
-        ]
-        gsol = []
-        map_var = []
-        for i in range(nvar) :
-            value = fixed_values[i]
-            if fixed_values[i] == None :
-                value = sol[len(map_var)]
-                map_var.append(i)
-            if i < mach.num_gvars  or  (i - mach.num_gvars) % (mach.num_inss + mach.num_lvars) >= mach.num_inss :
-                gsol.append(value)
-        
         return True
         
 
@@ -635,11 +666,14 @@ def generate_as(qs, mach, trotter_step=4, solver='least_squares', solver_tol=1e-
         if mach.with_sys_ham:
             for evo_index in range(len(qs.evos)):
                 (h, t) = qs.evos[evo_index]
-                sol_lvars = sol[
-                    locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(
-                        mach, evo_index + 1
-                    )
-                ].tolist()
+                if len(sol) > 0 :
+                    sol_lvars = sol[
+                        locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(
+                            mach, evo_index + 1
+                        )
+                    ].tolist()
+                else :
+                    sol_lvars = []
                 box = ([], t)
                 for i in range(len(mach.lines)):
                     line = mach.lines[i]

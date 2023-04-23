@@ -61,6 +61,7 @@ circ = Circuit()'''
     return circ, bk_c
 
 
-def transpile(n, alignment, sol_gvars, boxes, edges) :
+def transpile(alignment, sol_gvars, boxes, edges) :
+    n = len(alignment)
     circ = clean_as(n, boxes, edges)
     return circ

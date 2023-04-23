@@ -16,6 +16,7 @@ that commutativity test is possible.
 '''
 
 from copy import copy, deepcopy
+import simuq
 from simuq.expression import Expression
 
 class TIHamiltonian :

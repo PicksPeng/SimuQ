@@ -74,20 +74,48 @@ class Expression :
 
     @classmethod
     def cos(cls, e) :
-        if type(e) == int  or  type(e) == float  or  type(e) == complex :
+        if type(e) == int  or  type(e) == float :
             return math.cos(e)
         if isinstance(e, BaseVar) :
             e = e.to_exp()
-        exp = lambda gvars, lvars : math.cos(e.exp(gvars, lvars))
+        if isinstance(e, np.float64) :
+            return np.cos(e)
+
+        def exp(gvars, lvars) :
+            sub = e.exp(gvars, lvars)
+            if type(sub) == int  or  type(sub) == float :
+                return math.cos(sub)
+            if isinstance(sub, np.float64) :
+                return np.cos(sub)
+            import dreal as dr
+            if isinstance(sub, dr._dreal_py.Variable)  or  isinstance(sub, dr._dreal_py.Expression) :
+                return dr.cos(sub)
+            pp = qq
+            return NotImplemented
+
         return cls(e.mach, exp)
 
     @classmethod
     def sin(cls, e) :
-        if type(e) == int  or  type(e) == float  or  type(e) == complex :
+        if type(e) == int  or  type(e) == float :
             return math.sin(e)
         if isinstance(e, BaseVar) :
             e = e.to_exp()
-        exp = lambda gvars, lvars : math.sin(e.exp(gvars, lvars))
+        if isinstance(e, np.float64) :
+            return np.sin(e)
+        
+        def exp(gvars, lvars) :
+            sub = e.exp(gvars, lvars)
+            if type(sub) == int  or  type(sub) == float :
+                return math.cos(sub)
+            if isinstance(sub, np.float64) :
+                return np.sin(sub)
+            import dreal as dr
+            if type(sub) == dr._dreal_py.Variable  or  type(sub) == d._dreal_py.Expression :
+                return dr.sin(sub)
+            pp = qq
+            return NotImplemented
+        
         return cls(e.mach, exp)
 
     def __neg__(self) :

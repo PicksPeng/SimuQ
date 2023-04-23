@@ -16,7 +16,7 @@ def GenMach(n = 3, E = None) :
         
         ins1 = Instruction(L, 'native', 'L{}_X_Y'.format(i))
         amp = LocalVar(ins1)
-        phase = LocalVar(ins1)
+        phase = LocalVar(ins1, lower_bound = -2 * 3.1415926, upper_bound = 2 * 3.1415926)
         ins1.set_ham(amp * (Expression.cos(phase) * ql[i].X
                             + Expression.sin(phase) * ql[i].Y))
         

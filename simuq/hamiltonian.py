@@ -164,7 +164,7 @@ class TIHamiltonian :
     def __add__(self, other) :
         # need more typing restrictions
         if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
-            other = other * TIHamiltonian.empty()
+            other = other * TIHamiltonian.empty(self.sites_type)
         if self.sites_type != other.sites_type :
             self.extend_sites(other.sites_type)
             other.extend_sites(self.sites_type)
@@ -206,7 +206,7 @@ class TIHamiltonian :
 
         # Use a suffix sum to calculate the number of fermionic operators after site i.
         num_ferm_ope_backward = [0 for i in range(len(sites_type))]
-        for i in range(len(sites_type) - 1, 1, -1) :
+        for i in range(len(sites_type) - 1, 0, -1) :
             num_ferm_ope_backward[i - 1] = num_ferm_ope_backward[i]
             if sites_type[i] == 'fermion' :
                 num_ferm_ope_backward[i - 1] += len(a[i])

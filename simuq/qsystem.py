@@ -26,6 +26,9 @@ class QSystem(BaseQuantumEnvironment) :
     def add_time_dependent_evolution(self, ht, ts) :
         for i in range(len(ts) - 1) :
             self.add_evolution(ht(ts[i]), ts[i + 1] - ts[i])
+    
+    def add_td_evolution(self, ht, ts) :
+        return self.add_time_dependent_evolution(ht, ts)
 
     def clear_evos(self) :
         self.evos = []

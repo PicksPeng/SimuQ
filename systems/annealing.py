@@ -15,8 +15,8 @@ qs = QSystem()
 q = [qubit(qs) for i in range(n)]
 h0, h1 = 0, 0
 for i in range(n) :
-    h0 += ql[i].X
+    h0 += q[i].X
 for i in range(n - 1) :
-    h1 += ql[i].Z * ql[i + 1].Z
+    h1 += q[i].Z * q[i + 1].Z
 
-qs.add_time_dependent_evolution(anneal(h0, h1, T), np.linspace(0, T, m))
+qs.add_td_evolution(anneal(h0, h1, T), np.linspace(0, T, m))

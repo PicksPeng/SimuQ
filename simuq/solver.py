@@ -190,6 +190,10 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
                 if is_id(tprod):
                     ind += 1
                     continue
+                if isinstance(tc, complex) :
+                    if abs(tc.imag) > 1e-3 :
+                        raise Exception("Met complex coefficients, not implemented yet.")
+                    tc = tc.real
                 eq = (lambda c: lambda x: -c)(tc)
                 for i in range(len(mach.lines)):
                     line = mach.lines[i]
@@ -288,7 +292,6 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
         sol = sol_detail.x
 
         logger.info(np.linalg.norm(f(sol)))
-        # logger.info(sol)
         if np.linalg.norm(f(sol)) > tol:
             return False
 

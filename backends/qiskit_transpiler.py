@@ -10,6 +10,7 @@ from qiskit.circuit.library.standard_gates import (
     RZZGate,
     SdgGate,
     SGate,
+    RZGate,
 )
 from qiskit.compiler import schedule, transpile
 from qiskit.dagcircuit import DAGCircuit
@@ -27,7 +28,7 @@ from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
 from qiskit.tools.monitor import job_monitor
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import TransformationPass
-from qiskit.transpiler.passes import RZXCalibrationBuilder
+from qiskit.transpiler.passes import RZXCalibrationBuilder, CommutativeCancellation
 from qiskit.transpiler.passes.calibration.builders import CalibrationBuilder
 
 from qiskit.circuit.gate import Gate
@@ -85,11 +86,11 @@ class RYXGate(Gate) :
         q = QuantumRegister(2, 'q')
         qc = QuantumCircuit(q, name=self.name)
         rules = [
-            (SdgGate(), [q[0]], []),
+            (RZGate(-np.pi / 2), [q[0]], []),
             (HGate(), [q[0]], []),
             (RZXGate(theta), [q[0], q[1]], []),
             (HGate(), [q[0]], []),
-            (SGate(), [q[0]], []),
+            (RZGate(np.pi / 2), [q[0]], []),
         ]
         qc._data = rules
         self.definition = qc
@@ -296,18 +297,18 @@ class RYYCalibrationBuilder(TransformationPass):
                 mini_dag = DAGCircuit()
                 p = QuantumRegister(2, "p")
                 mini_dag.add_qreg(p)
-                mini_dag.apply_operation_back(SdgGate(), qargs=[p[0]])
+                mini_dag.apply_operation_back(RZGate(-np.pi / 2), qargs=[p[0]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[1]])
-                mini_dag.apply_operation_back(SGate(), qargs=[p[1]])
+                mini_dag.apply_operation_back(RZGate(np.pi / 2), qargs=[p[1]])
 
                 mini_dag.apply_operation_back(
                     RZXGate(node.op.params[0]), qargs=[p[0], p[1]]
                 )
-                mini_dag.apply_operation_back(SdgGate(), qargs=[p[1]])
+                mini_dag.apply_operation_back(RZGate(-np.pi / 2), qargs=[p[1]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[1]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
-                mini_dag.apply_operation_back(SGate(), qargs=[p[0]])
+                mini_dag.apply_operation_back(RZGate(np.pi / 2), qargs=[p[0]])
 
                 # substitute the cx node with the above mini-dag
                 cx_node = dag.op_nodes(op=RYYGate).pop()
@@ -342,13 +343,13 @@ class RYXCalibrationBuilder(TransformationPass):
                 mini_dag = DAGCircuit()
                 p = QuantumRegister(2, "p")
                 mini_dag.add_qreg(p)
-                mini_dag.apply_operation_back(SdgGate(), qargs=[p[0]])
+                mini_dag.apply_operation_back(RZGate(-np.pi / 2), qargs=[p[0]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
                 mini_dag.apply_operation_back(
                     RZXGate(node.op.params[0]), qargs=[p[0], p[1]]
                 )
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
-                mini_dag.apply_operation_back(SGate(), qargs=[p[0]])
+                mini_dag.apply_operation_back(RZGate(np.pi / 2), qargs=[p[0]])
 
                 pop_node = dag.op_nodes(op=RYXGate).pop()
                 dag.substitute_node_with_dag(
@@ -448,6 +449,6 @@ def get_pm(backend):
     )
 
     pm = PassManager(
-        [yzx_calibrater, yx_calibrater, zz_calibrater, xx_calibrater, yy_calibrater, zx_calibrater, x_calibrater]
+        [yzx_calibrater, yx_calibrater, zz_calibrater, xx_calibrater, yy_calibrater, zx_calibrater, CommutativeCancellation(), CommutativeCancellation(), x_calibrater]
     )
     return pm

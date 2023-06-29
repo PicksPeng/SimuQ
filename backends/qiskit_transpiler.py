@@ -1,16 +1,19 @@
+from math import atan2, cos, floor, pi, sin, sqrt
+
 import matplotlib.pyplot as plt
 import numpy as np
 from qiskit import IBMQ, Aer, QuantumCircuit, QuantumRegister, schedule, transpile
+from qiskit.circuit.gate import Gate
 from qiskit.circuit.library.standard_gates import (
     HGate,
     RXGate,
     RXXGate,
     RYYGate,
+    RZGate,
     RZXGate,
     RZZGate,
     SdgGate,
     SGate,
-    RZGate,
 )
 from qiskit.compiler import schedule, transpile
 from qiskit.dagcircuit import DAGCircuit
@@ -28,18 +31,14 @@ from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
 from qiskit.tools.monitor import job_monitor
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import TransformationPass
-from qiskit.transpiler.passes import RZXCalibrationBuilder, CommutativeCancellation
-from qiskit.transpiler.passes.calibration.builders import CalibrationBuilder
-
-from qiskit.circuit.gate import Gate
-from math import atan2, pi, floor, sqrt, sin, cos
+from qiskit.transpiler.passes import CommutativeCancellation, RZXCalibrationBuilder
+from qiskit.transpiler.passes.calibration.base_builder import CalibrationBuilder
 
 
-
-class eYZXGate(Gate) :
+class eYZXGate(Gate):
     def __init__(self, t):
         """Create new eYZX gate."""
-        super().__init__('eyzx', 3, [t])
+        super().__init__("eyzx", 3, [t])
 
     def _define(self):
         """
@@ -47,22 +46,28 @@ class eYZXGate(Gate) :
         Evolve under YZX for time t
         """
         # pylint: disable=cyclic-import
-        
+
         t = self.params[0]
-        if t < 0 or t >= 2 * pi :
+        if t < 0 or t >= 2 * pi:
             t -= floor(t / (2 * pi)) * 2 * pi
         repeat = floor(t / (pi / 2)) + 1
         t = t / repeat
         t1 = atan2(-sqrt(sin(2 * t)), 1) / 2
         t2 = atan2(+sqrt(sin(2 * t)), cos(t) - sin(t)) / 2
-        q = QuantumRegister(3, 'q')
+        q = QuantumRegister(3, "q")
         qc = QuantumCircuit(q, name=self.name)
-        rules = sum([[
-            (RYYGate(t1 * 2), [q[0], q[1]], []),
-            (RXXGate(t2 * 2), [q[1], q[2]], []),
-            (RYYGate(t2 * 2), [q[0], q[1]], []),
-            (RXXGate(t1 * 2), [q[1], q[2]], []),
-        ] for i in range(repeat)], [])
+        rules = sum(
+            [
+                [
+                    (RYYGate(t1 * 2), [q[0], q[1]], []),
+                    (RXXGate(t2 * 2), [q[1], q[2]], []),
+                    (RYYGate(t2 * 2), [q[0], q[1]], []),
+                    (RXXGate(t1 * 2), [q[1], q[2]], []),
+                ]
+                for i in range(repeat)
+            ],
+            [],
+        )
         qc._data = rules
         self.definition = qc
 
@@ -70,10 +75,11 @@ class eYZXGate(Gate) :
         """Return inverse RZX gate (i.e. with the negative rotation angle)."""
         return eYZXGate(-self.params[0])
 
-class RYXGate(Gate) :
+
+class RYXGate(Gate):
     def __init__(self, theta):
         """Create new RYX gate."""
-        super().__init__('ryx', 2, [theta])
+        super().__init__("ryx", 2, [theta])
 
     def _define(self):
         """
@@ -81,9 +87,9 @@ class RYXGate(Gate) :
         Rotate along YX for theta Ryx(theta) = exp(-i theta/2 YX)
         """
         # pylint: disable=cyclic-import
-        
+
         theta = self.params[0]
-        q = QuantumRegister(2, 'q')
+        q = QuantumRegister(2, "q")
         qc = QuantumCircuit(q, name=self.name)
         rules = [
             (RZGate(-np.pi / 2), [q[0]], []),
@@ -352,11 +358,10 @@ class RYXCalibrationBuilder(TransformationPass):
                 mini_dag.apply_operation_back(RZGate(np.pi / 2), qargs=[p[0]])
 
                 pop_node = dag.op_nodes(op=RYXGate).pop()
-                dag.substitute_node_with_dag(
-                    node=pop_node, input_dag=mini_dag, wires=p
-                )
+                dag.substitute_node_with_dag(node=pop_node, input_dag=mini_dag, wires=p)
 
         return dag
+
 
 class eYZXCalibrationBuilder(TransformationPass):
     def __init__(
@@ -382,7 +387,7 @@ class eYZXCalibrationBuilder(TransformationPass):
                 mini_dag = DAGCircuit()
 
                 t = node.op.params[0]
-                if t < 0 or t >= 2 * pi :
+                if t < 0 or t >= 2 * pi:
                     t -= floor(t / (2 * pi)) * 2 * pi
                 repeat = floor(t / (pi / 2)) + 1
                 t = t / repeat
@@ -391,22 +396,19 @@ class eYZXCalibrationBuilder(TransformationPass):
 
                 p = QuantumRegister(3, "p")
                 mini_dag.add_qreg(p)
-                for i in range(repeat) :
+                for i in range(repeat):
                     mini_dag.apply_operation_back(RYYGate(t1 * 2), qargs=[p[0], p[1]])
                     mini_dag.apply_operation_back(RXXGate(t2 * 2), qargs=[p[1], p[2]])
                     mini_dag.apply_operation_back(RYYGate(t2 * 2), qargs=[p[0], p[1]])
                     mini_dag.apply_operation_back(RXXGate(t1 * 2), qargs=[p[1], p[2]])
-                
+
                 pop_node = dag.op_nodes(op=eYZXGate).pop()
-                dag.substitute_node_with_dag(
-                    node=pop_node, input_dag=mini_dag, wires=p
-                )
+                dag.substitute_node_with_dag(node=pop_node, input_dag=mini_dag, wires=p)
 
         return dag
 
 
 def get_pm(backend):
-
     configuration = backend.configuration()
     properties = backend.properties()
     defaults = backend.defaults()
@@ -449,6 +451,16 @@ def get_pm(backend):
     )
 
     pm = PassManager(
-        [yzx_calibrater, yx_calibrater, zz_calibrater, xx_calibrater, yy_calibrater, zx_calibrater, CommutativeCancellation(), CommutativeCancellation(), x_calibrater]
+        [
+            # yzx_calibrater,
+            # yx_calibrater,
+            zz_calibrater,
+            # xx_calibrater,
+            # yy_calibrater,
+            zx_calibrater,
+            # CommutativeCancellation(),
+            # CommutativeCancellation(),
+            # x_calibrater,
+        ]
     )
     return pm

@@ -1,4 +1,4 @@
-def gen_bloqade_code(pos, clocks, pulse) :
+def gen_bloqade_code_constant(pos, clocks, pulse) :
     n = len(pos)
     code = "using Bloqade\n"
     pos_1d = list(map(lambda x : (x,), pos))
@@ -10,6 +10,34 @@ def gen_bloqade_code(pos, clocks, pulse) :
         code_delta += f'piecewise_constant(clocks = { clocks }, values = { pulse[0][i] }), '
         code_omega += f'piecewise_constant(clocks = { clocks }, values = { pulse[1][i] }), '
         code_phi += f'piecewise_constant(clocks = { clocks }, values = { pulse[2][i] }), '
+    code_omega += "]\n"
+    code_phi += "]\n"
+    code_delta += "]\n"
+    code += code_omega + code_phi + code_delta
+    code += "h = rydberg_h(atoms; Δ = delta, Ω = omega, ϕ = phi)"
+    return code
+
+def gen_bloqade_code_linear(pos, clocks, pulse) :
+    n = len(pos)
+    code = "using Bloqade\n"
+    pos_1d = list(map(lambda x : (x,), pos))
+    if len(pulse[0][0]) == 1 :
+        for i in range(3) :
+            for j in range(n) :
+                pulse[i][j].append(pulse[i][j][-1])
+    else :
+        for i in range(3) :
+            for j in range(n) :
+                k = (pulse[i][j][-1] - pulse[i][j][-2]) / (clocks[-2] - clocks[-3])
+                pulse[i][j].append(pulse[i][j][-1] + k * (clocks[-1] - clocks[-2]))
+    code += f'atoms = AtomList({ pos_1d }) \n'
+    code_delta = "delta = ["
+    code_omega = "omega = ["
+    code_phi = "phi = ["
+    for i in range(n) :
+        code_delta += f'piecewise_linear(clocks = { clocks }, values = { pulse[0][i] }), '
+        code_omega += f'piecewise_linear(clocks = { clocks }, values = { pulse[1][i] }), '
+        code_phi += f'piecewise_linear(clocks = { clocks }, values = { pulse[2][i] }), '
     code_omega += "]\n"
     code_phi += "]\n"
     code_delta += "]\n"
@@ -41,8 +69,11 @@ def clean_as(alignment, sol_gvars, boxes) :
 
     return (pos, gen_clocks(times), pulse)
 
-def transpile(alignment, sol_gvars, boxes, edges) :
-    code = gen_bloqade_code(*clean_as(alignment, sol_gvars, boxes))
-    with open('transpiled.jl', 'w') as f :
-        print(code, file = f)
+def transpile(alignment, sol_gvars, boxes, edges, inter_order = 0) :
+    if inter_order == 0 :
+        code = gen_bloqade_code_constant(*clean_as(alignment, sol_gvars, boxes))
+    elif inter_order == 1 :
+        code = gen_bloqade_code_linear(*clean_as(alignment, sol_gvars, boxes))
+    #with open('transpiled.jl', 'w') as f :
+    #    print(code, file = f)
     return code

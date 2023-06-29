@@ -1,13 +1,11 @@
 import networkx as nx
 import numpy as np
-from qiskit import QuantumCircuit
-
-from qiskit import IBMQ
-from qiskit.pulse import DriveChannel, GaussianSquare, ShiftPhase
 from backends.qiskit_transpiler import get_pm
+from qiskit import IBMQ, QuantumCircuit
+from qiskit.pulse import DriveChannel, GaussianSquare, ShiftPhase
 
 
-def get_n_link(backend) :
+def get_n_link(backend):
     configuration = backend.configuration()
     defaults = backend.defaults()
     n = configuration.num_qubits
@@ -38,47 +36,49 @@ def get_n_link(backend) :
     return n, link
 
 
-def clean_as(boxes, edges, backend) :
+def clean_as(boxes, edges, backend):
     n, link = get_n_link(backend)
     circ = QuantumCircuit(n)
     DG = nx.DiGraph()
     DG.add_nodes_from([i for i in range(len(boxes))])
     DG.add_edges_from(edges)
     topo_order = list(nx.topological_sort(DG))
-    for i in range(len(boxes)) :
+    for i in range(len(boxes)):
         idx = topo_order[i]
         t = boxes[idx][1]
-        for ((line, ins), params) in boxes[idx][0] :
-            if line < n :
-                if ins == 0 :
+        for (line, ins), params in boxes[idx][0]:
+            if line < n:
+                if ins == 0:
                     q = line
-                    circ.rz(-params[1],q)
-                    circ.rx(2 * params[0] * t,q)
-                    circ.rz(params[1],q)
-                else :
+                    circ.rz(-params[1], q)
+                    circ.rx(2 * params[0] * t, q)
+                    circ.rz(params[1], q)
+                else:
                     q = line
                     lamb = 2 * params[0] * t
                     circ.rz(lamb, q)
-            else :
-                #print(line)
+            else:
+                # print(line)
                 (q0, q1) = link[line - n]
                 theta = 2 * params[0] * t
-                if ins == 0 :
+                if ins == 0:
                     circ.rzx(theta, q0, q1)
-                elif ins == 1 :
+                elif ins == 1:
                     circ.rxx(theta, q0, q1)
-                elif ins == 2 :
+                elif ins == 2:
                     circ.ryy(theta, q0, q1)
-                else :
+                else:
                     circ.rzz(theta, q0, q1)
-    circ.measure_all()
+    # circ.measure_active()
     return circ
 
 
-def transpile_to_circ(backend, alignment, sol_gvars, boxes, edges) :
+def transpile_to_circ(backend, alignment, sol_gvars, boxes, edges):
     circ = clean_as(boxes, edges, backend)
     return circ
 
-def transpile(backend, alignment, sol_gvars, boxes, edges) :
+
+def transpile(backend, alignment, sol_gvars, boxes, edges):
     pm = get_pm(backend)
+    # return clean_as(boxes, edges, backend)
     return pm.run(clean_as(boxes, edges, backend))

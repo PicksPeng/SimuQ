@@ -82,10 +82,16 @@ class Instruction :
     It contains the local variables belonging to it, its
     property, and its instruction Hamiltonian.
     """
-    def __init__(self, line, prop, name = 'ins') :
-        self.mach = line.mach
-        self.line = line
-        line.inss.append(self)
+    def __init__(self, belong, prop, name = 'ins') :
+        if isinstance(belong, SignalLine) :
+            line = belong
+            self.mach = line.mach
+            self.line = line
+        elif isinstance(belong, QMachine) :
+            mach = belong
+            self.mach = mach
+            self.line = SignalLine(mach)
+        self.line.inss.append(self)
         self.index = self.mach.num_inss
         self.mach.num_inss += 1
         self.vars_index = []

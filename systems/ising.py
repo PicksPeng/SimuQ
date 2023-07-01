@@ -1,28 +1,15 @@
 import numpy as np
 from simuq.qsystem import QSystem
 from simuq.environment import qubit
-from scipy.constants import h
 
-n = 3
-m = 3
-T = 1
-tmp = np.random.uniform(0,1,(n,n))
-J = (tmp + tmp.T) / 2
-qs = QSystem()
-qubits = [qubit(qs) for i in range(n)]
-H0 = 0
-H1 = 0
-for i in range(n):
-    for j in range(n):
-        H0 += -J[i][j] * qubits[i].Z * qubits[j].Z
-
-for i in range(n):
-    H0 += - h * qubits[i].Z
-    H1 += qubits[i].X
-
-def ising_model(H0, H1, Tau, T):
-    def f(t):
-        return H0 - Tau(t/T)*H1
-    return f
-
-qs.add_time_dependent_evolution(ising_model(H0, H1, lambda t: 1-t**2, T), np.linspace(0, T, m))
+# Chain or cycle transverse Ising model
+def GenQS(n, T, J, h, is_chain=True) :
+    qs = QSystem()
+    q = [qubit(qs) for i in range(n)]
+    H = 0
+    for i in range(n - 1 if is_chain else n) :
+        H = H + J * q[i].Z * q[(i + 1)%n].Z
+    for i in range(n) :
+        H = H + h * q[i].X
+    qs.add_evolution(H, T)
+    return qs

@@ -455,10 +455,11 @@ def get_pm(backend):
             # yzx_calibrater,
             # yx_calibrater,
             zz_calibrater,
-            # xx_calibrater,
+            xx_calibrater,
             # yy_calibrater,
+            CommutativeCancellation(),
             zx_calibrater,
-            # CommutativeCancellation(),
+            CommutativeCancellation(),
             # CommutativeCancellation(),
             # x_calibrater,
         ]

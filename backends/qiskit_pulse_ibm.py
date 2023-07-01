@@ -78,7 +78,10 @@ def transpile_to_circ(backend, alignment, sol_gvars, boxes, edges):
     return circ
 
 
-def transpile(backend, alignment, sol_gvars, boxes, edges):
-    pm = get_pm(backend)
-    # return clean_as(boxes, edges, backend)
-    return pm.run(clean_as(boxes, edges, backend))
+def transpile(backend, alignment, sol_gvars, boxes, edges, use_pulse=True):
+    if use_pulse:
+        pm = get_pm(backend)
+        # return clean_as(boxes, edges, backend)
+        return pm.run(clean_as(boxes, edges, backend))
+    else:
+        return clean_as(boxes, edges, backend)

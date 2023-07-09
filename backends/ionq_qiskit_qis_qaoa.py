@@ -62,7 +62,9 @@ def clean_as(n, boxes, edges):
                     if abs(theta) > 1e-5:
                         # Hadamard on q0
                         circ.rzz(theta, q0, q1)
-    # circ.measure(np.arange(n), np.arange(n))
+    for i in range(12):
+        circ.h(i)
+    circ.measure(np.arange(n), np.arange(n))
     return circ, accum_phase
 
 

@@ -52,16 +52,26 @@ def clean_as(n, boxes, edges):
                 else:
                     q = line
                     # Rz(q, 2 * params[0] * t)
-                    accum_phase[q] += 2 * params[0] * t
+                    accum_phase[q] -= 2 * params[0] * t
             else:
                 (q0, q1) = link[line - n]
                 theta = 2 * params[0] * t
                 if ins == 0:
                     # R_XX(theta)
                     if abs(theta) > 1e-5:
+                        if theta < 0:
+                            delta_phase = np.pi
+                            theta = -theta
+                        else:
+                            delta_phase = 0
+                        if theta > np.pi:
+                            theta -= np.pi
+                        if theta > np.pi / 2:
+                            theta = np.pi - theta
+                            delta_phase += np.pi
                         circ.append(
                             MSGate(
-                                accum_phase[q0] / (2 * np.pi),
+                                (accum_phase[q0] + delta_phase) / (2 * np.pi),
                                 accum_phase[q1] / (2 * np.pi),
                                 theta / (2 * np.pi),
                             ),
@@ -78,7 +88,6 @@ def clean_as(n, boxes, edges):
                         add_hadamard(q1)
                         # S on q1
                         accum_phase[q1] += np.pi / 2
-
                         circ.append(
                             MSGate(
                                 accum_phase[q0] / (2 * np.pi),
@@ -117,30 +126,13 @@ def clean_as(n, boxes, edges):
                         add_hadamard(q0)
                         # Hadamard on q1
                         add_hadamard(q1)
+    for i in range(n):
+        add_hadamard(i)
+    circ.measure(range(n), range(n))
     return circ, accum_phase
 
 
 def transpile(alignment, sol_gvars, boxes, edges):
     n = len(alignment)
     circ, accum_phase = clean_as(n, boxes, edges)
-    return circ
-
-
-def debug_circ():
-    n = 2
-    circ = QuantumCircuit(n, n)
-    accum_phase = [0 for i in range(n)]
-
-    def add_gpi2gpigpi2(q, a, b, c):
-        circ.append(GPI2Gate((c + accum_phase[q]) / (2 * np.pi)), [q])
-        circ.append(GPIGate((b + accum_phase[q]) / (2 * np.pi)), [q])
-        circ.append(GPI2Gate((a + accum_phase[q]) / (2 * np.pi)), [q])
-
-    def add_hadamard(q):
-        add_gpi2gpigpi2(q, np.pi, -np.pi / 4, 0)
-
-    # Generate unitary GPI2(a)*GPI(b)*GPI2(c)
-
-    add_hadamard(0)
-    circ.measure(np.arange(n), np.arange(n))
     return circ

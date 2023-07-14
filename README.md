@@ -28,11 +28,11 @@ The following are optional, based on what part of SimuQ you want to use:
 
 ## Project Structure
 
-`examples/`: Example notebooks of running SimuQ and obtainning results.
+`examples/`: Example notebooks of running SimuQ and obtaining results.
 
 `aais/`: AAIS of many backends in AAPSI Specification Language.
 
-`backends/`: The transpilation to API languages of different machine backends.
+`backends/`: The translation to API languages of different machine backends.
 
 `simuq/`: The core compiler and language implementation of SimuQ.
 

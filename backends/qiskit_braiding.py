@@ -36,7 +36,7 @@ def clean_as(n, boxes, edges) :
                 theta = params[0] * t
                 circ.append(eYZXGate(theta), [0, 1, 2], [])
                 
-    circ.measure_all()
+    #circ.measure_all()
     return circ
 
 

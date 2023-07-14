@@ -23,6 +23,7 @@ def gen_clocks(times) :
     return clocks
 
 def clean_as(alignment, sol_gvars, boxes) :
+    #pos = [0., 0., 0.] + sol_gvars
     pos = [0., 0., *sol_gvars]
     pos2d = []
     for i in range(len(pos) // 2) :

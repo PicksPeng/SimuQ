@@ -90,7 +90,6 @@ class TIHamiltonian :
                     elif h[j] == 'XZ' :
                         h[j] = 'Y'
                         coef *= -1j
-                    self.ham[i]
             for j in range(len(h)) :
                 if self.sites_type[j] == 'boson' :
                     s = h[j].find('ac')
@@ -112,9 +111,23 @@ class TIHamiltonian :
             i += 1
 
 
-    def cleanHam(self, tol = 1e-10) :
+    def cleanHam(self, tol = 1e-6) :
         self.operAlgebra()
+
+        hamdic = dict([])
+        for (h, coef) in self.ham :
+            htup = tuple(h)
+            if htup not in hamdic :
+                hamdic[htup] = coef
+            else :
+                hamdic[htup] += coef
+
+        self.ham = []
+        for htup in hamdic :
+            if isinstance(hamdic[htup], Expression)  or  abs(hamdic[htup]) > tol :
+                self.ham.append((list(htup), hamdic[htup]))
         
+        """
         i = 0
         while i < len(self.ham) :
             for j in range(i) :
@@ -133,6 +146,7 @@ class TIHamiltonian :
                 del self.ham[i]
                 continue
             i += 1
+        """
 
     def extend_ham_by_sites(self) :
         for i in range(len(self.ham)) :
@@ -297,5 +311,33 @@ class TIHamiltonian :
                     ret[i] = 1
         self.saved_t_sites = ret
         return ret
+
+    def to_qiskit_opflow(self) :
+        from qiskit.opflow import X, Y, Z, I
+
+        def strlist_to_oplist(l) :
+            ret = []
+            for i in range(len(l)) :
+                if l[i] == '' :
+                    ret.append(I)
+                elif l[i] == 'X' :
+                    ret.append(X)
+                elif l[i] == 'Y' :
+                    ret.append(Y)
+                else :
+                    ret.append(Z)
+            return ret
+        
+        def list_kron(l) :
+            res = l[0]
+            for i in range(1, len(l)):
+                res = res ^ l[i]
+            return res
+
+        h = 0
+        for (prod, c) in self.ham :
+            h += c * list_kron(strlist_to_oplist(prod))
+        
+        return h
 
 Empty = TIHamiltonian.empty([])

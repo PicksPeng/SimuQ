@@ -86,6 +86,7 @@ def switch_fun(mach, evo_index, ins_index):
 # Equation builder and solver when an alignment is supplied.
 def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
     logger.info(ali)
+    print('Start_solving for ', ali)
 
     """
     Build equations. The equation variables are the global variables
@@ -198,6 +199,9 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
             (h, t) = qs.evos[evo_index]
             mark = [[0 for ins in line.inss] for line in mach.lines]
             targ_terms = [(to_mprod(ham), c) for (ham, c) in h.ham]
+            targ_hash = set()
+            for (tprod, tc) in targ_terms :
+                targ_hash.add(tuple(tprod))
             ind = 0
             while ind < len(targ_terms):
                 tprod, tc = targ_terms[ind]
@@ -221,6 +225,11 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
                                 mark[i][j] = 1
                                 # Check if other terms of machine instruction exists in targer Ham terms.
                                 for (mprod_prime, _) in ins.h.ham:
+                                    mprod_prime_tup = tuple(mprod_prime)
+                                    if mprod_prime_tup not in targ_hash :
+                                        targ_terms.append((mprod_prime, 0))
+                                        targ_hash.add(mprod_prime_tup)
+                                    """
                                     exists_in_targ_terms = False
                                     for (tprod_prime, _) in targ_terms:
                                         if match_prod(tprod_prime, mprod_prime):
@@ -228,8 +237,10 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
                                             break
                                     if not exists_in_targ_terms:
                                         targ_terms.append((mprod_prime, 0))
+                                    """
                                 break
                 eqs.append((lambda eq_: lambda x: eq_(x))(eq))
+                #print(len(eqs))
                 ind += 1
             for i in range(len(mach.lines)):
                 line = mach.lines[i]
@@ -305,29 +316,41 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
         return eqs
 
     if solver == 'least_squares' :
-        with_time_penalty = True
+        #with_time_penalty = True
+        with_time_penalty = False
+        #fix_time = True
         logger.info("Using Scipy's Least Square Solver.")
         import scipy.optimize as opt
 
         nvar = mach.num_gvars + len(qs.evos) * (mach.num_inss + mach.num_lvars) + len(qs.evos)
         eqs, fixed_values = build_eqs([None for i in range(nvar)])
-        f, lbs, ubs, init = build_obj(eqs, fixed_values)
+        #if fix_time :
+        #    for j in range(len(qs.evos)) :
+        #        fixed_values[locate_timevar(mach, len(qs.evos), j)] = qs.evos[j][1]
+        offset = np.sqrt(1e5 * tol / np.sqrt(nvar))
+        #offset = 0
+        f, lbs, ubs, init = build_obj([lambda x : offset] + eqs, fixed_values)
         if with_time_penalty :
-            f_solve, _, _, _ = build_obj(eqs + timevar_penalty(), fixed_values)
+            f_solve, _, _, _ = build_obj([lambda x : offset] + eqs + timevar_penalty(), fixed_values)
         else :
             f_solve = f
+            
+        print("#vars", nvar, "#eqs", len(eqs))
 
         import time
         start_time = time.time()
-        sol_detail = opt.least_squares(f_solve, init, bounds=(lbs, ubs))
+        #print(f_solve(init))
+        sol_detail = opt.least_squares(f_solve, init, bounds=(lbs, ubs), verbose=2)
         end_time = time.time()
         #print("First round time: ", end_time - start_time)
         logger.info("First round time: ", end_time - start_time)
         sol = sol_detail.x
 
-        sol_error = np.linalg.norm(f(sol))
-        logger.info(np.linalg.norm(f(sol)))
-        if np.linalg.norm(f(sol)) > tol:
+        f_sol = f(sol)
+        sol_error = np.linalg.norm(f_sol[1:], 1)
+        logger.info(np.linalg.norm(f_sol[1:], 1))
+        print(np.linalg.norm(f_sol[1:]), np.linalg.norm(f_sol[1:], 1))
+        if np.linalg.norm(f_sol[1:], 1) > tol:
             return False
 
         map_var = []
@@ -343,7 +366,7 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
                    and (i - mach.num_gvars) % (mach.num_inss + mach.num_lvars) < mach.num_inss :
                     temp_store = sol[label]
                     sol[label] = 0
-                    if np.linalg.norm(f(sol)) - sol_error > 1e-3 :
+                    if np.linalg.norm(f(sol)[1:], 1) - sol_error > 1e-3 :
                         new_fixed_values[i] = 1
                     else :
                         new_fixed_values[i] = 0
@@ -352,22 +375,25 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
                     new_init.append(sol[label])
 
         eqs, fixed_values = build_eqs(new_fixed_values)
-        f, lbs, ubs, _ = build_obj(eqs, fixed_values)
+        offset = np.sqrt(1e5 * tol / np.sqrt(len(new_init)))
+        f, lbs, ubs, _ = build_obj([lambda x : offset] + eqs, fixed_values)
         if with_time_penalty :
-            f_solve, _, _, _ = build_obj(eqs + timevar_penalty(), fixed_values)
+            f_solve, _, _, _ = build_obj([lambda x : offset] + eqs + timevar_penalty(), fixed_values)
         else :
             f_solve = f
 
         start_time = time.time()
-        sol_detail = opt.least_squares(f_solve, new_init, bounds=(lbs, ubs))
+        sol_detail = opt.least_squares(f_solve, new_init, bounds=(lbs, ubs), verbose=2)
         end_time = time.time()
         #print("Second round time: ", end_time - start_time)
         logger.info("Second round time: ", end_time - start_time)
         sol = sol_detail.x
 
-        logger.info(np.linalg.norm(f(sol)))
-        # logger.info(sol)
-        if np.linalg.norm(f(sol)) > tol:
+        f_sol = f(sol)
+        sol_error = np.linalg.norm(f_sol[1:], 1)
+        logger.info(np.linalg.norm(f_sol[1:], 1))
+        print(np.linalg.norm(f_sol[1:]), np.linalg.norm(f_sol[1:], 1))
+        if np.linalg.norm(f_sol[1:], 1) > tol:
             return False
 
         alignment = ali
@@ -715,10 +741,11 @@ def find_sol(qs, mach, ali=[], solver='least_squares', tol=1e-3):
 
 # The generation of abstract schedule
 # Trotterize the solution provided by the second step.
-def generate_as(qs, mach, trotter_step=4, solver='least_squares', solver_tol=1e-1):
+def generate_as(qs, mach, trotter_step=4, solver='least_squares', solver_tol=1e-1, override_layout = None):
     mach.instantiate_sys_ham()
     mach.extend_instruction_sites()
-    if find_sol(qs, mach, solver=solver, tol=solver_tol):
+    ali = [] if override_layout == None else override_layout
+    if find_sol(qs, mach, ali = ali, solver=solver, tol=solver_tol):
         sol = gsol
         switch = gswitch
 

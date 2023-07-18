@@ -340,4 +340,26 @@ class TIHamiltonian :
         
         return h
 
+    def to_qutip_qobj(self) :
+        from qutip import sigmax, sigmay, sigmaz, qeye, tensor
+
+        def strlist_to_oplist(l) :
+            ret = []
+            for i in range(len(l)) :
+                if l[i] == '' :
+                    ret.append(qeye(2))
+                elif l[i] == 'X' :
+                    ret.append(sigmax())
+                elif l[i] == 'Y' :
+                    ret.append(sigmay())
+                else :
+                    ret.append(sigmaz())
+            return ret
+
+        ret = 0
+        for (prod, c) in self.ham :
+            ret = ret + tensor(strlist_to_oplist(prod)) * c
+
+        return ret
+
 Empty = TIHamiltonian.empty([])

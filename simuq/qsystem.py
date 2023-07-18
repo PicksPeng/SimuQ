@@ -32,3 +32,21 @@ class QSystem(BaseQuantumEnvironment) :
 
     def clear_evos(self) :
         self.evos = []
+
+    def to_qutip(self) :
+
+        def time_indicator(tl, tr) :
+            def ret(t) :
+                if tl <= t and t < tr :
+                    return 1
+                else :
+                    return 0
+            return ret
+
+        ret = []
+        sumt = 0
+        for (h, t) in self.evos :
+            ret.append([h.to_qutip_qobj(), time_indicator(sumt, sumt + t)])
+            sumt += t
+
+        return ret

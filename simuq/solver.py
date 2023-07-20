@@ -84,9 +84,19 @@ def switch_fun(mach, evo_index, ins_index):
     return lambda x: x[locate_switch(mach, evo_index, ins_index)]
 
 # Equation builder and solver when an alignment is supplied.
-def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
+def solve_aligned(ali, qs, mach, solver = 'least_squares', solver_args={'tol':1e-3, 'with_time_penalty':False}, verbose = 0):
+    if isinstance(solver_args, float) :
+        tol = solver_args
+        with_time_penalty = False
+    else :
+        tol = solver_args['tol']
+        if 'with_time_penalty' in solver_args.keys() :
+            with_time_penalty = solver_args['with_time_penalty']
+        else :
+            with_time_penalty = False
     logger.info(ali)
-    print('Start_solving for ', ali)
+    if verbose > 0 :
+        print('Start_solving for ', ali)
 
     """
     Build equations. The equation variables are the global variables
@@ -240,7 +250,8 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
                                     """
                                 break
                 eqs.append((lambda eq_: lambda x: eq_(x))(eq))
-                #print(len(eqs))
+                if verbose > 1 :
+                    print(len(eqs))
                 ind += 1
             for i in range(len(mach.lines)):
                 line = mach.lines[i]
@@ -316,8 +327,6 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
         return eqs
 
     if solver == 'least_squares' :
-        #with_time_penalty = True
-        with_time_penalty = False
         #fix_time = True
         logger.info("Using Scipy's Least Square Solver.")
         import scipy.optimize as opt
@@ -334,22 +343,24 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
             f_solve, _, _, _ = build_obj([lambda x : offset] + eqs + timevar_penalty(), fixed_values)
         else :
             f_solve = f
-            
-        print("#vars", nvar, "#eqs", len(eqs))
+
+        if verbose > 0 :
+            print("#vars", nvar, "#eqs", len(eqs))
 
         import time
         start_time = time.time()
-        #print(f_solve(init))
-        sol_detail = opt.least_squares(f_solve, init, bounds=(lbs, ubs), verbose=2)
+        sol_detail = opt.least_squares(f_solve, init, bounds=(lbs, ubs), verbose=2 if verbose > 0 else 0)
         end_time = time.time()
-        #print("First round time: ", end_time - start_time)
+        if verbose > 0 :
+            print("First round time: ", end_time - start_time)
         logger.info("First round time: ", end_time - start_time)
         sol = sol_detail.x
 
         f_sol = f(sol)
         sol_error = np.linalg.norm(f_sol[1:], 1)
         logger.info(np.linalg.norm(f_sol[1:], 1))
-        print(np.linalg.norm(f_sol[1:]), np.linalg.norm(f_sol[1:], 1))
+        if verbose > 0 :
+            print('First round error: ', np.linalg.norm(f_sol[1:], 1))
         if np.linalg.norm(f_sol[1:], 1) > tol:
             return False
 
@@ -383,16 +394,18 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
             f_solve = f
 
         start_time = time.time()
-        sol_detail = opt.least_squares(f_solve, new_init, bounds=(lbs, ubs), verbose=2)
+        sol_detail = opt.least_squares(f_solve, new_init, bounds=(lbs, ubs), verbose=2 if verbose > 0 else 0)
         end_time = time.time()
-        #print("Second round time: ", end_time - start_time)
+        if verbose > 0 :
+            print("Second round time: ", end_time - start_time)
         logger.info("Second round time: ", end_time - start_time)
         sol = sol_detail.x
 
         f_sol = f(sol)
         sol_error = np.linalg.norm(f_sol[1:], 1)
         logger.info(np.linalg.norm(f_sol[1:], 1))
-        print(np.linalg.norm(f_sol[1:]), np.linalg.norm(f_sol[1:], 1))
+        if verbose > 0 :
+            print('Second round error: ', np.linalg.norm(f_sol[1:], 1))
         if np.linalg.norm(f_sol[1:], 1) > tol:
             return False
 
@@ -644,9 +657,9 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', tol=1e-3):
 
 # If the system has no global variable nor system
 # Hamiltonian, then we can solve it piece by piece.
-def solve_aligned_wrapper(ali, qs, mach, solver, tol) :
+def solve_aligned_wrapper(ali, qs, mach, solver, solver_args, verbose) :
     if mach.num_gvars != 0 or mach.with_sys_ham :
-        return solve_aligned(ali, qs, mach, solver, tol)
+        return solve_aligned(ali, qs, mach, solver, solver_args, verbose)
     else :
         switch = []
         sol = np.zeros(mach.num_lvars * len(qs.evos))
@@ -657,7 +670,7 @@ def solve_aligned_wrapper(ali, qs, mach, solver, tol) :
         global gtime
         for evo_index in range(len(evos)) :
             qs.evos = [evos[evo_index]]
-            if not solve_aligned(ali, qs, mach, solver, tol) :
+            if not solve_aligned(ali, qs, mach, solver, solver_args, verbose) :
                 return False
             switch.append(gswitch[0])
             sol[
@@ -680,7 +693,7 @@ non-zero product term in the target Hamiltonian, then break.
 """
 
 
-def align(i, ali, qs, mach, solver, tol):
+def align(i, ali, qs, mach, solver, solver_args, verbose):
     def is_id(tprod):
         ret = True
         for i in range(qs.num_sites):
@@ -690,7 +703,7 @@ def align(i, ali, qs, mach, solver, tol):
         return ret
 
     if i == qs.num_sites:
-        if solve_aligned_wrapper(ali, qs, mach, solver, tol):
+        if solve_aligned_wrapper(ali, qs, mach, solver, solver_args, verbose):
             return True
         return False
     for x in range(mach.num_sites):
@@ -727,25 +740,28 @@ def align(i, ali, qs, mach, solver, tol):
             if not available:
                 break
         if available:
-            if align(i + 1, ali, qs, mach, solver, tol):
+            if align(i + 1, ali, qs, mach, solver, solver_args, verbose):
                 return True
     return False
 
 
-def find_sol(qs, mach, ali=[], solver='least_squares', tol=1e-3):
+def find_sol(qs, mach, ali=[], solver='least_squares', solver_args={'tol':1e-2}, verbose = 0):
     if ali == []:
-        return align(0, [0 for i in range(qs.num_sites)], qs, mach, solver, tol)
+        return align(0, [0 for i in range(qs.num_sites)], qs, mach, solver, solver_args, verbose)
     else:
-        return solve_aligned_wrapper(ali, qs, mach, solver, tol)
+        return solve_aligned_wrapper(ali, qs, mach, solver, solver_args, verbose)
 
 
 # The generation of abstract schedule
 # Trotterize the solution provided by the second step.
-def generate_as(qs, mach, trotter_step=4, solver='least_squares', solver_tol=1e-1, override_layout = None):
+# Arg solver_tol will be deprecated. Please avoid its usage and use solver_args.
+def generate_as(qs, mach, trotter_num=4, solver='least_squares', solver_tol = None, solver_args={'tol':1e-1, 'with_time_penalty': False}, override_layout = None, verbose = 0):
+    if solver_tol != None :
+        solver_args['tol'] = solver_tol
+    ali = [] if override_layout == None else override_layout
     mach.instantiate_sys_ham()
     mach.extend_instruction_sites()
-    ali = [] if override_layout == None else override_layout
-    if find_sol(qs, mach, ali = ali, solver=solver, tol=solver_tol):
+    if find_sol(qs, mach, ali = ali, solver=solver, solver_args=solver_args, verbose = verbose):
         sol = gsol
         switch = gswitch
 
@@ -952,7 +968,7 @@ def generate_as(qs, mach, trotter_step=4, solver='least_squares', solver_tol=1e-
                 if all_commute:
                     steps = 1
                 else:
-                    steps = trotter_step
+                    steps = trotter_num
                 for i in range(steps):
                     next_local_ending_boxes = []
                     for k in range(len(nodes_of_color)):

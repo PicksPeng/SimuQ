@@ -131,9 +131,8 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
     return circ.job, accum_phase
 
 
-def transpile(
-    alignment, sol_gvars, boxes, edges, backend="simulator", noise_model=None
-):
-    n = len(alignment)
+def transpile(n, sol_gvars, boxes, edges, backend="simulator", noise_model=None):
+    if isinstance(n, list) :
+        n = len(n)
     circ, accum_phase = clean_as(n, boxes, edges, backend, noise_model)
     return circ

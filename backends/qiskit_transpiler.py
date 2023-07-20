@@ -408,7 +408,7 @@ class eYZXCalibrationBuilder(TransformationPass):
         return dag
 
 
-def get_pm(backend):
+def get_pm(backend, for_braiding = False):
     configuration = backend.configuration()
     properties = backend.properties()
     defaults = backend.defaults()
@@ -450,18 +450,32 @@ def get_pm(backend):
         qubit_channel_mapping=qubit_channel_map,
     )
 
-    pm = PassManager(
-        [
-            # yzx_calibrater,
-            # yx_calibrater,
-            zz_calibrater,
-            xx_calibrater,
-            # yy_calibrater,
-            CommutativeCancellation(),
-            zx_calibrater,
-            CommutativeCancellation(),
-            # CommutativeCancellation(),
-            # x_calibrater,
-        ]
-    )
+    if for_braiding :
+        pm = PassManager(
+            [
+                yzx_calibrater,
+                yx_calibrater,
+                zz_calibrater,
+                xx_calibrater,
+                yy_calibrater,
+                CommutativeCancellation(),
+                zx_calibrater,
+                CommutativeCancellation(),
+                # CommutativeCancellation(),
+                x_calibrater,
+            ]
+        )
+    else :
+        pm = PassManager(
+            [
+                zz_calibrater,
+                xx_calibrater,
+                yy_calibrater,
+                CommutativeCancellation(),
+                zx_calibrater,
+                CommutativeCancellation(),
+                CommutativeCancellation(),
+                x_calibrater,
+            ]
+        )
     return pm

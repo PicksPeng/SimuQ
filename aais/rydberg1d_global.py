@@ -30,7 +30,7 @@ def GenMach(n = 3, inits = None) :
         x = [0] + [GlobalVar(Rydberg, init_value = l * i) for i in range(1, n)]
     else :
         x = [0] + [GlobalVar(Rydberg, init_value = inits[i]) for i in range(1, n)]
-        
+    
     noper = [(q[i].I - q[i].Z) / 2 for i in range(n)]
 
     hlist = []
@@ -40,17 +40,21 @@ def GenMach(n = 3, inits = None) :
     sys_h = ham_sum(hlist)
     Rydberg.set_sys_ham(sys_h)
 
-    for i in range(n) :
-        L = SignalLine(Rydberg)
-        ins = Instruction(L, 'native', f'Detuning of site {i}')
-        d = LocalVar(ins)
-        ins.set_ham(- d * noper[i])
+    L = SignalLine(Rydberg)
+    ins = Instruction(L, "native", "Detuning")
+    d = LocalVar(ins)
+    ham_detuning = 0
+    for i in range(n):
+        ham_detuning += -d * noper[i]
+    ins.set_ham(ham_detuning)
 
-    for i in range(n) :
-        L = SignalLine(Rydberg)
-        ins = Instruction(L, 'native')
-        o = LocalVar(ins)
-        p = LocalVar(ins)
-        ins.set_ham(o / 2 * (Expression.cos(p) * q[i].X - Expression.sin(p) * q[i].Y))
+    L = SignalLine(Rydberg)
+    ins = Instruction(L, "native")
+    o = LocalVar(ins)
+    p = LocalVar(ins)
+    ham_rabi = 0
+    for i in range(n):
+        ham_rabi += o / 2 * (Expression.cos(p) * q[i].X - Expression.sin(p) * q[i].Y)
+    ins.set_ham(ham_rabi)
 
     return Rydberg

@@ -42,5 +42,5 @@ def clean_as(n, boxes, edges) :
 
 def transpile(backend, alignment, sol_gvars, boxes, edges) :
     circ = clean_as(n, boxes, edges)
-    pm = get_pm(backend)
+    pm = get_pm(backend, for_braiding = True)
     return pm.run(circ)

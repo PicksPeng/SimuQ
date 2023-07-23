@@ -22,7 +22,7 @@ TODO: Add API for variables' bounds.
 '''
 
 from copy import deepcopy, copy
-from simuq.environment import BaseQuantumEnvironment
+from simuq.environment import BaseQuantumEnvironment, qubit, fermion, boson
 from simuq.expression import BaseVar, Expression
 import numpy as np
 
@@ -82,7 +82,7 @@ class Instruction :
     It contains the local variables belonging to it, its
     property, and its instruction Hamiltonian.
     """
-    def __init__(self, belong, prop, name = 'ins') :
+    def __init__(self, belong, nativeness = 'native', name = 'ins') :
         if isinstance(belong, SignalLine) :
             line = belong
             self.mach = line.mach
@@ -95,7 +95,7 @@ class Instruction :
         self.index = self.mach.num_inss
         self.mach.num_inss += 1
         self.vars_index = []
-        self.prop = prop
+        self.nativeness = nativeness
         self.name = name
         self.is_sys_ham = False
 

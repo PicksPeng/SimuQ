@@ -38,13 +38,13 @@ class BraketProvider() :
             nsite = qs.num_sites
             
             if aais == 'rydberg1d_global' :
-                from aais.rydberg1d_global import GenMach
-                from backends.braket_rydberg1d_global import transpile
+                from simuq.aais.rydberg1d_global import GenMach
+                from simuq.backends.braket_rydberg1d_global import transpile
                 mach = GenMach(nsite)
                 comp = transpile
             elif aais == 'rydberg2d_global' :
-                from aais.rydberg2d_global import GenMach
-                from backends.braket_rydberg2d_global import transpile
+                from simuq.aais.rydberg2d_global import GenMach
+                from simuq.backends.braket_rydberg2d_global import transpile
                 mach = GenMach(nsite)
                 comp = transpile
 
@@ -81,10 +81,10 @@ class BraketProvider() :
             data = {
                 'amplitude [rad/s]': drive.amplitude.time_series,
                 'detuning [rad/s]': drive.detuning.time_series,
-                #'phase [rad]': drive.phase.time_series,
+                'phase [rad]': drive.phase.time_series,
             }
     
-            fig, axes = plt.subplots(2, 1, figsize=(5, 4), sharex=True)
+            fig, axes = plt.subplots(3, 1, figsize=(5, 4), sharex=True)
             for ax, data_name in zip(axes, data.keys()):
                 if data_name == 'phase [rad]':
                     ax.step(data[data_name].times(), data[data_name].values(), '.-', where='post')
@@ -220,8 +220,8 @@ class IonQProvider() :
         
         if aais == 'heis_aais' :
 
-            from aais.heis_aais import GenMach
-            from backends.ionq import transpile
+            from simuq.aais.heis_aais import GenMach
+            from simuq.backends.ionq import transpile
 
             mach = GenMach(qs.num_sites, E = None)
             comp = transpile

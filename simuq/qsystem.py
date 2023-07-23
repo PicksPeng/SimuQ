@@ -5,7 +5,7 @@ It is a container of the desired piecewise
 constant evolution.
 '''
 
-from simuq.environment import BaseQuantumEnvironment
+from simuq.environment import BaseQuantumEnvironment, qubit, boson, fermion
 
 class QSystem(BaseQuantumEnvironment) :
     """ A target quantum system.

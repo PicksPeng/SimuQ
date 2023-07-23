@@ -900,8 +900,8 @@ def generate_as(qs, mach, trotter_num=4, solver='least_squares', solver_tol = No
                         if not TIHamiltonian.commutativity_test(
                             ins_set[j][2],
                             ins_set[k][2],
-                            ins_set[j][1].prop == "derived"
-                            or ins_set[k][1].prop == "derived",
+                            ins_set[j][1].nativeness == "derived"
+                            or ins_set[k][1].nativeness == "derived",
                         ):
                             all_commute = False
                             break
@@ -936,8 +936,8 @@ def generate_as(qs, mach, trotter_num=4, solver='least_squares', solver_tol = No
                             continue
                         if (ins_set[i][0][0] == ins_set[j][0][0]) or (
                             (
-                                ins_set[i][1].prop == "derived"
-                                or ins_set[j][1].prop == "derived"
+                                ins_set[i][1].nativeness == "derived"
+                                or ins_set[j][1].nativeness == "derived"
                             )
                             and (
                                 not TIHamiltonian.commutativity_test(

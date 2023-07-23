@@ -1,44 +1,92 @@
 # SimuQ
 
-SimuQ is a domain-specific language for quantum simulation with analog compilation.
+**SimuQ** is a domain-specific language for quantum simulation with analog compilation.
 
-## Requirements
+Our [project website](https://pickspeng.github.io/SimuQ/) includes use cases and documentation of SimuQ.
 
-Basic environment requirements for SimuQ:
+We illustrate our design and benefits in our [arXiv paper](https://arxiv.org/abs/2303.02775).
 
-* Python 3.9
+## Installation
 
-* NetworkX 2.8.7
+We recommend Python 3.9 or greater since many optional dependencies have requirements for Python version.
 
-* NumPy 1.23.4
+We encourage using ``pip`` for SimuQ installation. To install the core components of SimuQ, run the following command in shell:
 
-* SciPy 1.9.3
+```bash
+pip install simuq
+```
 
-The following are optional, based on what part of SimuQ you want to use:
+Multiple platforms are supported by SimuQ through different APIs and you may optionally install them based on your needs. You may install all optional dependencies, though not recommended, by
 
-* Qiskit 0.43.0
+```bash
+pip install simuq[all]
+```
 
-* Qiskit-Terra 0.24.1
+### Amazon Braket
 
-* Julia 1.7.2
+SimuQ supports compilation to IonQ's trapped-ion devices and QuEra's neutral atom devices through Amazon Braket.
 
-* Bloqade 0.1.13
+To enable these backends, you may install the dependencies via
 
-* Amazon Braket SDK 1.39.1
+```bash
+pip install simuq[braket]
+```
+
+Then you need to configure AWS IAM roles, regions, and AWS credentials. Please refer to [Amazon Braket Python SDK](https://github.com/aws/amazon-braket-sdk-python).
+
+For examples using Amazon Braket providers of SimuQ, please refer to [Simulating Ising model on QuEra devices](https://github.com/PicksPeng/SimuQ/blob/main/notebooks/ising_quera.ipynb).
+
+### IonQ Quantum Cloud
+
+SimuQ supports compilation to IonQ's trapped-ion devices through IonQ Quantum Cloud.
+
+To enable these backends, you may install the dependencies via
+
+```bash
+pip install simuq[ionq]
+```
+
+To run through IonQ Quantum Cloud, you must obtain an API key from [IonQ](https://ionq.com/quantum-cloud).
+
+When creating IonQ providers in SimuQ, you must provide the API key either through a string or a file storing the key. For further details please refer to [Simulating Ising model on IonQ devices](https://github.com/PicksPeng/SimuQ/blob/main/notebooks/ising_ionq.ipynb).
+
+### Qiskit
+
+SimuQ supports compilation to IBM's superconducting devices through Qiskit and IBM Quantum.
+
+To enable these backends, you may install the dependencies via
+
+```bash
+pip install simuq[qiskit]
+```
+
+To run through IBM Quantum, you must obtain an API token from [IBM](https://quantum-computing.ibm.com/).
+
+The examples are TODO.
+
+### dReal solver
+
+The default solver of SimuQ is based on [SciPy](https://scipy.org/)'s least square solver. Other SMT solvers are also supported in SimuQ compiler, like dReal.
+
+To try dReal solver, please refer to [installation of dReal4](https://github.com/dreal/dreal4), and enable the solver by
+
+```bash
+pip install simuq[dreal]
+```
 
 ## Project Structure
 
-`examples/`: Example notebooks of running SimuQ and obtaining results.
-
-`aais/`: AAIS of many backends in AAPSI Specification Language.
-
-`backends/`: The translation to API languages of different machine backends.
+`notebooks/`: Example notebooks of running SimuQ and obtaining results.
 
 `simuq/`: The core compiler and language implementation of SimuQ.
 
-`systems/`: Hamiltonian evolution implemented in Hamiltonian Modeling Language.
+`simuq/aais/`: AAIS of many backends in AAIS Specification Language.
 
-`systems/benchmark/`: A small benchmark of quantum Hamiltonian simulation as reported in the paper.
+`simuq/backends/`: The translation to API languages of different machine backends.
+
+`simuq/systems/`: Hamiltonian evolution implemented in Hamiltonian Modeling Language.
+
+`simuq/systems/benchmark/`: A small benchmark of quantum Hamiltonian simulation as reported in our arXiv paper.
 
 
 

@@ -1,7 +1,7 @@
 import networkx as nx
 import numpy as np
 from qiskit import QuantumCircuit
-from backends.qiskit_transpiler import get_pm, RYXGate, eYZXGate
+from simuq.backends.qiskit_transpiler import get_pm, RYXGate, eYZXGate
 
 n = 3
 

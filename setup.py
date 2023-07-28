@@ -39,6 +39,7 @@ setup(
             'dreal',
         ],
         "qiskit" : [
+            'matplotlib',
             'qiskit',
             'qiskit-terra',
         ],

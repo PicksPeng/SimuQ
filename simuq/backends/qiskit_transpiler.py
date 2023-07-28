@@ -1,6 +1,5 @@
 from math import atan2, cos, floor, pi, sin, sqrt
 
-import matplotlib.pyplot as plt
 import numpy as np
 from qiskit import IBMQ, Aer, QuantumCircuit, QuantumRegister, schedule, transpile
 from qiskit.circuit.gate import Gate

@@ -4,7 +4,18 @@ def to_bin(res, n) :
     b = bin(res)[2:]
     return '0' * (n - len(b)) + b
 
-class BraketProvider() :
+class BaseProvider() :
+    def __init__(self) :
+        self.prog = None
+        self.task = None
+        self.qs_names = None
+
+    def print_sites(self) :
+        if self.prog == None :
+            raise Exception("No compiled job in record.")
+        print("Order of sites:", self.qs_names)
+
+class BraketProvider(BaseProvider) :
     def __init__(self) :
 
         try :
@@ -17,8 +28,7 @@ class BraketProvider() :
         self.backend_aais[('ionq', 'aria-1')] = ['heis_aais']
         self.backend_aais[('quera', 'Aquila')] = ['rydberg1d_global', 'rydberg2d_global']
 
-        self.task = None
-        self.prog = None
+        super.__init__()
 
     def supported_backends(self) :
         for (comp, dev) in self.backend_aais.keys() :
@@ -29,6 +39,8 @@ class BraketProvider() :
             raise Exception("Not supported hardware provider or device.")
         if aais not in self.backend_aais[(provider, device)] :
             raise Exception("Not supported AAIS on this device.")
+
+        self.qs_names = qs.print_sites()
 
         self.provider = provider
         self.device = device
@@ -184,7 +196,7 @@ class BraketProvider() :
 
 
 
-class IonQProvider() : 
+class IonQProvider(BaseProvider) : 
     def __init__(self, API_key = None, from_file = None) :
         if API_key == None :
             if from_file == None :
@@ -194,7 +206,8 @@ class IonQProvider() :
                     API_key = f.readline()
         self.API_key = API_key
         self.all_backends = ['harmony', 'aria-1', 'aria-2', 'forte']
-        self.task = None
+        
+        super.__init__()
 
     def supported_backends(self) :
         print(self.all_backends)
@@ -232,6 +245,8 @@ class IonQProvider() :
                                                       verbose = verbose)
         self.prog = comp(qs.num_sites, sol_gvars, boxes, edges, backend = 'qpu.' + backend, noise_model = backend)
         self.layout = layout
+        self.qs_names = qs.print_sites()
+
 
     def run(self, shots = 4096, on_simulator = False) :
 
@@ -292,3 +307,39 @@ class IonQProvider() :
 
         return results_from_data(res['data']['histogram'])
         
+
+
+class QuTiPProvider(BaseProvider) :
+    def __init__(self) :
+        try :
+            import qutip as qp
+        except :
+            raise Exception("No QuTiP package detected. Please try command 'pip install simuq[qutip]'. ")
+        self.prog = None
+        self.fin = None
+
+    def compile(self, qs) :
+        import qutip as qp
+        self.n = qs.num_sites
+        self.init = qp.basis(1<<self.n)
+        self.prog = (qs.to_qutip(), qs.total_time())
+        self.qs_names = qs.print_sites()
+        print("Compiled.")
+        #return self.prog
+        
+    def run(self, shots = None, on_simulator = None) :
+        import qutip as qp
+        if self.prog == None :
+            raise Exception("No compiled job in record.")
+        self.fin = qp.sesolve(self.prog[0], self.init, [0, self.prog[1]])
+        print("Solved.")
+        #return self.fin
+
+    def results(self) :
+        import numpy as np
+        if self.fin == None :
+            raise Exception("No submitted job in record.")
+        self.res = dict()
+        for i in range(1<<self.n) :
+            self.res[to_bin(i, self.n)] = np.abs(self.fin.states[1][i][0][0]) ** 2
+        return self.res

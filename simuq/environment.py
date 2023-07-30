@@ -37,9 +37,12 @@ class BaseQuantumEnvironment :
 class BaseSite :
     """ The basic quantum site.
     """
-    def __init__(self, qs) :
+    def __init__(self, qs, name = None) :
         self.index = qs.num_sites
         self.qs = qs
+        if name == None :
+            name = f"Site{qs.num_sites}"
+        self.name = name
         qs.num_sites += 1
         qs.sites.append(self)
 
@@ -54,8 +57,10 @@ class qubit(BaseSite) :
     By default, there are X, Y, Z, I defined as site operators
     of a qubit site.
     """
-    def __init__(self, qs) :
-        super().__init__(qs)
+    def __init__(self, qs, name = None) :
+        if name == None :
+            name = f"Qubit{qs.num_sites}"
+        super().__init__(qs, name)
         qs.sites_type.append('qubit')
         self.X = self.gen_X()
         self.Y = self.gen_Y()
@@ -81,8 +86,10 @@ class BaseParticle(BaseSite) :
     By default, there are annihilation and creation operators.
     Additionally, to be consistent with qubit, I represents the identity.
     """
-    def __init__(self, qs) :
-        super().__init__(qs)
+    def __init__(self, qs, name = None) :
+        if name == None :
+            name = f"Site{qs.num_sites}"
+        super().__init__(qs, name)
         qs.sites_type.append('particle')
         self.a = self.gen_a()
         self.c = self.gen_c()
@@ -101,15 +108,19 @@ class BaseParticle(BaseSite) :
 class fermion(BaseParticle) :
     """ The fermionic site
     """
-    def __init__(self, qs) :
-        super().__init__(qs)
+    def __init__(self, qs, name = None) :
+        if name == None :
+            name = f"Fermion{qs.num_sites}"
+        super().__init__(qs, name)
         qs.sites_type[-1] = 'fermion'
 
 
 class boson(BaseParticle) :
     """ The bosonic site
     """
-    def __init__(self, qs) :
-        super().__init__(qs)
+    def __init__(self, qs, name = None) :
+        if name == None :
+            name = f"Boson{qs.num_sites}"
+        super().__init__(qs, name)
         qs.sites_type[-1] = 'boson'
     

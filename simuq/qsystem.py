@@ -21,6 +21,7 @@ class QSystem(BaseQuantumEnvironment) :
         self.evos = []
 
     def add_evolution(self, h, t) :
+        h.extend_ham_by_sites()
         self.evos.append((h, t))
 
     def add_time_dependent_evolution(self, ht, ts) :
@@ -36,7 +37,7 @@ class QSystem(BaseQuantumEnvironment) :
     def to_qutip(self) :
 
         def time_indicator(tl, tr) :
-            def ret(t) :
+            def ret(t, args) :
                 if tl <= t and t < tr :
                     return 1
                 else :
@@ -46,7 +47,20 @@ class QSystem(BaseQuantumEnvironment) :
         ret = []
         sumt = 0
         for (h, t) in self.evos :
+            h.extend_ham_by_sites()
             ret.append([h.to_qutip_qobj(), time_indicator(sumt, sumt + t)])
             sumt += t
 
         return ret
+
+    def total_time(self) :
+        ret = 0
+        for (h, t) in self.evos :
+            ret += t
+        return ret
+
+    def print_sites(self) :
+        name_list = []
+        for site in self.sites :
+            name_list.append(site.name)
+        return name_list

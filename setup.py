@@ -30,6 +30,7 @@ setup(
     ],
     extras_require={
         "braket" : [
+            'matplotlib',
             'amazon-braket-sdk',
         ],
         "ionq" : [
@@ -43,8 +44,11 @@ setup(
             'qiskit',
             'qiskit-terra',
         ],
+        "qutip" : [
+            'qutip',
+        ],
         "all" : [
-            'simuq[braket, ionq, dreal, qiskit]'
+            'simuq[braket, ionq, dreal, qiskit, qutip]'
         ],
     }
 )

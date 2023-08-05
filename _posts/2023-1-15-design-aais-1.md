@@ -4,7 +4,7 @@ title:  "Tutorial: design an AAIS (I)"
 date:   2023-01-15 12:00:00
 categories: tutorial
 description: "The design of an AAIS for Rydberg atom arrays"
-image: 'https://greentownlabs.com/wp-content/uploads/2020/06/QuEra-300x255.png'
+image: img/ideal_rydberg.png
 published: true
 author: Yuxiang Peng
 ---

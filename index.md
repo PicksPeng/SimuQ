@@ -31,13 +31,15 @@ We currently support the following backends:
 * Superconducting transmon qubit systems: Qiskit Pulse for IBM machines.
 * Quantum circuits: Qiskit and Amazon Braket.
 
+These backends can be accessed through different providers in SimuQ, with details presented in [Tutorial](/SimuQ/docs/providers). Additionally, we support a translation to QuTiP, and classical simulations of quantum systems programmed in SimuQ is integrated into our `QuTiPProvider`.
+
 An illustration of SimuQ capability:
 
 ![SimuQ Illustration](img/simuq-illustration.svg)
 
 # Documentation
 
-For full instructions, please check [Documentation](/QWIRE/docs/).
+For full instructions, please check [Documentation](/SimuQ/docs/).
 
 # Citations
 

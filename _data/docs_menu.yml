@@ -2,10 +2,12 @@
   items:
     - name: Installation
       link: /docs/getting-started/installation/
-    - name: Program Target Evolution
+    - name: Program target evolution
       link: /docs/getting-started/qsystem/
-    - name: Compile to Qiskit Pulse Schedules
+    - name: Simulate your quantum system
       link: /docs/getting-started/compilation/
+    - name: Compile and run on devices
+      link: /docs/getting-started/providers/
 - label: API References
   items:
     - name: SimuQ Online Docs

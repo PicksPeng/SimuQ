@@ -28,7 +28,7 @@ class BraketProvider(BaseProvider) :
         self.backend_aais[('ionq', 'aria-1')] = ['heis_aais']
         self.backend_aais[('quera', 'Aquila')] = ['rydberg1d_global', 'rydberg2d_global']
 
-        super.__init__()
+        super().__init__()
 
     def supported_backends(self) :
         for (comp, dev) in self.backend_aais.keys() :
@@ -207,7 +207,7 @@ class IonQProvider(BaseProvider) :
         self.API_key = API_key
         self.all_backends = ['harmony', 'aria-1', 'aria-2', 'forte']
         
-        super.__init__()
+        super().__init__()
 
     def supported_backends(self) :
         print(self.all_backends)

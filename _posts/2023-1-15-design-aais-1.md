@@ -1,79 +1,92 @@
 ---
 layout: post
-title:  "Tutorial: design an AAIS (I)"
+title:  "Tutorial: design an AAIS (I) - IBM"
 date:   2023-01-15 12:00:00
 categories: tutorial
-description: "The design of an AAIS for Rydberg atom arrays"
-image: img/ideal_rydberg.png
+description: "The design of an AAIS for IBM's transmon qubit machines"
+image: 'https://media.nature.com/lw767/magazine-assets/d41586-021-03476-5/d41586-021-03476-5_19875844.jpg?as=webp'
 published: true
-author: Yuxiang Peng
+author: Jacob Young
 ---
 
-We introduce the design ideas of AAIS from the viewpoint of a device provider. In this tutorial, we briefly discuss the Rydberg atom arrays and present how to build an AAIS for them.
+We introduce the design ideas of an AAIS from the viewpoint of a device provider. In this tutorial, we briefly discuss superconducting machines with fixed-frequency transmon qubits and present how to build an AAIS based on these machines.
 
 
-## Rydberg atom arrays
+## Superconducting Qubits
 
-A Rydberg atom array is typically made by Yb or Rb atoms. Optical tweezers are utilized to trap neutral atoms on a 2-D plane (there are devices support placing in 3-D space). The placement of the atoms normally has restrictions like limited square region and lower bounds of atom distances. In this introduction, we neglect these restrictions for simplicity.
+Superconducting circuits are a promising platform for scalable quantum computing. Carefully constructed mesoscopic circuits can be designed to have quantum behavior, allowing easier exploitation of quantum effects for quantum computation. A simple superconducting LC oscillator can be quantized in terms of the phase and charge moving within the circuit, and by replacing the inductor with a Josephson Junction, a component serving as a nonlinear inductor, the oscillator becomes anharmonic, separating out the lower two energy levels of the oscillation to use as the computational basis of a qubit. Treating each oscillator as a two-level system yields the approximate qubit Hamiltonian $$H = \omega_q \frac{\sigma_z}{2}$$, where $$\omega_q$$ is the oscillation frequency of the qubit's precession about the z-axis. When constructed with certain circuit parameters, this simple anharmonic oscillator is known as a transmon qubit.
 
-The atoms have multiple energy levels and scientists particularly chose the minimal energe state as $$\vert 0\rangle $$ (or $$\vert g\rangle$$) and a high energy state as $$\vert 1\rangle$$ (or $$\vert r\rangle$$) called the Rydberg state. There exist other hyperfine states while we do not use them in this note. 
+## Superconducting Qubit Control
 
-Assume the positions of the atoms are $$\{(x_j, y_j)\}$$ (unit: $$\mu m$$). Between two atoms indexed by $$j$$ and $$k$$, there is an interaction called [van der Waals force](https://en.wikipedia.org/wiki/Van_der_Waals_force) attracting the two atoms. The effect of this force can be expressed as $$
-\frac{C_6}{d^6(j, k)}\hat{n}_j\hat{n}_k.
-$$ Here $$d(j, k)=\sqrt{(x_j-x_k)^2+(y_j-y_k)^2}$$ is the distance between them, $$\hat{n}_j$$ is the number operator of the atom $$j$$, and $$C_6$$  is the Rydberg interaction constant. Most current devices do not support moving atoms after experiment set-up.
+Qubit control is accomplished through the use of signal lines, dedicated signal paths where arbitrary waveform generators can modify the Hamiltonian of the qubit(s) affected by that line. For a single qubit drive line, in the frame of reference rotating with the qubit, the qubit has no system Hamiltonian, and the Hamiltonian induced by a pulse applied to the drive line may be written as $$H_d = g_d s(t) (\cos(\theta) \sigma_x + \sin(\theta) \sigma_y)$$, where $$g_d$$ and $$s(t)$$ are the interaction strength and signal envelope for the applied pulse and $$\theta$$ is the phase of the pulse. We emphasize that to produce this Hamiltonian in the rotating frame, in the lab frame, pulses are constructed with a frequency matching that of the qubit.
 
-The atoms are driven by laser beams targeting them. Current QuEra devices have global laser control: all atoms are targetted by the same laser beam configuration. Future Rydberg atom array devices may have local laser control: the laser configurations are customizable for different atoms. For the $$j$$-th laser targeting atom $$j$$, there are three independent configurable parameters: detuning $$\Delta_j$$, amplitude $$\Omega_j$$, and phase $$\phi_j$$. These parameters are real functions of time. The effect of this laser beam is characterized by Hamiltonian $$
--\Delta_j\hat{n}_j+\frac{\Omega_j}{2}(\cos(\phi_j)X_j-\sin(\phi_j)Y_j).
-$$ Here $$X_j, Y_j, Z_j$$ are the Pauli operators and $$\hat{n}_j=(I_j-Z_j)/2$$ are the number operators for qubits.
+This format for single-qubit drive operations gives rise to an important feature of superconducting qubits-- the free Z rotation. The phase of the drive signal relative to the qubit determines whether an X or Y rotation is performed-- the same thing accomplished by rotating a qubit about its Z axis. Furthermore, because measurements are performed in the Z basis, the global phase of a given qubit is irrelevant. Updating the phase used when sending drive signals to the qubit is equivalent to performing a single-qubit Z rotation. Tracking this phase shift in software instead of driving the qubit allows for instantaneous, parametrized, error-free Z rotations.
 
-We create a quantum environment for a 2-D Rydberg atom array with local laser control. Assume that we have `n` atoms.
+For multi-qubit entangling lines, two coupled fixed-frequency transmon qubits are entangled through the cross-resonance interaction. This interaction is induced by driving one qubit at the other qubit's frequency, resulting in a Hamiltonian of the form $$H_{CR} = g_{CR} s(t) (\nu \sigma_x \otimes I + \mu I \otimes \sigma_x + \sigma_z \otimes \sigma_x)$$, where $$g_{CR}$$, $$\nu$$, and $$\mu$$ are interaction strength constants, $$s(t)$$ is the signal envelope, and the tensor product indicates Hamiltonian terms affecting both systems. A ZX polyrotation may be extracted from this Hamiltonian through the careful application of multiple drive signals on both qubits, resulting in an effective Hamiltonian of $$H_{eff} = g_{CR} \sigma_z \otimes \sigma_x$$.
 
-```python
-Rydberg = QMachine()
-q = [qubit(Rydberg) for i in range(n)]
-```
+## Initializing the Machine and Extracting Backend Details
 
-
-## Global variables and system Hamiltonian
-
-We model the positions of atoms as global variables in the AAIS, because it is only configurable before the start of the experiment and keeps the same during the experiment. We create a list of global variables by the following Python code
+We begin by creating a machine object with some number of qubits-- in this case, 27. We build our machine with a call to `QMachine()` and add qubits to it with calls to `qubit(mach)`.
 
 ```python
-x = [(0, 0)] + [(GlobalVar(Rydberg), GlobalVar(Rydberg)) for i in range(1, n)]
+mach = QMachine()
+n = 27
+ql = [qubit(mach) for i in range(n)]
 ```
 
-The first element of `x` is set to `(0, 0)` to reduce the degree of freedom. You can also set initial value used in the solver here, by specifying `init_value` in the definition of `GlobalVar`. Since the default initial value is `0` for variables, it may cause numerical issues for van der Waals forces. We recommend initial values by heuristics from your target problem.
-
-The van der Waals interactions between each pair of atoms is then determined by `x`. Since these interactions can not be neglected or turned off, we model them as the system Hamiltonian, which is always on when synthesizing Hamiltonian. The following code calculates the summation of these effects.
+We can extract qubit coupling information directly from the IBM backend targeted by our AAIS.
 
 ```python
-noper = [(q[i].I - q[i].Z) / 2 for i in range(n)]
-sys_h = 0
-for i in range(n) :
-    for j in range(i) :
-        dsqr = (x[i][0] - x[j][0])**2 + (x[i][1] - x[j][1])**2
-        sys_h += (C6 / (dsqr ** 3)) * noper[i] * noper[j]
-Rydberg.set_sys_ham(sys_h)
+IBMQ.load_account()
+        
+provider = IBMQ.get_provider(hub=<your_hub>, group=<your_group>, project=<your_project>)
+backend = provider.get_backend(<27_qubit_ibm_backend>)
+
+control_line_by_system = {tuple(v['operates']['qubits']): int(k.strip("u")) for k, v in backend.configuration().channels.items() if v['purpose'] == 'cross-resonance'}
+
+link = list(self.control_line_by_system.keys())
+print("New list of connected pairs for IBM system: " + str(link))
 ```
 
-The algebraic expressions above defining `noper` make use of SimuQ Expression, and is intuitive when being read. They represent the number operators $\hat{n}$. The following nested loops enumerate atom pairs and calculate the van der Waals effects between the atoms in the pair. The command `set_sys_ham` then sets the system Hamiltonian of `Rydberg`.
+## Building Single-Qubit Signal Lines
 
-
-## Signal lines, instructions and local variables
-
-Signal lines are abstraction of signal carriers of the machine. On our Rydberg machines, the signal carriers are the laser beams. We hence define a signal line for each laser beam.
-
-```python
-L = [SignalLine(Rydberg) for i in range(n)]
-```
-
-We directly create an instruction for each signal line to package the effect of the laser beam. Three local variables are defined to represent the three configurable parameters of a laser beam.
+For each qubit on our machine, we build a single-qubit X-Y drive interaction in the format described above, and we define a derived Z instruction implemented in software via the free Z interaction. Each signal line is built and added to the machine with a call to `SignalLine(mach)`, and each instruction is built with a call to `Instruction(<Signal_Line>, <Instruction_Type>, <Instruction_Label>)`. We define the instruction Hamiltonians term by term intuitively using SimuQ Expressions and assign them with calls to `instruction.set_ham(<Expression>)`. Note that instructions have two types-- `native` and `derived`-- corresponding to Hamiltonians that can be created more directly on the processor and instructions whose effective Hamiltonians are formed from some combination of effects. The SimuQ compiler treats these types differently, allowing native instructions on different lines affecting the same systems to be executed simultaneously. By contrast, derived instructions may inherently involve operations on other lines and are not scheduled simultaneously with other instructions affecting the same systems. As described earlier, the X_Y instruction is directly supported and therefore native, whereas the the software-implemented free Z rotation is considered a derived instruction.
 
 ```python
 for i in range(n) :
-    ins = Instruction(L[i], 'native')
-    d, o, p = LocalVar(ins), LocalVar(ins), LocalVar(ins)
-    ins.set_ham(- d * noper[i] + o / 2 * (cos(p) * q[i].X - sin(p) * q[i].Y))
+    L = SignalLine(mach)
+    
+    ins1 = Instruction(L, 'native', 'L{}_X_Y'.format(i))
+    amp = LocalVar(ins1)
+    phase = LocalVar(ins1)
+    ins1.set_ham(amp * (Expression.cos(phase) * ql[i].X + Expression.sin(phase) * ql[i].Y))
+    
+    ins2 = Instruction(L, 'derived', 'L{}_Z'.format(i))
+    amp = LocalVar(ins2)
+    ins2.set_ham(amp * ql[i].Z)
 ```
 
-Here the property of this instruction is `native`, meaning that the effect of this instruction is direct and can apply simultaneously with other native instructions (including the system Hamiltonian). This is because the laser beam's effect is directly built in the instruction, and multiple laser beams' effects can present at the same time.
+## Building Multi-Qubit Signal Lines
+
+We iterate through the coupled pairs identified earlier and build an entangling signal line for each pair. Here, because of the complexity involved in extracting the ZX polyrotation from the Cross-Resonance Hamiltonian, all instructions are considered derived instructions. Furthermore, the underlying hardware may perform a change of basis operation to convert the ZX polyrotation into other basic polyrotations, allowing us to easily support additional instructions. Note that in our SimuQ Expressions, multiplication of two operators on different qubits corresponds to taking the tensor product of the two operators
+
+```python
+for (q0, q1) in link :
+    L = SignalLine(mach)
+
+    ins = Instruction(L, 'derived', 'L{}{}_ZX'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].Z * ql[q1].X)
+
+    ins = Instruction(L, 'derived', 'L{}{}_XX'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].X * ql[q1].X)
+
+    ins = Instruction(L, 'derived', 'L{}{}_YY'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].Y * ql[q1].Y)
+
+    ins = Instruction(L, 'derived', 'L{}{}_ZZ'.format(q0, q1))
+    amp = LocalVar(ins)
+    ins.set_ham(amp * ql[q0].Z * ql[q1].Z)
+```

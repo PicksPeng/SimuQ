@@ -11,12 +11,9 @@ We start with programming the Ising model on a 3 qubit chain.
 
 ## Prepare the python environment
 
-Currently we haven't packaged SimuQ into a distrubution, so methods should be directly imported.
-
 Run Python where Python path equals to the SimuQ folder.
 ```python
-from simuq.qsystem import QSystem
-from simuq.environment import qubit
+from simuq.qsystem import QSystem, qubit
 ```
 Here `QSystem` is the class for quantum systems, and `qubit` is the class for qubit sites.
 

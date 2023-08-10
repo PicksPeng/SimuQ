@@ -12,6 +12,8 @@ We recommend Python 3.9 or greater since many optional dependencies have require
 
 We encourage using ``pip`` for SimuQ installation. To install the core components of SimuQ, run the following command in shell:
 
+(Currently we haven't uploaded the repo to PyPI, so please download/clone the repository, enter the (unzipped) folder, and follow the following instructions but substituting ``.`` for ``simuq``, i.e., ``pip install .[all]``.)
+
 ```bash
 pip install simuq
 ```

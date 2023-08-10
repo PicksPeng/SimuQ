@@ -1,4 +1,4 @@
-from setuptools import setup
+from setuptools import setup, find_packages
 
 import codecs
 import os.path
@@ -22,7 +22,7 @@ setup(
     description='A Python package for quantum simulation with analog compilation',
     url='https://github.com/PicksPeng/SimuQ',
     license='BSD 3-Clause Clear',
-    packages=['simuq'],
+    packages=find_packages(),
     install_requires=[
         'numpy',
         'scipy',

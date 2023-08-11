@@ -1,6 +1,7 @@
-from simuq.environment import qubit
+from simuq.aais.qmachine_factory import QMachineFactory
 from simuq.qmachine import *
 from simuq.expression import Expression
+from simuq.hamiltonian import TIHamiltonian
 import numpy as np
 
 def ham_sum(hlist) :
@@ -15,46 +16,47 @@ def ham_sum(hlist) :
     for i in range(n) :
         ham += hlist[i].ham
 
-    from simuq.hamiltonian import TIHamiltonian
     return TIHamiltonian(sites_type, ham)
 
-def GenMach(n = 3, inits = None) :
-    Rydberg = QMachine()
+class Rydberg1DGlobalQMachineFactory(QMachineFactory):
+    @staticmethod
+    def generate_qmachine(n=3, inits=None):
+        rydberg = QMachine()
 
-    C6 = 862690 * 2. * np.pi
+        C6 = 862690 * 2. * np.pi
 
-    q = [qubit(Rydberg) for i in range(n)]
+        q = [qubit(rydberg) for i in range(n)]
 
-    l = C6 ** (1. / 6)
-    if inits == None :
-        x = [0] + [GlobalVar(Rydberg, init_value = l * i) for i in range(1, n)]
-    else :
-        x = [0] + [GlobalVar(Rydberg, init_value = inits[i]) for i in range(1, n)]
-    
-    noper = [(q[i].I - q[i].Z) / 2 for i in range(n)]
+        l = C6 ** (1. / 6)
+        if inits == None :
+            x = [0] + [GlobalVar(rydberg, init_value = l * i) for i in range(1, n)]
+        else :
+            x = [0] + [GlobalVar(rydberg, init_value = inits[i]) for i in range(1, n)]
 
-    hlist = []
-    for i in range(n) :
-        for j in range(i) :
-            hlist.append((C6 / (x[i] - x[j])**6) * noper[i] * noper[j])
-    sys_h = ham_sum(hlist)
-    Rydberg.set_sys_ham(sys_h)
+        noper = [(q[i].I - q[i].Z) / 2 for i in range(n)]
 
-    L = SignalLine(Rydberg)
-    ins = Instruction(L, "native", "Detuning")
-    d = LocalVar(ins)
-    ham_detuning = 0
-    for i in range(n):
-        ham_detuning += -d * noper[i]
-    ins.set_ham(ham_detuning)
+        hlist = []
+        for i in range(n) :
+            for j in range(i) :
+                hlist.append((C6 / (x[i] - x[j])**6) * noper[i] * noper[j])
+        sys_h = ham_sum(hlist)
+        rydberg.set_sys_ham(sys_h)
 
-    L = SignalLine(Rydberg)
-    ins = Instruction(L, "native")
-    o = LocalVar(ins)
-    p = LocalVar(ins)
-    ham_rabi = 0
-    for i in range(n):
-        ham_rabi += o / 2 * (Expression.cos(p) * q[i].X - Expression.sin(p) * q[i].Y)
-    ins.set_ham(ham_rabi)
+        L = SignalLine(rydberg)
+        ins = Instruction(L, "native", "Detuning")
+        d = LocalVar(ins)
+        ham_detuning = 0
+        for i in range(n):
+            ham_detuning += -d * noper[i]
+        ins.set_ham(ham_detuning)
 
-    return Rydberg
+        L = SignalLine(rydberg)
+        ins = Instruction(L, "native")
+        o = LocalVar(ins)
+        p = LocalVar(ins)
+        ham_rabi = 0
+        for i in range(n):
+            ham_rabi += o / 2 * (Expression.cos(p) * q[i].X - Expression.sin(p) * q[i].Y)
+        ins.set_ham(ham_rabi)
+
+        return rydberg

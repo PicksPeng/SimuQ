@@ -368,18 +368,12 @@ class IonQProvider(BaseProvider):
 
 
 class IBMProvider(BaseProvider):
-    def __init__(self, API_key=None, from_file=None):
+    def __init__(self, API_key=None, hub="ibm-q", group="open", project="main"):
         from qiskit import IBMQ
 
-        if API_key == None:
-            if from_file == None:
-                raise Exception("No API_key provided.")
-            else:
-                with open(from_file, "r") as f:
-                    API_key = f.readline()
         self.API_key = API_key
         self.provider = IBMQ.enable_account(
-            API_key, hub="ibm-q", group="open", project="main"
+            API_key, hub=hub, group=group, project=project
         )
         super().__init__()
 
@@ -390,7 +384,7 @@ class IBMProvider(BaseProvider):
         self,
         qs,
         backend="ibmq_jakarta",
-        aais="ibm",
+        aais="heis_aais",
         tol=0.01,
         trotter_num=6,
         verbose=0,
@@ -401,7 +395,7 @@ class IBMProvider(BaseProvider):
         if qs.num_sites > nsite:
             raise Exception("Device has less sites than the target quantum system.")
 
-        if aais == "ibm":
+        if aais == "heis_aais":
             from simuq.aais.ibm import get_mach
             from simuq.backends.qiskit_pulse_ibm import transpile
 
@@ -414,7 +408,7 @@ class IBMProvider(BaseProvider):
             trotter_num,
             solver="least_squares",
             solver_args={"tol": tol},
-            override_layout=[i for i in range(qs.num_sites)],
+            override_layout=None,
             verbose=verbose,
         )
         self.prog = comp(
@@ -430,7 +424,11 @@ class IBMProvider(BaseProvider):
     def run(self, shots=4096, on_simulator=False):
         from qiskit import execute
 
-        job = execute(self.prog, shots=shots, backend=self.backend)
+        if on_simulator:
+            self.simulator = self.provider.get_backend("ibmq_qasm_simulator")
+            job = execute(self.prog, shots=shots, backend=self.simulator)
+        else:
+            job = execute(self.prog, shots=shots, backend=self.backend)
         self.task = job
         print(self.task)
 
@@ -447,7 +445,23 @@ class IBMProvider(BaseProvider):
             print("Job is not completed")
             return
 
-        return job.result().get_counts()
+        def layout_rev(res):
+            n = len(self.layout)
+            b = to_bin(res, n)
+            ret = ""
+            for i in range(n):
+                ret += b[self.layout[i]]
+            return ret
+
+        def results_from_data(data):
+            ret = dict()
+            for key in data.keys():
+                ret[layout_rev(int(key))] = data[key] / n_shots
+            return ret
+
+        count = job.result().get_counts()
+        n_shots = sum(count.values())
+        return results_from_data(count)
 
 
 class QuTiPProvider(BaseProvider):

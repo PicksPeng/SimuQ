@@ -32,7 +32,7 @@ class BraketProvider(BaseProvider) :
 
     def supported_backends(self) :
         for (comp, dev) in self.backend_aais.keys() :
-            print(f'Hardware provider: {comp}  -  Device name: {dev}  -  AAIS supports: {self.backend_aais_supports[(comp, dev)]}')
+            print(f'Hardware provider: {comp}  -  Device name: {dev}  -  AAIS supports: {self.backend_aais[(comp, dev)]}')
 
     def compile(self, qs, provider, device, aais, tol = 0.01, trotter_num = 6, verbose = 0) :
         if (provider, device) not in self.backend_aais.keys() :
@@ -248,7 +248,16 @@ class IonQProvider(BaseProvider) :
         self.qs_names = qs.print_sites()
 
 
-    def run(self, shots = 4096, on_simulator = False) :
+    def print_circuit(self) :
+        if self.prog == None :
+            raise Exception("No compiled job in record.")
+        print(self.prog["body"]["circuit"])
+
+
+    def run(self, shots = 4096, on_simulator = False, with_noise = True) :
+        
+        if self.prog == None :
+            raise Exception("No compiled job in record.")
 
         import requests, json
 
@@ -262,6 +271,8 @@ class IonQProvider(BaseProvider) :
         data['shots'] = shots
         if on_simulator :
             data['target'] = 'simulator'
+            if not with_noise :
+                data['noise'] = {'model': 'ideal'}
         
         #print(data)
 
@@ -327,6 +338,16 @@ class QuTiPProvider(BaseProvider) :
         print("Compiled.")
         #return self.prog
         
+    def evaluate_Hamiltonian(self, t) :
+        import qutip as qp
+        if self.prog == None :
+            raise Exception("No compiled job in record.")
+        M = 0
+        for i in range(len(self.prog[0])) :
+            (H, f) = self.prog[0][i]
+            M += H * f(t, None)
+        return M
+
     def run(self, shots = None, on_simulator = None) :
         import qutip as qp
         if self.prog == None :
@@ -343,3 +364,5 @@ class QuTiPProvider(BaseProvider) :
         for i in range(1<<self.n) :
             self.res[to_bin(i, self.n)] = np.abs(self.fin.states[1][i][0][0]) ** 2
         return self.res
+
+

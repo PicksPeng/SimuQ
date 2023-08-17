@@ -178,7 +178,7 @@ class TIHamiltonian :
     def __add__(self, other) :
         # need more typing restrictions
         if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
-            other = other * TIHamiltonian.empty(self.sites_type)
+            other = other * TIHamiltonian.identity(self.sites_type)
         if self.sites_type != other.sites_type :
             self.extend_sites(other.sites_type)
             other.extend_sites(self.sites_type)
@@ -190,14 +190,14 @@ class TIHamiltonian :
 
     def __radd__(self, other) :
         if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
-            return self.__add__(other * TIHamiltonian.empty(self.sites_type))
+            return self.__add__(other * TIHamiltonian.identity(self.sites_type))
         else :
             return NotImplemented
 
     def __sub__(self, other) :
         # need more typing restrictions
         if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
-            other = other * TIHamiltonian.empty(self.sites_type)
+            other = other * TIHamiltonian.identity(self.sites_type)
         if self.sites_type != other.sites_type :
             self.extend_sites(other.sites_type)
             other.extend_sites(self.sites_type)
@@ -209,7 +209,7 @@ class TIHamiltonian :
 
     def __rsub__(self, other) :
         if type(other) == int  or  type(other) == float  or  type(other) == complex  or  isinstance(other, Expression) :
-            return (other * TIHamiltonian.empty(self.sites_type)) - self
+            return (other * TIHamiltonian.identity(self.sites_type)) - self
         else :
             return NotImplemented
 
@@ -361,5 +361,3 @@ class TIHamiltonian :
             ret = ret + tensor(strlist_to_oplist(prod)) * c
 
         return ret
-
-Empty = TIHamiltonian.empty([])

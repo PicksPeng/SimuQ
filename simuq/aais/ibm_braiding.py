@@ -3,7 +3,7 @@ from simuq.qmachine import *
 
 class IbmBraidingFactory(QMachineFactory):
     @staticmethod
-    def generate_qmachine(n=3):
+    def generate_qmachine(n=3, *args, **kwargs):
         mach = QMachine()
         n = 3
         ql = [qubit(mach) for i in range(n)]

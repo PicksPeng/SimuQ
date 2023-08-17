@@ -5,7 +5,7 @@ from simuq.qmachine import *
 
 class IbmQMachineFactory(QMachineFactory):
     @staticmethod
-    def generate_qmachine(backend):
+    def generate_qmachine(backend, *args, **kwargs):
         configuration = backend.configuration()
         defaults = backend.defaults()
         n = configuration.num_qubits

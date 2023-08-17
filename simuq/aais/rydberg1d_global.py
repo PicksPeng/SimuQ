@@ -20,7 +20,7 @@ def ham_sum(hlist) :
 
 class Rydberg1DGlobalQMachineFactory(QMachineFactory):
     @staticmethod
-    def generate_qmachine(n=3, inits=None):
+    def generate_qmachine(n=3, inits=None, *args, **kwargs):
         rydberg = QMachine()
 
         C6 = 862690 * 2. * np.pi

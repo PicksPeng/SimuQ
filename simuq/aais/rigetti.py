@@ -5,7 +5,7 @@ from simuq.expression import Expression
 
 class RigettiQMachineFactory(QMachineFactory):
     @staticmethod
-    def generate_qmachine():
+    def generate_qmachine(*args, **kwargs):
         mach = QMachine()
         rings_per_row = 5
         qubits_per_ring = 8

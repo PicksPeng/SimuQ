@@ -4,7 +4,7 @@ from simuq.qmachine import *
 
 class HeisenbergQMachineFactory(QMachineFactory):
     @staticmethod
-    def generate_qmachine(n=3, E=None):
+    def generate_qmachine(n=3, E=None, *args, **kwargs):
         mach = QMachine()
         ql = [qubit(mach) for i in range(n)]
 

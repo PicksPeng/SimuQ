@@ -56,16 +56,16 @@ class BraketProvider(BaseProvider):
             nsite = qs.num_sites
 
             if aais == "rydberg1d_global":
-                from simuq.aais.rydberg1d_global import GenMach
+                from simuq.aais.rydberg1d_global import Rydberg1DGlobalQMachineFactory
                 from simuq.backends.braket_rydberg1d_global import transpile
 
-                mach = GenMach(nsite)
+                mach = Rydberg1DGlobalQMachineFactory.generate_qmachine(nsite)
                 comp = transpile
             elif aais == "rydberg2d_global":
-                from simuq.aais.rydberg2d_global import GenMach
+                from simuq.aais.rydberg2d_global import Rydberg2DGlobalQMachineFactory
                 from simuq.backends.braket_rydberg2d_global import transpile
 
-                mach = GenMach(nsite)
+                mach = Rydberg2DGlobalQMachineFactory.generate_qmachine(nsite)
                 comp = transpile
 
             layout, sol_gvars, boxes, edges = generate_as(
@@ -272,10 +272,10 @@ class IonQProvider(BaseProvider):
             raise Exception("Device has less sites than the target quantum system.")
 
         if aais == "heis_aais":
-            from simuq.aais.heis_aais import GenMach
+            from simuq.aais.heisenberg import HeisenbergQMachineFactory
             from simuq.backends.ionq import transpile
 
-            mach = GenMach(qs.num_sites, E=None)
+            mach = HeisenbergQMachineFactory.generate_qmachine(qs.num_sites, E=None)
             comp = transpile
 
         layout, sol_gvars, boxes, edges = generate_as(
@@ -413,10 +413,10 @@ class IBMProvider(BaseProvider):
             raise Exception("Device has less sites than the target quantum system.")
 
         if aais == "heis_aais":
-            from simuq.aais.ibm import get_mach
+            from simuq.aais.ibm import IbmQMachineFactory
             from simuq.backends.qiskit_pulse_ibm import transpile
 
-            mach = get_mach(self.backend)
+            mach = IbmQMachineFactory.generate_qmachine(self.backend)
             comp = transpile
 
         layout, sol_gvars, boxes, edges = generate_as(

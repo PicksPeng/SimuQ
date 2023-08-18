@@ -313,7 +313,9 @@ class IonQProvider(BaseProvider):
         if self.prog == None :
             raise Exception("No compiled job in record.")
 
-        import requests, json
+        import json
+
+        import requests
 
         headers = {
             "Authorization": "apiKey " + self.API_key,
@@ -380,9 +382,11 @@ class IonQProvider(BaseProvider):
 
 
 class IBMProvider(BaseProvider):
-    def __init__(self, API_key=None, hub="ibm-q", group="open", project="main"):
+    def __init__(self, API_key=None, hub="ibm-q", group="open", project="main", from_file=None):
         from qiskit import IBMQ
-
+        if from_file != None:
+            with open(from_file, "r") as f:
+                API_key = f.readline().strip()
         self.API_key = API_key
         self.provider = IBMQ.enable_account(
             API_key, hub=hub, group=group, project=project
@@ -400,6 +404,7 @@ class IBMProvider(BaseProvider):
         tol=0.01,
         trotter_num=6,
         verbose=0,
+        use_pulse=True,
     ):
         self.backend = self.provider.get_backend(backend)
         nsite = self.backend.configuration().n_qubits
@@ -429,6 +434,7 @@ class IBMProvider(BaseProvider):
             sol_gvars,
             boxes,
             edges,
+            use_pulse=use_pulse,
         )
         self.layout = layout
         self.qs_names = qs.print_sites()
@@ -444,14 +450,16 @@ class IBMProvider(BaseProvider):
         self.task = job
         print(self.task)
 
-    def results(self, job_id=None):
+    def results(self, job_id=None,on_simulator=False):
         if job_id == None:
             if self.task != None:
                 job_id = self.task.job_id()
             else:
                 raise Exception("No submitted job in record.")
-
-        job = self.backend.retrieve_job(job_id)
+        if on_simulator:
+            job = self.simulator.retrieve_job(job_id)
+        else:
+            job = self.backend.retrieve_job(job_id)
         status = job.status()
         if status.name == "QUEUED":
             print("Job is not completed")
@@ -459,19 +467,27 @@ class IBMProvider(BaseProvider):
 
         def layout_rev(res):
             n = len(self.layout)
-            b = to_bin(res, n)
+            # print(self.layout)
+            b=res
+            print(b)
             ret = ""
             for i in range(n):
-                ret += b[self.layout[i]]
+                ret += b[-1-self.layout[i]]
+            print(ret)
             return ret
 
         def results_from_data(data):
             ret = dict()
             for key in data.keys():
-                ret[layout_rev(int(key))] = data[key] / n_shots
+                new_key = layout_rev(key)
+                if new_key in ret:
+                    ret[new_key] += data[key]/ n_shots
+                else:
+                    ret[new_key] = data[key]/ n_shots
             return ret
 
         count = job.result().get_counts()
+        print(count)
         n_shots = sum(count.values())
         return results_from_data(count)
 

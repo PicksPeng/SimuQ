@@ -34,11 +34,8 @@ class QMachine(BaseQuantumEnvironment) :
     """
     def __init__(self) :
         super().__init__()
-        self.num_gvars = 0
         self.gvars = []
-        self.num_lvars = 0
         self.lvars = []
-        self.num_lines = 0
         self.lines = []
         self.num_inss = 0
         self.sys_ham = 0
@@ -62,6 +59,12 @@ class QMachine(BaseQuantumEnvironment) :
             for ins in line.inss :
                 ins.h.extend_sites(self.sites_type)
 
+    def add_signal_line(self):
+        return SignalLine(self)
+
+    def add_global_variable(self, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
+        return GlobalVar(self, init_value, lower_bound, upper_bound)
+
 
 class SignalLine :
     """ A signal line.
@@ -70,10 +73,12 @@ class SignalLine :
     """
     def __init__(self, mach) :
         self.mach = mach
-        self.index = mach.num_lines
-        mach.num_lines += 1
+        self.index = len(mach.lines)
         mach.lines.append(self)
         self.inss = []
+
+    def add_instruction(self, nativeness = 'native', name = 'ins') :
+        return Instruction(self, nativeness, name)
 
 
 class Instruction :
@@ -82,22 +87,20 @@ class Instruction :
     It contains the local variables belonging to it, its
     property, and its instruction Hamiltonian.
     """
-    def __init__(self, belong, nativeness = 'native', name = 'ins') :
-        if isinstance(belong, SignalLine) :
-            line = belong
-            self.mach = line.mach
-            self.line = line
-        elif isinstance(belong, QMachine) :
-            mach = belong
-            self.mach = mach
-            self.line = SignalLine(mach)
+    def __init__(self, line, nativeness = 'native', name = 'ins') :
+        self.line = line
         self.line.inss.append(self)
-        self.index = self.mach.num_inss
-        self.mach.num_inss += 1
+        self.index = self.line.mach.num_inss
+        self.line.mach.num_inss += 1
         self.vars_index = []
         self.nativeness = nativeness
         self.name = name
         self.is_sys_ham = False
+        self.h = None
+
+    @property
+    def mach(self):
+        return self.line.mach
 
     def set_ham(self, h) :
         newh = copy(h)
@@ -109,6 +112,9 @@ class Instruction :
     def exp_eval(self, gvars, lvars) :
         return self.h.exp_eval(gvars, lvars)
 
+    def add_local_variable(self, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
+        return LocalVar(self, init_value, lower_bound, upper_bound)
+
 
 class GlobalVar(BaseVar) :
     """ A global variable, belonging to a QMachine.
@@ -118,8 +124,7 @@ class GlobalVar(BaseVar) :
     """
     def __init__(self, mach, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
         super().__init__(mach)
-        self.index = mach.num_gvars
-        mach.num_gvars += 1
+        self.index = len(mach.gvars)
         mach.gvars.append(self)
         self.init_value = init_value
         self.lower_bound = lower_bound
@@ -139,9 +144,8 @@ class LocalVar(BaseVar) :
     def __init__(self, ins, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
         mach = ins.mach
         super().__init__(mach)
-        self.index = mach.num_lvars
+        self.index = len(mach.lvars)
         ins.vars_index.append(self.index)
-        mach.num_lvars += 1
         mach.lvars.append(self)
         self.init_value = init_value
         self.lower_bound = lower_bound

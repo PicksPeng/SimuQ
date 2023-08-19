@@ -439,11 +439,20 @@ class IBMProvider(BaseProvider):
         self.layout = layout
         self.qs_names = qs.print_sites()
 
-    def run(self, shots=4096, on_simulator=False):
+    def run(self, shots=4096, on_simulator=False,with_noise = False):
         from qiskit import execute
 
         if on_simulator:
-            self.simulator = self.provider.get_backend("ibmq_qasm_simulator")
+            if with_noise :
+                from qiskit_aer.noise import NoiseModel
+                self.simulator=self.provider.get_backend('ibmq_qasm_simulator')
+                # currently a bug in ibm's backend
+                from qiskit.providers.fake_provider import FakeGuadalupe
+                noise_model = NoiseModel.from_backend(FakeGuadalupe()).to_dict()
+
+                self.simulator.options.update_options(noise_model=noise_model)
+            else :
+                self.simulator=self.provider.get_backend('ibmq_qasm_simulator')
             job = execute(self.prog, shots=shots, backend=self.simulator)
         else:
             job = execute(self.prog, shots=shots, backend=self.backend)
@@ -464,16 +473,13 @@ class IBMProvider(BaseProvider):
         if status.name == "QUEUED":
             print("Job is not completed")
             return
-
         def layout_rev(res):
             n = len(self.layout)
             # print(self.layout)
             b=res
-            print(b)
             ret = ""
             for i in range(n):
                 ret += b[-1-self.layout[i]]
-            print(ret)
             return ret
 
         def results_from_data(data):
@@ -487,7 +493,6 @@ class IBMProvider(BaseProvider):
             return ret
 
         count = job.result().get_counts()
-        print(count)
         n_shots = sum(count.values())
         return results_from_data(count)
 

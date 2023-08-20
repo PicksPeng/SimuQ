@@ -30,7 +30,12 @@ from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
 from qiskit.tools.monitor import job_monitor
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import TransformationPass
-from qiskit.transpiler.passes import CommutativeCancellation, RZXCalibrationBuilder
+from qiskit.transpiler.passes import (
+    Collect1qRuns,
+    CollectCliffords,
+    CommutativeCancellation,
+    RZXCalibrationBuilder,
+)
 from qiskit.transpiler.passes.calibration.base_builder import CalibrationBuilder
 
 
@@ -470,10 +475,9 @@ def get_pm(backend, for_braiding = False):
                 zz_calibrater,
                 xx_calibrater,
                 yy_calibrater,
-                CommutativeCancellation(),
+                # CommutativeCancellation(),
                 zx_calibrater,
-                CommutativeCancellation(),
-                CommutativeCancellation(),
+                # CommutativeCancellation(),
                 x_calibrater,
             ]
         )

@@ -436,6 +436,8 @@ class IBMProvider(BaseProvider):
             edges,
             use_pulse=use_pulse,
         )
+        from qiskit import transpile as transpile_qiskit
+        self.prog=transpile_qiskit(self.prog,backend=self.backend)
         self.layout = layout
         self.qs_names = qs.print_sites()
 

@@ -84,16 +84,16 @@ def switch_fun(mach, evo_index, ins_index):
     return lambda x: x[locate_switch(mach, evo_index, ins_index)]
 
 # Equation builder and solver when an alignment is supplied.
-def solve_aligned(ali, qs, mach, solver = 'least_squares', solver_args={'tol':1e-3, 'with_time_penalty':False}, verbose = 0):
+def solve_aligned(ali, qs, mach, solver = 'least_squares', solver_args={'tol':1e-3, 'time_penalty':0}, verbose = 0):
     if isinstance(solver_args, float) :
         tol = solver_args
-        with_time_penalty = False
+        time_penalty = 0
     else :
         tol = solver_args['tol']
-        if 'with_time_penalty' in solver_args.keys() :
-            with_time_penalty = solver_args['with_time_penalty']
+        if 'time_penalty' in solver_args.keys() :
+            time_penalty = solver_args['time_penalty']
         else :
-            with_time_penalty = False
+            time_penalty = 0
     logger.info(ali)
     if verbose > 0 :
         print('Start_solving for ', ali)
@@ -339,8 +339,8 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', solver_args={'tol':1e
         offset = np.sqrt(1e5 * tol / np.sqrt(nvar))
         #offset = 0
         f, lbs, ubs, init = build_obj([lambda x : offset] + eqs, fixed_values)
-        if with_time_penalty :
-            f_solve, _, _, _ = build_obj([lambda x : offset] + eqs + timevar_penalty(), fixed_values)
+        if time_penalty != 0 :
+            f_solve, _, _, _ = build_obj([lambda x : offset] + eqs + timevar_penalty(time_penalty), fixed_values)
         else :
             f_solve = f
 
@@ -388,8 +388,8 @@ def solve_aligned(ali, qs, mach, solver = 'least_squares', solver_args={'tol':1e
         eqs, fixed_values = build_eqs(new_fixed_values)
         offset = np.sqrt(1e5 * tol / np.sqrt(len(new_init)))
         f, lbs, ubs, _ = build_obj([lambda x : offset] + eqs, fixed_values)
-        if with_time_penalty :
-            f_solve, _, _, _ = build_obj([lambda x : offset] + eqs + timevar_penalty(), fixed_values)
+        if time_penalty != 0 :
+            f_solve, _, _, _ = build_obj([lambda x : offset] + eqs + timevar_penalty(time_penalty), fixed_values)
         else :
             f_solve = f
 

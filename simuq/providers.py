@@ -28,8 +28,8 @@ class BraketProvider(BaseProvider):
             )
 
         self.backend_aais = dict()
-        self.backend_aais[("ionq", "harmony")] = ["heis_aais"]
-        self.backend_aais[("ionq", "aria-1")] = ["heis_aais"]
+        self.backend_aais[("ionq", "harmony")] = ["heisenberg"]
+        self.backend_aais[("ionq", "aria-1")] = ["heisenberg"]
         self.backend_aais[("quera", "Aquila")] = [
             "rydberg1d_global",
             "rydberg2d_global",
@@ -41,7 +41,7 @@ class BraketProvider(BaseProvider):
         for (comp, dev) in self.backend_aais.keys() :
             print(f'Hardware provider: {comp}  -  Device name: {dev}  -  AAIS supports: {self.backend_aais[(comp, dev)]}')
 
-    def compile(self, qs, provider, device, aais, tol=0.01, trotter_num=6, verbose=0):
+    def compile(self, qs, provider, device, aais, tol=0.01, trotter_num=6, state_prep = None, no_main_body = False, verbose=0):
         if (provider, device) not in self.backend_aais.keys():
             raise Exception("Not supported hardware provider or device.")
         if aais not in self.backend_aais[(provider, device)]:
@@ -66,17 +66,20 @@ class BraketProvider(BaseProvider):
                 mach = Rydberg2DGlobalQMachineFactory.generate_qmachine(nsite)
                 comp = transpile
 
-            layout, sol_gvars, boxes, edges = generate_as(
-                qs,
-                mach,
-                trotter_num=1,
-                solver="least_squares",
-                solver_args={"tol": tol, "with_time_penalty": True},
-                override_layout=[i for i in range(nsite)],
-                verbose=verbose,
-            )
+            if state_prep == None :
+                state_prep = {'times' : [], 'omega' : [], 'delta' : [], 'phi' : []}
 
-            self.ahs_prog = comp(sol_gvars, boxes, edges, verbose=verbose)
+            layout, sol_gvars, boxes, edges = generate_as(qs, mach, trotter_num=1, solver="least_squares",
+                                                          solver_args={"tol": tol, "time_penalty": 1},
+                                                          override_layout=[i for i in range(nsite)],
+                                                          verbose=verbose)
+            self.sol = [layout, sol_gvars, boxes, edges]
+
+            # Only use this when debugging state_preparation pulses
+            if no_main_body :
+                for j, (b, t) in enumerate(boxes) :
+                    boxes[j] = (b, 0.01)
+            self.ahs_prog = comp(sol_gvars, boxes, edges, state_prep = state_prep, verbose=verbose)
             self.prog = self.ahs_prog
             self.layout = layout
 
@@ -88,62 +91,40 @@ class BraketProvider(BaseProvider):
         braket_prog = self.ahs_prog
 
         def show_register(register):
-            filled_sites = [
-                site.coordinate
-                for site in register._sites
-                if site.site_type == SiteType.FILLED
-            ]
-            empty_sites = [
-                site.coordinate
-                for site in register._sites
-                if site.site_type == SiteType.VACANT
-            ]
-            fig = plt.figure(figsize=(5, 5))
+            filled_sites = [site.coordinate for site in register._sites if site.site_type == SiteType.FILLED]
+            empty_sites = [site.coordinate for site in register._sites if site.site_type == SiteType.VACANT]
+            
+            fig = plt.figure(figsize=(4, 4))
             if len(filled_sites) > 0:
-                plt.plot(
-                    np.array(filled_sites)[:, 0],
-                    np.array(filled_sites)[:, 1],
-                    "r.",
-                    ms=15,
-                    label="filled",
-                )
+                plt.plot(np.array(filled_sites)[:, 0], np.array(filled_sites)[:, 1], "r.", ms=15, label="filled")
             if len(empty_sites) > 0:
-                plt.plot(
-                    np.array(empty_sites)[:, 0],
-                    np.array(empty_sites)[:, 1],
-                    ".",
-                    color="k",
-                    ms=2,
-                    label="vacant",
-                )
+                plt.plot(np.array(empty_sites)[:, 0], np.array(empty_sites)[:, 1], ".", color="k", ms=2, label="vacant")
             plt.legend(bbox_to_anchor=(1.1, 1.05))
-
-        show_register(braket_prog.register)
+            
+            return fig
 
         def show_global_drive(drive):
             data = {
-                "amplitude [rad/s]": drive.amplitude.time_series,
                 "detuning [rad/s]": drive.detuning.time_series,
+                "amplitude [rad/s]": drive.amplitude.time_series,
                 "phase [rad]": drive.phase.time_series,
             }
-
-            fig, axes = plt.subplots(3, 1, figsize=(5, 4), sharex=True)
+            
+            fig, axes = plt.subplots(3, 1, figsize=(6, 4), sharex=True)
             for ax, data_name in zip(axes, data.keys()):
                 if data_name == "phase [rad]":
-                    ax.step(
-                        data[data_name].times(),
-                        data[data_name].values(),
-                        ".-",
-                        where="post",
-                    )
+                    ax.step(data[data_name].times(), data[data_name].values(), ".-", where="post")
                 else:
                     ax.plot(data[data_name].times(), data[data_name].values(), ".-")
                 ax.set_ylabel(data_name)
                 ax.grid(ls=":")
             axes[-1].set_xlabel("time [s]")
             plt.tight_layout()
+            
+            return fig
 
-        show_global_drive(braket_prog.hamiltonian)
+        fig1 = show_register(braket_prog.register)
+        fig2 = show_global_drive(braket_prog.hamiltonian)
         plt.show()
 
     def visualize(self):
@@ -152,7 +133,7 @@ class BraketProvider(BaseProvider):
         if self.provider == "quera":
             self.visualize_quera()
 
-    def run(self, shots=1000, on_simulator=False):
+    def run(self, shots=1000, on_simulator=False, verbose = 0):
         if self.prog == None:
             raise Exception("No compiled job in record.")
 
@@ -164,18 +145,20 @@ class BraketProvider(BaseProvider):
                 simulator = LocalSimulator("braket_ahs")
                 self.task = simulator.run(self.ahs_prog, shots=shots)
                 meta = self.task.metadata()
-                print("Submitted.")
+                if verbose >= 0 :
+                    print("Submitted.")
             else:
                 aquila_qpu = AwsDevice(
-                    "arn:aws:braket:us-east-1::device/qpu/quera/" + device
+                    "arn:aws:braket:us-east-1::device/qpu/quera/" + self.device
                 )
                 self.task = aquila_qpu.run(self.ahs_prog, shots=shots)
-                print("Submitted.")
                 meta = self.task.metadata()
-                print("Task arn: ", meta["quantumTaskArn"])
-                print("Task status: ", meta["status"])
+                if verbose >= 0 :
+                    print("Submitted.")
+                    print("Task arn: ", meta["quantumTaskArn"])
+                    print("Task status: ", meta["status"])
 
-    def results(self, task_arn=None):
+    def results(self, task_arn=None, verbose = 0):
         if task_arn != None:
             from braket.aws import AwsQuantumTask
 
@@ -187,9 +170,10 @@ class BraketProvider(BaseProvider):
 
         state = task.state()
         if state != "COMPLETED":
-            print("Job is not completed")
-            print(task.metadata())
-            return
+            if verbose >= 0 :
+                print("Job is not completed")
+                print(task.metadata())
+            return None
 
         result = task.result()
 
@@ -249,9 +233,7 @@ class IonQProvider(BaseProvider):
     def supported_backends(self):
         print(self.all_backends)
 
-    def compile(
-        self, qs, backend="aria-1", aais="heis_aais", tol=0.01, trotter_num=6, verbose=0
-    ):
+    def compile(self, qs, backend="aria-1", aais="heisenberg", tol=0.01, trotter_num=6, state_prep = None, verbose=0):
         if backend == "harmony":
             nsite = 11
         elif backend == "aria-1":
@@ -269,30 +251,22 @@ class IonQProvider(BaseProvider):
         if qs.num_sites > nsite:
             raise Exception("Device has less sites than the target quantum system.")
 
-        if aais == "heis_aais":
+        if aais == "heisenberg":
             from simuq.aais.heisenberg import HeisenbergQMachineFactory
             from simuq.backends.ionq import transpile
 
             mach = HeisenbergQMachineFactory.generate_qmachine(qs.num_sites, E = None)
             comp = transpile
 
-        layout, sol_gvars, boxes, edges = generate_as(
-            qs,
-            mach,
-            trotter_num,
-            solver="least_squares",
-            solver_args={"tol": tol},
-            override_layout=[i for i in range(qs.num_sites)],
-            verbose=verbose,
-        )
-        self.prog = comp(
-            qs.num_sites,
-            sol_gvars,
-            boxes,
-            edges,
-            backend="qpu." + backend,
-            noise_model=backend,
-        )
+        layout, sol_gvars, boxes, edges = generate_as(qs, mach, trotter_num, solver="least_squares",
+                                                      solver_args={"tol": tol}, override_layout=[i for i in range(qs.num_sites)],
+                                                      verbose=verbose)
+        self.prog = comp(qs.num_sites, sol_gvars, boxes, edges,
+                         backend="qpu." + backend, noise_model=backend)
+
+        if state_prep != None :
+            self.prog['body']['circuit'] = state_prep['circuit'] + self.prog['body']['circuit']
+        
         self.layout = layout
         self.qs_names = qs.print_sites()
 
@@ -306,8 +280,7 @@ class IonQProvider(BaseProvider):
         print(self.prog["body"]["circuit"])
 
 
-    def run(self, shots = 4096, on_simulator = False, with_noise = True) :
-
+    def run(self, shots = 4096, on_simulator = False, with_noise = True, verbose = 0) :
         if self.prog == None :
             raise Exception("No compiled job in record.")
 
@@ -335,9 +308,10 @@ class IonQProvider(BaseProvider):
         )
         self.task = response.json()
 
-        print(self.task)
+        if verbose >= 0 :
+            print(self.task)
 
-    def results(self, job_id=None):
+    def results(self, job_id=None, verbose = 0):
         if job_id == None:
             if self.task != None:
                 job_id = self.task["id"]
@@ -358,9 +332,10 @@ class IonQProvider(BaseProvider):
         res = response.json()
 
         if res["status"] != "completed":
-            print("Job is not completed")
-            print(res)
-            return
+            if verbose >= 0 :
+                print("Job is not completed")
+                print(res)
+            return None
 
         def layout_rev(res):
             n = len(self.layout)
@@ -398,7 +373,7 @@ class IBMProvider(BaseProvider):
         self,
         qs,
         backend="ibmq_jakarta",
-        aais="heis_aais",
+        aais="heisenberg",
         tol=0.01,
         trotter_num=6,
         verbose=0,
@@ -410,7 +385,7 @@ class IBMProvider(BaseProvider):
         if qs.num_sites > nsite:
             raise Exception("Device has less sites than the target quantum system.")
 
-        if aais == "heis_aais":
+        if aais == "heisenberg":
             from simuq.aais.ibm import IbmQMachineFactory
             from simuq.backends.qiskit_pulse_ibm import transpile
 
@@ -439,7 +414,7 @@ class IBMProvider(BaseProvider):
         self.layout = layout
         self.qs_names = qs.print_sites()
 
-    def run(self, shots=4096, on_simulator=False,with_noise = False):
+    def run(self, shots=4096, on_simulator=False,with_noise = False, verbose = 0):
         from qiskit import execute
 
         if on_simulator:
@@ -457,7 +432,8 @@ class IBMProvider(BaseProvider):
         else:
             job = execute(self.prog, shots=shots, backend=self.backend)
         self.task = job
-        print(self.task)
+        if verbose >= 0 :
+            print(self.task)
 
     def results(self, job_id=None,on_simulator=False):
         if job_id == None:
@@ -508,14 +484,18 @@ class QuTiPProvider(BaseProvider):
         self.prog = None
         self.fin = None
 
-    def compile(self, qs):
+    def compile(self, qs, initial_state = None, verbose = 0):
         import qutip as qp
 
         self.n = qs.num_sites
-        self.init = qp.basis(1 << self.n)
+        if initial_state == None :
+            self.init = qp.basis(1 << self.n)
+        else :
+            self.init = initial_state
         self.prog = (qs.to_qutip(), qs.total_time())
         self.qs_names = qs.print_sites()
-        print("Compiled.")
+        if verbose >= 0 :
+            print("Compiled.")
         #return self.prog
 
     def evaluate_Hamiltonian(self, t) :
@@ -528,16 +508,17 @@ class QuTiPProvider(BaseProvider):
             M += H * f(t, None)
         return M
 
-    def run(self, shots = None, on_simulator = None) :
+    def run(self, shots = None, on_simulator = None, verbose = 0) :
         import qutip as qp
 
         if self.prog == None:
             raise Exception("No compiled job in record.")
         self.fin = qp.sesolve(self.prog[0], self.init, [0, self.prog[1]])
-        print("Solved.")
+        if verbose >= 0 :
+            print("Solved.")
         # return self.fin
 
-    def results(self):
+    def results(self, verbose = 0):
         import numpy as np
 
         if self.fin == None:
@@ -546,3 +527,4 @@ class QuTiPProvider(BaseProvider):
         for i in range(1 << self.n):
             self.res[to_bin(i, self.n)] = np.abs(self.fin.states[1][i][0][0]) ** 2
         return self.res
+

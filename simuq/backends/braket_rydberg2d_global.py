@@ -21,20 +21,18 @@ def gen_braket_code(pos, clocks, pulse):
     phi = TimeSeries()
 
     delta.put(0, pulse[0][0])
-    delta.put(clocks[1], pulse[0][0])
-    for i in range(len(clocks) - 3):
-        delta.put(clocks[i + 2], pulse[0][i])
+    for i in range(len(clocks) - 2):
+        delta.put(clocks[i + 1], pulse[0][i])
     delta.put(clocks[-1], pulse[0][-1])
     omega.put(0, 0)
-    omega.put(clocks[1], pulse[1][0])
-    for i in range(len(clocks) - 3):
-        omega.put(clocks[i + 2], pulse[1][i])
+    for i in range(len(clocks) - 2):
+        omega.put(clocks[i + 1], pulse[1][i])
     omega.put(clocks[-1], 0)
     phi.put(0, 0)
-    phi.put(clocks[1], pulse[2][0])
-    for i in range(len(clocks) - 3):
-        phi.put(clocks[i + 2], pulse[2][i])
+    for i in range(len(clocks) - 2):
+        phi.put(clocks[i + 1], pulse[2][i])
     phi.put(clocks[-1], 0)
+
 
     drive = DrivingField(amplitude=omega, phase=phi, detuning=delta)
     from braket.ahs.analog_hamiltonian_simulation import AnalogHamiltonianSimulation
@@ -57,8 +55,11 @@ def gen_braket_code(pos, clocks, pulse):
     result = device.run(discretized_ahs_program, shots=1_000_000).result()
 
 
-def gen_clocks(times, ramp_time):
+def gen_clocks(times, ramp_time, state_prep_time):
     clocks = [0, ramp_time]
+    for t in state_prep_time :
+        clocks.append(clocks[-1] + t)
+    clocks.append(clocks[-1] + ramp_time)
     for t in times:
         clocks.append(clocks[-1] + t)
     clocks.append(clocks[-1] + ramp_time)
@@ -66,7 +67,7 @@ def gen_clocks(times, ramp_time):
     return clocks
 
 
-def clean_as(sol_gvars, boxes, ramp_time, verbose = 0):
+def clean_as(sol_gvars, boxes, ramp_time, state_prep, verbose = 0):
     pos = [(0., 0.) ]
     for i in range(int(len(sol_gvars) / 2)) :
         pos.append((sol_gvars[2*i], sol_gvars[2*i+1]))
@@ -93,11 +94,22 @@ def clean_as(sol_gvars, boxes, ramp_time, verbose = 0):
             else:
                 pulse[1][evo_idx] = ins_lvars[0] * 1e6
                 pulse[2][evo_idx] = ins_lvars[1] * 1e6
-    return (pos, gen_clocks(times, ramp_time), pulse)
+    if len(state_prep['times']) > 0 :
+        pulse[0] = [v * 1e6 for v in state_prep['delta']] + [pulse[0][0]] + pulse[0]
+        pulse[1] = [v * 1e6 for v in state_prep['omega']] + [pulse[1][0]] + pulse[1]
+        pulse[2] = [v * 1e6 for v in state_prep['phi']] + [pulse[2][0]] + pulse[2]
+    else :
+        for i in range(3) :
+            pulse[i] = [0, pulse[i][0]] + pulse[i]
+    for i in range(len(pulse[0])) :
+        if pulse[1][i] < 0 :
+            pulse[1][i] = -pulse[1][i]
+            pulse[2][i] += np.pi
+    return (pos, gen_clocks(times, ramp_time, state_prep['times']), pulse)
 
 
-def transpile(sol_gvars, boxes, edges, ramp_time = 0.05, verbose = 0):
+def transpile(sol_gvars, boxes, edges, ramp_time = 0.05, state_prep = {}, verbose = 0):
     #print(sol_gvars)
     #print(boxes)
-    code = gen_braket_code(*clean_as(sol_gvars, boxes, ramp_time, verbose))
+    code = gen_braket_code(*clean_as(sol_gvars, boxes, ramp_time, state_prep, verbose))
     return code

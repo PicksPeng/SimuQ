@@ -69,7 +69,7 @@ def clean_as(boxes, edges, backend):
                     circ.ryy(theta, q0, q1)
                 else:
                     circ.rzz(theta, q0, q1)
-    circ.measure_active()
+    circ.measure_all()
     return circ
 
 

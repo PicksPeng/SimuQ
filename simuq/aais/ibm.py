@@ -1,12 +1,10 @@
-from qiskit import IBMQ
 from qiskit.pulse import DriveChannel, GaussianSquare, ShiftPhase
 
 from simuq.environment import qubit
 from simuq.expression import Expression
-from simuq.qmachine import *
+from simuq.qmachine import QMachine
 
-
-def get_mach(backend):
+def generate_qmachine(backend):
     configuration = backend.configuration()
     defaults = backend.defaults()
     n = configuration.num_qubits
@@ -37,35 +35,35 @@ def get_mach(backend):
             link.append(item)
 
     for i in range(n):
-        L = SignalLine(mach)
+        L = mach.add_signal_line()
 
-        ins1 = Instruction(L, "native", "L{}_X_Y".format(i))
-        amp = LocalVar(ins1)
-        phase = LocalVar(ins1)
+        ins1 = L.add_instruction("native", "L{}_X_Y".format(i))
+        amp = ins1.add_local_variable()
+        phase = ins1.add_local_variable()
         ins1.set_ham(
             amp * (Expression.cos(phase) * ql[i].X + Expression.sin(phase) * ql[i].Y)
         )
 
-        ins2 = Instruction(L, "derived", "L{}_Z".format(i))
-        amp = LocalVar(ins2)
+        ins2 = L.add_instruction("derived", "L{}_Z".format(i))
+        amp = ins2.add_local_variable()
         ins2.set_ham(amp * ql[i].Z)
 
     for (q0, q1) in link:
-        L = SignalLine(mach)
+        L = mach.add_signal_line()
 
-        ins = Instruction(L, "derived", "L{}{}_ZX".format(q0, q1))
-        amp = LocalVar(ins)
+        ins = L.add_instruction("derived", "L{}{}_ZX".format(q0, q1))
+        amp = ins.add_local_variable()
         ins.set_ham(amp * ql[q0].Z * ql[q1].X)
 
-        ins = Instruction(L, "derived", "L{}{}_XX".format(q0, q1))
+        ins = L.add_instruction("derived", "L{}{}_XX".format(q0, q1))
         amp = LocalVar(ins)
         ins.set_ham(amp * ql[q0].X * ql[q1].X)
 
-        ins = Instruction(L, "derived", "L{}{}_YY".format(q0, q1))
-        amp = LocalVar(ins)
+        ins = L.add_instruction("derived", "L{}{}_YY".format(q0, q1))
+        amp = ins.add_local_variable()
         ins.set_ham(amp * ql[q0].Y * ql[q1].Y)
 
-        ins = Instruction(L, "derived", "L{}{}_ZZ".format(q0, q1))
-        amp = LocalVar(ins)
+        ins = L.add_instruction("derived", "L{}{}_ZZ".format(q0, q1))
+        amp = ins.add_local_variable()
         ins.set_ham(amp * ql[q0].Z * ql[q1].Z)
     return mach

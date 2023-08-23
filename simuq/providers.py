@@ -28,8 +28,8 @@ class BraketProvider(BaseProvider):
             )
 
         self.backend_aais = dict()
-        self.backend_aais[("ionq", "harmony")] = ["heis_aais"]
-        self.backend_aais[("ionq", "aria-1")] = ["heis_aais"]
+        self.backend_aais[("ionq", "harmony")] = ["heisenberg"]
+        self.backend_aais[("ionq", "aria-1")] = ["heisenberg"]
         self.backend_aais[("quera", "Aquila")] = [
             "rydberg1d_global",
             "rydberg2d_global",
@@ -56,16 +56,14 @@ class BraketProvider(BaseProvider):
             nsite = qs.num_sites
 
             if aais == "rydberg1d_global":
-                from simuq.aais.rydberg1d_global import GenMach
+                from simuq.aais import rydberg1d_global
                 from simuq.backends.braket_rydberg1d_global import transpile
-
-                mach = GenMach(nsite)
+                mach = rydberg1d_global.generate_qmachine(nsite)
                 comp = transpile
             elif aais == "rydberg2d_global":
-                from simuq.aais.rydberg2d_global import GenMach
+                from simuq.aais import rydberg2d_global
                 from simuq.backends.braket_rydberg2d_global import transpile
-
-                mach = GenMach(nsite)
+                mach = rydberg2d_global.generate_qmachine(nsite)
                 comp = transpile
 
             if state_prep == None :
@@ -235,7 +233,7 @@ class IonQProvider(BaseProvider):
     def supported_backends(self):
         print(self.all_backends)
 
-    def compile(self, qs, backend="aria-1", aais="heis_aais", tol=0.01, trotter_num=6, state_prep = None, verbose=0):
+    def compile(self, qs, backend="aria-1", aais="heisenberg", tol=0.01, trotter_num=6, state_prep = None, verbose=0):
         if backend == "harmony":
             nsite = 11
         elif backend == "aria-1":
@@ -253,11 +251,11 @@ class IonQProvider(BaseProvider):
         if qs.num_sites > nsite:
             raise Exception("Device has less sites than the target quantum system.")
 
-        if aais == "heis_aais":
-            from simuq.aais.heis_aais import GenMach
+        if aais == "heisenberg":
+            from simuq.aais import heisenberg
             from simuq.backends.ionq import transpile
 
-            mach = GenMach(qs.num_sites, E=None)
+            mach = heisenberg.generate_qmachine(qs.num_sites, e = None)
             comp = transpile
 
         layout, sol_gvars, boxes, edges = generate_as(qs, mach, trotter_num, solver="least_squares",
@@ -283,7 +281,6 @@ class IonQProvider(BaseProvider):
 
 
     def run(self, shots = 4096, on_simulator = False, with_noise = True, verbose = 0) :
-        
         if self.prog == None :
             raise Exception("No compiled job in record.")
 
@@ -303,7 +300,7 @@ class IonQProvider(BaseProvider):
             data['target'] = 'simulator'
             if not with_noise :
                 data['noise'] = {'model': 'ideal'}
-        
+
         #print(data)
 
         response = requests.post(
@@ -376,7 +373,7 @@ class IBMProvider(BaseProvider):
         self,
         qs,
         backend="ibmq_jakarta",
-        aais="heis_aais",
+        aais="heisenberg",
         tol=0.01,
         trotter_num=6,
         verbose=0,
@@ -388,11 +385,11 @@ class IBMProvider(BaseProvider):
         if qs.num_sites > nsite:
             raise Exception("Device has less sites than the target quantum system.")
 
-        if aais == "heis_aais":
-            from simuq.aais.ibm import get_mach
+        if aais == "heisenberg":
+            from simuq.aais import ibm
             from simuq.backends.qiskit_pulse_ibm import transpile
 
-            mach = get_mach(self.backend)
+            mach = ibm.generate_qmachine(self.backend)
             comp = transpile
 
         layout, sol_gvars, boxes, edges = generate_as(
@@ -500,7 +497,7 @@ class QuTiPProvider(BaseProvider):
         if verbose >= 0 :
             print("Compiled.")
         #return self.prog
-        
+
     def evaluate_Hamiltonian(self, t) :
         import qutip as qp
         if self.prog == None :
@@ -530,5 +527,4 @@ class QuTiPProvider(BaseProvider):
         for i in range(1 << self.n):
             self.res[to_bin(i, self.n)] = np.abs(self.fin.states[1][i][0][0]) ** 2
         return self.res
-
 

@@ -107,7 +107,7 @@ class Expression :
         def exp(gvars, lvars) :
             sub = e.exp(gvars, lvars)
             if type(sub) == int  or  type(sub) == float :
-                return math.cos(sub)
+                return math.sin(sub)
             if isinstance(sub, np.float64) :
                 return np.sin(sub)
             import dreal as dr

@@ -46,9 +46,7 @@ def clean_as(n, boxes, edges):
                     # circ.rx(2 * rot, q)
                     # circ.rz(phi, q)
                     if abs(rot) > 1e-5:
-                        add_gpi2gpigpi2(
-                            q, np.pi / 2 - phi, rot - np.pi / 2 - phi, np.pi / 2 - phi
-                        )
+                        add_gpi2gpigpi2(q, np.pi / 2 - phi, rot - np.pi / 2 - phi, np.pi / 2 - phi)
                 else:
                     q = line
                     # Rz(q, 2 * params[0] * t)

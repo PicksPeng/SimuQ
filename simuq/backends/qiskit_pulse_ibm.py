@@ -17,9 +17,7 @@ def get_n_link(backend):
         cx_sched = instruction_schedule_map.get("cx", qubits=(q1, q2))
         supported = False
         for time, inst in cx_sched.instructions:
-            if isinstance(inst.channel, DriveChannel) and not isinstance(
-                inst, ShiftPhase
-            ):
+            if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
                 if isinstance(inst.pulse, GaussianSquare):
                     target = inst.channel.index
                     control = q1 if target == q2 else q2

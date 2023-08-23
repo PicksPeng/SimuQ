@@ -46,14 +46,12 @@ def clean_as(n, boxes, edges):
                     # circ.rx(2 * rot, q)
                     # circ.rz(phi, q)
                     if abs(rot) > 1e-5:
-                        add_gpi2gpigpi2(
-                            q, np.pi / 2 - phi, rot - np.pi / 2 - phi, np.pi / 2 - phi
-                        )
+                        add_gpi2gpigpi2(q, np.pi / 2 - phi, rot - np.pi / 2 - phi, np.pi / 2 - phi)
                 else:
                     q = line
                     # Rz(q, 2 * params[0] * t)
                     accum_phase[q] += 2 * params[0] * t
-            elif line < n + len(link) :
+            elif line < n + len(link):
                 (q0, q1) = link[line - n]
                 theta = 2 * params[0] * t
                 if ins == 0:
@@ -63,7 +61,7 @@ def clean_as(n, boxes, edges):
                         add_hadamard(q0)
                         # S on q0
                         accum_phase[q0] += np.pi / 2
-                        
+
                         circ.append(
                             MSGate(
                                 accum_phase[q0] / (2 * np.pi),
@@ -72,7 +70,7 @@ def clean_as(n, boxes, edges):
                             ),
                             [q0, q1],
                         )
-                        
+
                         # Sdg on q0
                         accum_phase[q0] -= np.pi / 2
                         # Hadamard on q0
@@ -86,7 +84,7 @@ def clean_as(n, boxes, edges):
                 t1 = atan2(-sqrt(sin(2 * t)), 1) / 2
                 t2 = atan2(+sqrt(sin(2 * t)), cos(t) - sin(t)) / 2
 
-                def eYY(T, q0, q1) :
+                def eYY(T, q0, q1):
                     # Hadamard on q0
                     add_hadamard(q0)
                     # S on q0
@@ -114,7 +112,7 @@ def clean_as(n, boxes, edges):
                     # Hadamard on q1
                     add_hadamard(q1)
 
-                def eXX(T, q0, q1) :
+                def eXX(T, q0, q1):
                     circ.append(
                         MSGate(
                             accum_phase[q0] / (2 * np.pi),

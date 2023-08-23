@@ -77,9 +77,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                     phi = params[1]
                     # expm(-i*rot*(cos(phi)X+sin(phi)Y))
                     if abs(rot) > 1e-5:
-                        add_gpi2gpigpi2(
-                            q, np.pi / 2 - phi, rot - np.pi / 2 - phi, np.pi / 2 - phi
-                        )
+                        add_gpi2gpigpi2(q, np.pi / 2 - phi, rot - np.pi / 2 - phi, np.pi / 2 - phi)
                 else:
                     q = line
                     # Rz(q, 2 * params[0] * t)
@@ -132,7 +130,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
 
 
 def transpile(n, sol_gvars, boxes, edges, backend="simulator", noise_model=None):
-    if isinstance(n, list) :
+    if isinstance(n, list):
         n = len(n)
     circ, accum_phase = clean_as(n, boxes, edges, backend, noise_model)
     return circ

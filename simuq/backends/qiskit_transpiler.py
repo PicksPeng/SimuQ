@@ -169,9 +169,7 @@ class RXXCalibrationBuilder(TransformationPass):
         cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
 
         for time, inst in cx_sched.instructions:
-            if isinstance(inst.channel, DriveChannel) and not isinstance(
-                inst, ShiftPhase
-            ):
+            if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
                 if isinstance(inst.pulse, GaussianSquare):
                     target = inst.channel.index
                     control = q1 if target == q2 else q2
@@ -195,9 +193,7 @@ class RXXCalibrationBuilder(TransformationPass):
                 mini_dag.add_qreg(p)
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
 
-                mini_dag.apply_operation_back(
-                    RZXGate(node.op.params[0]), qargs=[p[0], p[1]]
-                )
+                mini_dag.apply_operation_back(RZXGate(node.op.params[0]), qargs=[p[0], p[1]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
 
                 # substitute the cx node with the above mini-dag
@@ -226,9 +222,7 @@ class RZZCalibrationBuilder(TransformationPass):
         cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
 
         for time, inst in cx_sched.instructions:
-            if isinstance(inst.channel, DriveChannel) and not isinstance(
-                inst, ShiftPhase
-            ):
+            if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
                 if isinstance(inst.pulse, GaussianSquare):
                     target = inst.channel.index
                     control = q1 if target == q2 else q2
@@ -252,9 +246,7 @@ class RZZCalibrationBuilder(TransformationPass):
                 mini_dag.add_qreg(p)
                 mini_dag.apply_operation_back(HGate(), qargs=[p[1]])
 
-                mini_dag.apply_operation_back(
-                    RZXGate(node.op.params[0]), qargs=[p[0], p[1]]
-                )
+                mini_dag.apply_operation_back(RZXGate(node.op.params[0]), qargs=[p[0], p[1]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[1]])
 
                 # substitute the cx node with the above mini-dag
@@ -283,9 +275,7 @@ class RYYCalibrationBuilder(TransformationPass):
         cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
 
         for time, inst in cx_sched.instructions:
-            if isinstance(inst.channel, DriveChannel) and not isinstance(
-                inst, ShiftPhase
-            ):
+            if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
                 if isinstance(inst.pulse, GaussianSquare):
                     target = inst.channel.index
                     control = q1 if target == q2 else q2
@@ -312,9 +302,7 @@ class RYYCalibrationBuilder(TransformationPass):
                 mini_dag.apply_operation_back(HGate(), qargs=[p[1]])
                 mini_dag.apply_operation_back(RZGate(np.pi / 2), qargs=[p[1]])
 
-                mini_dag.apply_operation_back(
-                    RZXGate(node.op.params[0]), qargs=[p[0], p[1]]
-                )
+                mini_dag.apply_operation_back(RZXGate(node.op.params[0]), qargs=[p[0], p[1]])
                 mini_dag.apply_operation_back(RZGate(-np.pi / 2), qargs=[p[1]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[1]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
@@ -355,9 +343,7 @@ class RYXCalibrationBuilder(TransformationPass):
                 mini_dag.add_qreg(p)
                 mini_dag.apply_operation_back(RZGate(-np.pi / 2), qargs=[p[0]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
-                mini_dag.apply_operation_back(
-                    RZXGate(node.op.params[0]), qargs=[p[0], p[1]]
-                )
+                mini_dag.apply_operation_back(RZXGate(node.op.params[0]), qargs=[p[0], p[1]])
                 mini_dag.apply_operation_back(HGate(), qargs=[p[0]])
                 mini_dag.apply_operation_back(RZGate(np.pi / 2), qargs=[p[0]])
 
@@ -412,7 +398,7 @@ class eYZXCalibrationBuilder(TransformationPass):
         return dag
 
 
-def get_pm(backend, for_braiding = False):
+def get_pm(backend, for_braiding=False):
     configuration = backend.configuration()
     properties = backend.properties()
     defaults = backend.defaults()
@@ -454,7 +440,7 @@ def get_pm(backend, for_braiding = False):
         qubit_channel_mapping=qubit_channel_map,
     )
 
-    if for_braiding :
+    if for_braiding:
         pm = PassManager(
             [
                 yzx_calibrater,
@@ -469,7 +455,7 @@ def get_pm(backend, for_braiding = False):
                 x_calibrater,
             ]
         )
-    else :
+    else:
         pm = PassManager(
             [
                 zz_calibrater,

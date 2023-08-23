@@ -759,7 +759,7 @@ def generate_as(qs, mach, trotter_num=4, solver='least_squares', solver_tol = No
     if solver_tol != None :
         solver_args['tol'] = solver_tol
     ali = [] if override_layout == None else override_layout
-    mach.instantiate_sys_ham()
+    mach.instantiate()
     mach.extend_instruction_sites()
     if find_sol(qs, mach, ali = ali, solver=solver, solver_args=solver_args, verbose = verbose):
         sol = gsol

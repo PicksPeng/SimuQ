@@ -25,6 +25,7 @@ from copy import copy
 from simuq.environment import BaseQuantumEnvironment
 from simuq.expression import BaseVar, Expression
 import numpy as np
+import itertools
 
 class QMachine(BaseQuantumEnvironment) :
     """ A quantum device described by its AAIS.
@@ -46,12 +47,30 @@ class QMachine(BaseQuantumEnvironment) :
         self.sys_ham = h
         self.with_sys_ham = True
 
-    def instantiate_sys_ham(self) :
-        if self.with_sys_ham  and  not self.instantiated :
-            SysLine = SignalLine(self)
-            SysIns = Instruction(SysLine, 'native', 'System Hamiltonian')
-            SysIns.set_ham(self.sys_ham)
-            SysIns.is_sys_ham = True
+    def instantiate(self) :
+        if not self.instantiated :
+            if self.with_sys_ham:
+               SysLine = self.add_signal_line()
+               SysIns = SysLine.add_instruction('native', 'System Hamiltonian')
+               SysIns.set_ham(self.sys_ham)
+               SysIns.is_sys_ham = True
+
+            # Add indices to global variables
+            for index, gvar in enumerate(self.gvars):
+                gvar.set_index(index)
+            # Populate self.lvars and set their indices
+            self.lvars = [lvar for line in self.lines for ins in line.inss for lvar in ins.lvars]
+            for index, lvar in enumerate(self.lvars):
+                lvar.set_index(len(self.gvars) + index)
+            for line in self.lines:
+                for ins in line.inss:
+                    ins.set_vars_index([lvar.index-len(self.gvars) for lvar in ins.lvars])
+
+            # Set indices for instructions
+            for index, ins in enumerate(itertools.chain(*[line.inss for line in self.lines])):
+                ins.set_index(index)
+            self.num_inss = sum(len(line.inss) for line in self.lines)
+
             self.instantiated = True
 
     def extend_instruction_sites(self) :
@@ -60,10 +79,14 @@ class QMachine(BaseQuantumEnvironment) :
                 ins.h.extend_sites(self.sites_type)
 
     def add_signal_line(self):
-        return SignalLine(self)
+        line = SignalLine()
+        self.lines.append(line)
+        return line
 
     def add_global_variable(self, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
-        return GlobalVar(self, init_value, lower_bound, upper_bound)
+        var = BaseVar(init_value, lower_bound, upper_bound)
+        self.gvars.append(var)
+        return var
 
 
 class SignalLine :
@@ -71,14 +94,13 @@ class SignalLine :
 
     It contains all instructions belonging to it.
     """
-    def __init__(self, mach) :
-        self.mach = mach
-        self.index = len(mach.lines)
-        mach.lines.append(self)
+    def __init__(self) :
         self.inss = []
 
     def add_instruction(self, nativeness = 'native', name = 'ins') :
-        return Instruction(self, nativeness, name)
+        ins = Instruction(nativeness, name)
+        self.inss.append(ins)
+        return ins
 
 
 class Instruction :
@@ -87,70 +109,34 @@ class Instruction :
     It contains the local variables belonging to it, its
     property, and its instruction Hamiltonian.
     """
-    def __init__(self, line, nativeness = 'native', name = 'ins') :
-        self.line = line
-        self.line.inss.append(self)
-        self.index = self.line.mach.num_inss
-        self.line.mach.num_inss += 1
-        self.vars_index = []
+    def __init__(self, nativeness = 'native', name = 'ins') :
+        self.index = None
+        self.lvars = []
+        # Stores the index of the local variables in the QMachine (not lvar.index itself)
+        self.vars_index = None
         self.nativeness = nativeness
         self.name = name
         self.is_sys_ham = False
         self.h = None
 
-    @property
-    def mach(self):
-        return self.line.mach
+    def set_index(self, index):
+        self.index = index
+
+    def set_vars_index(self, vars_index):
+        self.vars_index = vars_index
 
     def set_ham(self, h) :
         newh = copy(h)
         for i in range(len(h.ham)) :
             if not isinstance(h.ham[i][1], Expression) :
-                newh.ham[i] = (h.ham[i][0], h.ham[i][1] * Expression.unit(self.mach))
+                newh.ham[i] = (h.ham[i][0], h.ham[i][1] * Expression.unit())
         self.h = newh
 
     def exp_eval(self, gvars, lvars) :
         return self.h.exp_eval(gvars, lvars)
 
     def add_local_variable(self, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
-        return LocalVar(self, init_value, lower_bound, upper_bound)
+        var = BaseVar(init_value, lower_bound, upper_bound)
+        self.lvars.append(var)
+        return var
 
-
-class GlobalVar(BaseVar) :
-    """ A global variable, belonging to a QMachine.
-
-    One can set its initial value, lower and upper bounds
-    when declaring it.
-    """
-    def __init__(self, mach, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
-        super().__init__(mach)
-        self.index = len(mach.gvars)
-        mach.gvars.append(self)
-        self.init_value = init_value
-        self.lower_bound = lower_bound
-        self.upper_bound = upper_bound
-
-    def to_exp(self) :
-        e = Expression.id_gvar(self.mach, self.index)
-        return e
-        
-
-class LocalVar(BaseVar) :
-    """ A local vabiable, belonging to an instruction.
-
-    One can set its initial value, lower and upper bounds
-    when declaring it.
-    """
-    def __init__(self, ins, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
-        mach = ins.mach
-        super().__init__(mach)
-        self.index = len(mach.lvars)
-        ins.vars_index.append(self.index)
-        mach.lvars.append(self)
-        self.init_value = init_value
-        self.lower_bound = lower_bound
-        self.upper_bound = upper_bound
-    
-    def to_exp(self) :
-        e = Expression.id_lvar(self.mach, self.index)
-        return e

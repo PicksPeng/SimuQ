@@ -55,15 +55,15 @@ class BraketProvider(BaseProvider):
         if self.provider == "quera":
             nsite = qs.num_sites
 
-            if aais == 'rydberg1d_global' :
-                from simuq.aais.rydberg1d_global import Rydberg1DGlobalQMachineFactory
+            if aais == "rydberg1d_global" :
+                from simuq.aais import rydberg1d_global
                 from simuq.backends.braket_rydberg1d_global import transpile
-                mach = Rydberg1DGlobalQMachineFactory.generate_qmachine(nsite)
+                mach = rydberg1d_global.generate_qmachine(nsite)
                 comp = transpile
-            elif aais == 'rydberg2d_global' :
-                from simuq.aais.rydberg2d_global import Rydberg2DGlobalQMachineFactory
+            elif aais == "rydberg2d_global" :
+                from simuq.aais import rydberg2d_global
                 from simuq.backends.braket_rydberg2d_global import transpile
-                mach = Rydberg2DGlobalQMachineFactory.generate_qmachine(nsite)
+                mach = rydberg2d_global.generate_qmachine(nsite)
                 comp = transpile
 
             if state_prep == None :
@@ -252,10 +252,10 @@ class IonQProvider(BaseProvider):
             raise Exception("Device has less sites than the target quantum system.")
 
         if aais == "heisenberg":
-            from simuq.aais.heisenberg import HeisenbergQMachineFactory
+            from simuq.aais import heisenberg
             from simuq.backends.ionq import transpile
 
-            mach = HeisenbergQMachineFactory.generate_qmachine(qs.num_sites, E = None)
+            mach = heisenberg.generate_qmachine(qs.num_sites, E = None)
             comp = transpile
 
         layout, sol_gvars, boxes, edges = generate_as(qs, mach, trotter_num, solver="least_squares",
@@ -386,10 +386,10 @@ class IBMProvider(BaseProvider):
             raise Exception("Device has less sites than the target quantum system.")
 
         if aais == "heisenberg":
-            from simuq.aais.ibm import IbmQMachineFactory
+            from simuq.aais import ibm
             from simuq.backends.qiskit_pulse_ibm import transpile
 
-            mach = IbmQMachineFactory.generate_qmachine(self.backend)
+            mach = ibm.generate_qmachine(self.backend)
             comp = transpile
 
         layout, sol_gvars, boxes, edges = generate_as(

@@ -21,8 +21,8 @@ Hamiltonian.
 TODO: Add API for variables' bounds.
 '''
 
-from copy import deepcopy, copy
-from simuq.environment import BaseQuantumEnvironment, qubit, fermion, boson
+from copy import copy
+from simuq.environment import BaseQuantumEnvironment
 from simuq.expression import BaseVar, Expression
 import numpy as np
 

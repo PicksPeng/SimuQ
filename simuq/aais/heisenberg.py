@@ -2,14 +2,15 @@ from simuq.environment import qubit
 from simuq.expression import Expression
 from simuq.qmachine import QMachine
 
-def generate_qmachine(n=3, E=None):
+
+def generate_qmachine(n=3, e=None):
     mach = QMachine()
     ql = [qubit(mach) for i in range(n)]
 
-    if E == None:
+    if e is None:
         link = [(i, j) for i in range(n) for j in range(i + 1, n)]
     else:
-        link = E
+        link = e
 
     for i in range(n):
         L = mach.add_signal_line()

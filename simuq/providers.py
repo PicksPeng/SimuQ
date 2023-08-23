@@ -55,12 +55,12 @@ class BraketProvider(BaseProvider):
         if self.provider == "quera":
             nsite = qs.num_sites
 
-            if aais == "rydberg1d_global" :
+            if aais == "rydberg1d_global":
                 from simuq.aais import rydberg1d_global
                 from simuq.backends.braket_rydberg1d_global import transpile
                 mach = rydberg1d_global.generate_qmachine(nsite)
                 comp = transpile
-            elif aais == "rydberg2d_global" :
+            elif aais == "rydberg2d_global":
                 from simuq.aais import rydberg2d_global
                 from simuq.backends.braket_rydberg2d_global import transpile
                 mach = rydberg2d_global.generate_qmachine(nsite)
@@ -255,7 +255,7 @@ class IonQProvider(BaseProvider):
             from simuq.aais import heisenberg
             from simuq.backends.ionq import transpile
 
-            mach = heisenberg.generate_qmachine(qs.num_sites, E = None)
+            mach = heisenberg.generate_qmachine(qs.num_sites, e = None)
             comp = transpile
 
         layout, sol_gvars, boxes, edges = generate_as(qs, mach, trotter_num, solver="least_squares",

@@ -19,6 +19,7 @@ def ham_sum(hlist) :
     return TIHamiltonian(sites_type, ham)
 
 C_6 = 862690 * 2. * np.pi
+
 def generate_qmachine(n=3, inits=None):
     rydberg = QMachine()
 

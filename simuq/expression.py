@@ -23,7 +23,7 @@ class BaseVar :
     The constraints specific to the variables are stored here,
     like the initial value, lower and upper bounds of them.
     """
-    def __init__(self, init_value = 0, lower_bound = -np.inf, upper_bound = np.inf) :
+    def __init__(self, init_value=0, lower_bound=-np.inf, upper_bound=np.inf):
         self.init_value = init_value
         self.lower_bound = lower_bound
         self.upper_bound = upper_bound

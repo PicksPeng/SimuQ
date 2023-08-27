@@ -378,6 +378,7 @@ class IBMProvider(BaseProvider):
         trotter_num=6,
         verbose=0,
         use_pulse=True,
+        state_prep = None
     ):
         self.backend = self.provider.get_backend(backend)
         nsite = self.backend.configuration().n_qubits
@@ -413,6 +414,8 @@ class IBMProvider(BaseProvider):
         self.prog=transpile_qiskit(self.prog,backend=self.backend)
         self.layout = layout
         self.qs_names = qs.print_sites()
+        if state_prep != None :
+            self.prog = self.prog.compose(state_prep,qubits=layout,front=True)
 
     def run(self, shots=4096, on_simulator=False,with_noise = False, verbose = 0):
         from qiskit import execute

@@ -4,6 +4,7 @@ from simuq.environment import qubit
 from simuq.expression import Expression
 from simuq.qmachine import QMachine
 
+
 def generate_qmachine(backend):
     configuration = backend.configuration()
     defaults = backend.defaults()
@@ -56,7 +57,7 @@ def generate_qmachine(backend):
         ins.set_ham(amp * ql[q0].Z * ql[q1].X)
 
         ins = L.add_instruction("derived", "L{}{}_XX".format(q0, q1))
-        amp = LocalVar(ins)
+        amp = ins.add_local_variable()
         ins.set_ham(amp * ql[q0].X * ql[q1].X)
 
         ins = L.add_instruction("derived", "L{}{}_YY".format(q0, q1))

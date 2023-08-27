@@ -1,8 +1,9 @@
 import networkx as nx
 import numpy as np
-from backends.qiskit_transpiler import get_pm
 from qiskit import IBMQ, QuantumCircuit
 from qiskit.pulse import DriveChannel, GaussianSquare, ShiftPhase
+
+from simuq.backends.qiskit_transpiler import get_pm
 
 
 def get_n_link(backend):

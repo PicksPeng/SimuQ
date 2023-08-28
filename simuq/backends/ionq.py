@@ -30,22 +30,34 @@ class Circuit:
         gate = self.job["body"]["circuit"][-1]
         gate["gate"] = "gpi2"
         gate["target"] = q
-        gate["phase"] = phi / (2 * np.pi)
+        gate["phase"] = (phi / (2 * np.pi)) % 1
 
     def gpi(self, q, phi):
         self.job["body"]["circuit"].append({})
         gate = self.job["body"]["circuit"][-1]
         gate["gate"] = "gpi"
         gate["target"] = q
-        gate["phase"] = phi / (2 * np.pi)
+        gate["phase"] = (phi / (2 * np.pi)) % 1
 
     def ms(self, q0, q1, phi0, phi1, theta):
-        self.job["body"]["circuit"].append({})
-        gate = self.job["body"]["circuit"][-1]
-        gate["gate"] = "ms"
-        gate["targets"] = [q0, q1]
-        gate["phases"] = [phi0 / (2 * np.pi), phi1 / (2 * np.pi)]
-        gate["angle"] = theta / (2 * np.pi)
+        # assume angle is between 0 and 1
+        if 0 <= theta <= np.pi / 2:
+            self.job["body"]["circuit"].append({})
+            gate = self.job["body"]["circuit"][-1]
+            gate["gate"] = "ms"
+            gate["targets"] = [q0, q1]
+            gate["phases"] = [(phi0 / (2 * np.pi)) % 1, (phi1 / (2 * np.pi)) % 1]
+            gate["angle"] = theta / (2 * np.pi)
+        elif 3 * np.pi / 2 <= theta <= 2 * np.pi:
+            self.job["body"]["circuit"].append({})
+            gate = self.job["body"]["circuit"][-1]
+            gate["gate"] = "ms"
+            gate["targets"] = [q0, q1]
+            gate["phases"] = [(phi0 / (2 * np.pi)) % 1, ((phi1 + np.pi) / (2 * np.pi)) % 1]
+            gate["angle"] = 1 - theta / (2 * np.pi)
+        else:
+            raise ValueError(f"Parameter theta is {theta}, must be between 0 and pi/2 or 3*pi/2 and 2*pi (use two gates instead)")
+        
 
 
 def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
@@ -57,14 +69,6 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
     circ = Circuit("test", n, backend, noise_model)
     accum_phase = [0 for i in range(n)]
 
-    # Generate unitary GPI2(a)*GPI(b)*GPI2(c)
-    def add_gpi2gpigpi2(q, a, b, c):
-        circ.gpi2(q, c + accum_phase[q])
-        circ.gpi(q, b + accum_phase[q])
-        circ.gpi2(q, a + accum_phase[q])
-
-    def add_hadamard(q):
-        add_gpi2gpigpi2(q, np.pi, -np.pi / 4, 0)
 
     for i in range(len(boxes)):
         idx = topo_order[i]
@@ -73,60 +77,85 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
             if line < n:
                 if ins == 0:
                     q = line
-                    rot = params[0] * t
+                    # expm(-i*(rot/2)*(cos(phi)X+sin(phi)Y))
+                    rot = 2 * params[0] * t
                     phi = params[1]
-                    # expm(-i*rot*(cos(phi)X+sin(phi)Y))
                     if abs(rot) > 1e-5:
-                        add_gpi2gpigpi2(
-                            q, np.pi / 2 - phi, rot - np.pi / 2 - phi, np.pi / 2 - phi
-                        )
+                        # Rz(q, phi)
+                        accum_phase[q] -= phi
+                        accum_phase[q] %= (2 * np.pi)
+                        # Rx(q, rot)
+                        if abs(rot / (2 * np.pi) - 0.25) < 1e-6:
+                            circ.gpi2(q, (accum_phase[q] + 0) % (2 * np.pi))
+                        elif abs(rot / (2 * np.pi) + 0.25) < 1e-6:
+                            circ.gpi2(q, (accum_phase[q] + np.pi) % (2 * np.pi))
+                        elif abs(rot / (2 * np.pi) - 0.5) < 1e-6:
+                            circ.gpi(q, (accum_phase[q] + 0) % (2 * np.pi))
+                        elif abs(rot / (2 * np.pi) + 0.5) < 1e-6:
+                            circ.gpi(q, (accum_phase[q] + np.pi) % (2 * np.pi))
+                        else:
+                            circ.gpi2(q, (accum_phase[q] + 3 * np.pi / 2) % (2 * np.pi))
+                            accum_phase[q] -= rot
+                            accum_phase[q] %= (2 * np.pi)
+                            circ.gpi2(q, (accum_phase[q] + np.pi / 2) % (2 * np.pi))
+                        # Rz(q, -phi)
+                        accum_phase[q] += phi
+                        accum_phase[q] %= (2 * np.pi)
+
                 else:
                     q = line
                     # Rz(q, 2 * params[0] * t)
-                    accum_phase[q] += 2 * params[0] * t
+                    accum_phase[q] -= 2 * params[0] * t
+                    accum_phase[q] %= (2 * np.pi)
             else:
                 (q0, q1) = link[line - n]
                 theta = 2 * params[0] * t
                 if ins == 0:
                     # R_XX(theta)
                     if abs(theta) > 1e-5:
-                        circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], theta)
+                        if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
+                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], theta % (2 * np.pi))
+                        elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
+                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], (theta % (2 * np.pi)) / 2)
+                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], (theta % (2 * np.pi)) / 2)
+                        elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
+                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                        else:
+                            raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                 elif ins == 1:
                     # R_YY(theta)
                     if abs(theta) > 1e-5:
-                        # Hadamard on q0
-                        add_hadamard(q0)
-                        # S on q0
-                        accum_phase[q0] += np.pi / 2
-                        # Hadamard on q1
-                        add_hadamard(q1)
-                        # S on q1
-                        accum_phase[q1] += np.pi / 2
-
-                        circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], theta)
-
-                        # Sdg on q0
-                        accum_phase[q0] -= np.pi / 2
-                        # Hadamard on q0
-                        add_hadamard(q0)
-                        # Sdg on q1
-                        accum_phase[q1] -= np.pi / 2
-                        # Hadamard on q1
-                        add_hadamard(q1)
+                        if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), theta % (2 * np.pi))
+                        elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
+                        elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                        else:
+                            raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                 else:
                     # R_ZZ(theta)
                     if abs(theta) > 1e-5:
-                        # Hadamard on q0
-                        add_hadamard(q0)
-                        # Hadamard on q1
-                        add_hadamard(q1)
-
-                        circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], theta)
-
-                        # Hadamard on q0
-                        add_hadamard(q0)
-                        # Hadamard on q1
-                        add_hadamard(q1)
+                        # R_X(-pi/2)
+                        circ.gpi2(q0, (accum_phase[q0] + np.pi) % (2 * np.pi))
+                        circ.gpi2(q1, (accum_phase[q1] + np.pi) % (2 * np.pi))
+                        # R_YY(theta)
+                        if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), theta % (2 * np.pi))
+                        elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
+                        elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                        else:
+                            raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
+                        # R_X(pi/2)
+                        circ.gpi2(q0, (accum_phase[q0]) % (2 * np.pi))
+                        circ.gpi2(q1, (accum_phase[q1]) % (2 * np.pi))
     # circ = Circuit().add_verbatim_box(circ)
     return circ.job, accum_phase
 

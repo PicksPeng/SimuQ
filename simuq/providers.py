@@ -233,7 +233,7 @@ class IonQProvider(BaseProvider):
     def supported_backends(self):
         print(self.all_backends)
 
-    def compile(self, qs, backend="aria-1", aais="heisenberg", tol=0.01, trotter_num=6, state_prep = None, verbose=0):
+    def compile(self, qs, backend="aria-1", aais="heisenberg", tol=0.01, trotter_num=6, state_prep=None, verbose=0):
         if backend == "harmony":
             nsite = 11
         elif backend == "aria-1":
@@ -268,11 +268,7 @@ class IonQProvider(BaseProvider):
             self.prog['body']['circuit'] = state_prep['circuit'] + self.prog['body']['circuit']
         
         self.layout = layout
-        self.qs_names = qs.print_sites()
-
-    def run(self, shots=4096, on_simulator=False):
-        import json
-
+        self.qs_names = qs.print_sites
 
     def print_circuit(self) :
         if self.prog == None :
@@ -280,7 +276,7 @@ class IonQProvider(BaseProvider):
         print(self.prog["body"]["circuit"])
 
 
-    def run(self, shots = 4096, on_simulator = False, with_noise = True, verbose = 0) :
+    def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
         if self.prog == None :
             raise Exception("No compiled job in record.")
 
@@ -417,7 +413,7 @@ class IBMProvider(BaseProvider):
         if state_prep != None :
             self.prog = self.prog.compose(state_prep,qubits=layout,front=True)
 
-    def run(self, shots=4096, on_simulator=False,with_noise = False, verbose = 0):
+    def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
         from qiskit import execute
 
         if on_simulator:

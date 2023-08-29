@@ -116,11 +116,13 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
                             circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], theta % (2 * np.pi))
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
-                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], (theta % (2 * np.pi)) / 2)
-                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], (theta % (2 * np.pi)) / 2)
+                            circ.gpi(q0, accum_phase[q0])
+                            circ.gpi(q1, accum_phase[q1])
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi) % (2 * np.pi), accum_phase[q1], np.pi - (theta % (2 * np.pi)))
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
-                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
-                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                            circ.gpi(q0, accum_phase[q0])
+                            circ.gpi(q1, accum_phase[q1])
+                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], (theta % (2 * np.pi)) - np.pi)
                         else:
                             raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                 elif ins == 1:
@@ -129,11 +131,13 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
                             circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), theta % (2 * np.pi))
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
+                            circ.gpi(q0, accum_phase[q0])
+                            circ.gpi(q1, accum_phase[q1])
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), np.pi - (theta % (2 * np.pi)))
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                            circ.gpi(q0, accum_phase[q0])
+                            circ.gpi(q1, accum_phase[q1])
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) - np.pi)
                         else:
                             raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                 else:
@@ -146,11 +150,13 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
                             circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), theta % (2 * np.pi))
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) / 2)
+                            circ.gpi(q0, accum_phase[q0])
+                            circ.gpi(q1, accum_phase[q1])
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), np.pi - (theta % (2 * np.pi)))
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), ((theta % (2 * np.pi)) / 2 - np.pi) % (2 * np.pi))
+                            circ.gpi(q0, accum_phase[q0])
+                            circ.gpi(q1, accum_phase[q1])
+                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) - np.pi)
                         else:
                             raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                         # R_X(pi/2)

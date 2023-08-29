@@ -71,11 +71,13 @@ def clean_as(n, boxes, edges):
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
                             circ.append(MSGate(accum_phase[q0] / (2 * np.pi), accum_phase[q1] / (2 * np.pi), (theta / (2 * np.pi)) % 1, [q0, q1]))
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
-                            circ.append(GPI2Gate(((accum_phase[q0]) / (2 * np.pi)) % 1, [q0]))
-                            circ.append(GPI2Gate(((accum_phase[q1]) / (2 * np.pi)) % 1, [q1]))
-                            circ.append(MSGate(accum_phase[q0] / (2 * np.pi), accum_phase[q1] / (2 * np.pi), (((theta / (2 * np.pi)) % 1) / 2) % 1, [q0, q1]))
+                            circ.append(GPIGate(((accum_phase[q0]) / (2 * np.pi)) % 1, [q0]))
+                            circ.append(GPIGate(((accum_phase[q1]) / (2 * np.pi)) % 1, [q1]))
+                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.5) % 1, accum_phase[q1] / (2 * np.pi), 0.5 - ((theta / (2 * np.pi)) % 1), [q0, q1]))
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
-                            circ.append(MSGate(accum_phase[q0] / (2 * np.pi), accum_phase[q1] / (2 * np.pi), (((theta / (2 * np.pi)) % 1) / 2 - 0.5) % 1, [q0, q1]))
+                            circ.append(GPIGate(((accum_phase[q0]) / (2 * np.pi)) % 1, [q0]))
+                            circ.append(GPIGate(((accum_phase[q1]) / (2 * np.pi)) % 1, [q1]))
+                            circ.append(MSGate(accum_phase[q0] / (2 * np.pi), accum_phase[q1] / (2 * np.pi), ((theta / (2 * np.pi)) % 1) - 0.5, [q0, q1]))
                         else:
                             raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                 elif ins == 1:
@@ -84,11 +86,13 @@ def clean_as(n, boxes, edges):
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
                             circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (theta / (2 * np.pi)) % 1, [q0, q1]))
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2) % 1, [q0, q1]))
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2) % 1, [q0, q1]))
+                            circ.append(GPIGate(((accum_phase[q0]) / (2 * np.pi)) % 1, [q0]))
+                            circ.append(GPIGate(((accum_phase[q1]) / (2 * np.pi)) % 1, [q1]))
+                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.75) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, 0.5 - ((theta / (2 * np.pi)) % 1), [q0, q1]))
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2 - 0.5) % 1, [q0, q1]))
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2 - 0.5) % 1, [q0, q1]))
+                            circ.append(GPIGate(((accum_phase[q0]) / (2 * np.pi)) % 1, [q0]))
+                            circ.append(GPIGate(((accum_phase[q1]) / (2 * np.pi)) % 1, [q1]))
+                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, ((theta / (2 * np.pi)) % 1) - 0.5, [q0, q1]))
                         else:
                             raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                 else:
@@ -101,11 +105,13 @@ def clean_as(n, boxes, edges):
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
                             circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (theta / (2 * np.pi)) % 1, [q0, q1]))
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2) % 1, [q0, q1]))
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2) % 1, [q0, q1]))
+                            circ.append(GPIGate(((accum_phase[q0]) / (2 * np.pi)) % 1, [q0]))
+                            circ.append(GPIGate(((accum_phase[q1]) / (2 * np.pi)) % 1, [q1]))
+                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.75) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, 0.5 - ((theta / (2 * np.pi)) % 1), [q0, q1]))
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2 - 0.5) % 1, [q0, q1]))
-                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, (((theta / (2 * np.pi)) % 1) / 2 - 0.5) % 1, [q0, q1]))
+                            circ.append(GPIGate(((accum_phase[q0]) / (2 * np.pi)) % 1, [q0]))
+                            circ.append(GPIGate(((accum_phase[q1]) / (2 * np.pi)) % 1, [q1]))
+                            circ.append(MSGate((accum_phase[q0] / (2 * np.pi) + 0.25) % 1, (accum_phase[q1] / (2 * np.pi) + 0.25) % 1, ((theta / (2 * np.pi)) % 1) - 0.5, [q0, q1]))
                         else:
                             raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
                         # R_X(pi/2)

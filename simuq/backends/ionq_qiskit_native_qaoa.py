@@ -24,7 +24,7 @@ def clean_as(n, boxes, edges):
 
     def add_hadamard(q):
         accum_phase[q] -= np.pi
-        accum_phase[q] %= 1
+        accum_phase[q] %= (2 * np.pi)
         circ.append(GPI2Gate((accum_phase / (2 * np.pi) + 0.25) % 1, [q]))
 
     for i in range(len(boxes)):

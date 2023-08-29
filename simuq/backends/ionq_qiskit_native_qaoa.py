@@ -42,18 +42,18 @@ def clean_as(n, boxes, edges):
                         accum_phase[q] %= (2 * np.pi)
                         # Rx(q, rot)
                         if abs(rot / (2 * np.pi) - 0.25) < 1e-6:
-                            circ.gpi2(q, (accum_phase[q] + 0) % (2 * np.pi))
+                            circ.append(GPI2Gate(((accum_phase[q] + 0) / (2 * np.pi)) % 1, [q]))
                         elif abs(rot / (2 * np.pi) + 0.25) < 1e-6:
-                            circ.gpi2(q, (accum_phase[q] + np.pi) % (2 * np.pi))
+                            circ.append(GPI2Gate(((accum_phase[q] + np.pi) / (2 * np.pi)) % 1, [q]))
                         elif abs(rot / (2 * np.pi) - 0.5) < 1e-6:
-                            circ.gpi(q, (accum_phase[q] + 0) % (2 * np.pi))
+                            circ.append(GPIGate(((accum_phase[q] + 0) / (2 * np.pi)) % 1, [q]))
                         elif abs(rot / (2 * np.pi) + 0.5) < 1e-6:
-                            circ.gpi(q, (accum_phase[q] + np.pi) % (2 * np.pi))
+                            circ.append(GPIGate(((accum_phase[q] + np.pi) / (2 * np.pi)) % 1, [q]))
                         else:
-                            circ.gpi2(q, (accum_phase[q] + 3 * np.pi / 2) % (2 * np.pi))
+                            circ.append(GPI2Gate(((accum_phase[q] + 3 * np.pi / 2) / (2 * np.pi)) % 1, [q]))
                             accum_phase[q] -= rot
                             accum_phase[q] %= (2 * np.pi)
-                            circ.gpi2(q, (accum_phase[q] + np.pi / 2) % (2 * np.pi))
+                            circ.append(GPI2Gate(((accum_phase[q] + np.pi / 2) % (2 * np.pi)) % 1, [q]))
                         # Rz(q, -phi)
                         accum_phase[q] += phi
                         accum_phase[q] %= (2 * np.pi)

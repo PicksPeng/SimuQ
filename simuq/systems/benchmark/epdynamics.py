@@ -4,8 +4,6 @@
 # Hel = 1/2 Σ_j eps_j Z_j + 1/2 Σ_k Σ_j V_jk (X_j X_k + Y_j Y_k)
 # Hph =
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

@@ -1,7 +1,6 @@
 import numpy as np
 
 from simuq.environment import qubit
-from simuq.expression import Expression
 from simuq.qsystem import QSystem
 
 # The Floquet Hamiltonian system in arXiv:2107.07311

@@ -1,8 +1,6 @@
 # Generate a transverse field cycle Ising model
 # H = J \sum_{j=1}^{n} Z_jZ_{j+1} + h \sum_{j=1}^n X_j  (assuming Z_{n+1}=Z_1)
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

@@ -10,14 +10,13 @@ In the worst case, this representation may take
 exponential resources. In practice, it is enough for
 nowadays machines.
 
-Natural computation operations are overloaded. 
+Natural computation operations are overloaded.
 Pauli basis products are symbolically calculated, so
 that commutativity test is possible.
 """
 
-from copy import copy, deepcopy
+from copy import copy
 
-import simuq
 from simuq.expression import Expression
 
 
@@ -139,7 +138,7 @@ class TIHamiltonian:
                     break
             i += 1
         i = 0
-        
+
         while i < len(self.ham) :
             if isinstance(self.ham[i][1], Expression) :
                 break
@@ -178,12 +177,7 @@ class TIHamiltonian:
 
     def __add__(self, other):
         # need more typing restrictions
-        if (
-            type(other) == int
-            or type(other) == float
-            or type(other) == complex
-            or isinstance(other, Expression)
-        ):
+        if isinstance(other, (int, float, complex, Expression)):
             other = other * TIHamiltonian.identity(self.sites_type)
         if self.sites_type != other.sites_type:
             self.extend_sites(other.sites_type)
@@ -195,24 +189,14 @@ class TIHamiltonian:
         return h
 
     def __radd__(self, other):
-        if (
-            type(other) == int
-            or type(other) == float
-            or type(other) == complex
-            or isinstance(other, Expression)
-        ):
+        if isinstance(other, (int, float, complex, Expression)):
             return self.__add__(other * TIHamiltonian.identity(self.sites_type))
         else:
             return NotImplemented
 
     def __sub__(self, other):
         # need more typing restrictions
-        if (
-            type(other) == int
-            or type(other) == float
-            or type(other) == complex
-            or isinstance(other, Expression)
-        ):
+        if isinstance(other, (int, float, complex, Expression)):
             other = other * TIHamiltonian.identity(self.sites_type)
         if self.sites_type != other.sites_type:
             self.extend_sites(other.sites_type)
@@ -224,12 +208,7 @@ class TIHamiltonian:
         return h
 
     def __rsub__(self, other):
-        if (
-            type(other) == int
-            or type(other) == float
-            or type(other) == complex
-            or isinstance(other, Expression)
-        ):
+        if isinstance(other, (int, float, complex, Expression)):
             return (other * TIHamiltonian.identity(self.sites_type)) - self
         else:
             return NotImplemented
@@ -267,12 +246,7 @@ class TIHamiltonian:
 
     def __mul__(self, other):
         # need more typing restrictions
-        if (
-            type(other) == int
-            or type(other) == float
-            or type(other) == complex
-            or isinstance(other, Expression)
-        ):
+        if isinstance(other, (int, float, complex, Expression)):
             return self.scalar_mul(other)
         self.extend_ham_by_sites()
         other.extend_ham_by_sites()
@@ -289,23 +263,13 @@ class TIHamiltonian:
         return h
 
     def __truediv__(self, other):
-        if (
-            type(other) == int
-            or type(other) == float
-            or type(other) == complex
-            or isinstance(other, Expression)
-        ):
+        if isinstance(other, (int, float, complex, Expression)):
             return self.scalar_mul(1 / other)
         else:
             return NotImplemented
 
     def __rmul__(self, other):
-        if (
-            type(other) == int
-            or type(other) == float
-            or type(other) == complex
-            or isinstance(other, Expression)
-        ):
+        if isinstance(other, (int, float, complex, Expression)):
             return self.scalar_mul(other)
         else:
             return NotImplemented
@@ -338,7 +302,7 @@ class TIHamiltonian:
         return (h1 * h2 - h2 * h1).is_empty()
 
     def touched_sites(self):
-        if self.saved_t_sites != None:
+        if self.saved_t_sites is not None:
             return self.saved_t_sites
         ret = [0 for i in range(len(self.sites_type))]
         for prod, t in self.ham:

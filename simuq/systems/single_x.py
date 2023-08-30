@@ -1,5 +1,3 @@
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

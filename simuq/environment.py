@@ -5,8 +5,8 @@ A quantum environment is a container of sites. Either target quantum
 systems or quantum machines are described by its children classes.
 
 A site is the basic unit describing a quantized physics entity. It
-includes qubit / bosonic / fermionic states, or other customized 
-types of sites. Each site contains a set of site operators. These 
+includes qubit / bosonic / fermionic states, or other customized
+types of sites. Each site contains a set of site operators. These
 operators will be used in the construction of Hamiltonians.
 
 Currently operators are stored as strings. In future these may be
@@ -43,7 +43,7 @@ class BaseSite:
     def __init__(self, qs, name=None):
         self.index = qs.num_sites
         self.qs = qs
-        if name == None:
+        if name is None:
             name = f"Site{qs.num_sites}"
         self.name = name
         qs.num_sites += 1
@@ -62,7 +62,7 @@ class qubit(BaseSite):
     """
 
     def __init__(self, qs, name=None):
-        if name == None:
+        if name is None:
             name = f"Qubit{qs.num_sites}"
         super().__init__(qs, name)
         qs.sites_type.append("qubit")
@@ -92,7 +92,7 @@ class BaseParticle(BaseSite):
     """
 
     def __init__(self, qs, name=None):
-        if name == None:
+        if name is None:
             name = f"Site{qs.num_sites}"
         super().__init__(qs, name)
         qs.sites_type.append("particle")
@@ -114,7 +114,7 @@ class fermion(BaseParticle):
     """The fermionic site"""
 
     def __init__(self, qs, name=None):
-        if name == None:
+        if name is None:
             name = f"Fermion{qs.num_sites}"
         super().__init__(qs, name)
         qs.sites_type[-1] = "fermion"
@@ -124,7 +124,7 @@ class boson(BaseParticle):
     """The bosonic site"""
 
     def __init__(self, qs, name=None):
-        if name == None:
+        if name is None:
             name = f"Boson{qs.num_sites}"
         super().__init__(qs, name)
         qs.sites_type[-1] = "boson"

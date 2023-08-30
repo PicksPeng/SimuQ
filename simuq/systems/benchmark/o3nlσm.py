@@ -3,8 +3,6 @@
 # H = Jx Σ_{(j, k)} σ_{j, k}·σ_{(j+1), k} + Jy Σ_{(j, k)} σ_{j, k}·σ_{j, (k+1)}
 # Here σ_{j, k}=(X_{j, k}, Y_{j, k}, Z_{j, k})
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

@@ -5,7 +5,6 @@
 # try qiskit_iontrap.py which generates a circuit in bk_c.
 
 import networkx as nx
-import numpy as np
 from qiskit import QuantumCircuit
 
 # import gates

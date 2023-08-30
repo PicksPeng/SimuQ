@@ -2,8 +2,6 @@
 # The following comes from Aramthottil et al., Phys. Rev. B, L041101, 2022
 # H = μ/2 Σ_{j=1}^{n-1} Z_jZ_{j+1} - Σ_{j=1}^n (t X_j + h Z_j)
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

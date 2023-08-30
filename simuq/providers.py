@@ -13,7 +13,7 @@ class BaseProvider:
         self.qs_names = None
 
     def print_sites(self):
-        if self.prog == None:
+        if self.prog is None:
             raise Exception("No compiled job in record.")
         print("Order of sites:", self.qs_names)
 
@@ -81,7 +81,7 @@ class BraketProvider(BaseProvider):
                 mach = rydberg2d_global.generate_qmachine(nsite)
                 comp = transpile
 
-            if state_prep == None:
+            if state_prep is None:
                 state_prep = {"times": [], "omega": [], "delta": [], "phi": []}
 
             layout, sol_gvars, boxes, edges = generate_as(
@@ -165,13 +165,13 @@ class BraketProvider(BaseProvider):
         plt.show()
 
     def visualize(self):
-        if self.prog == None:
+        if self.prog is None:
             raise Exception("No compiled job in record.")
         if self.provider == "quera":
             self.visualize_quera()
 
     def run(self, shots=1000, on_simulator=False, verbose=0):
-        if self.prog == None:
+        if self.prog is None:
             raise Exception("No compiled job in record.")
 
         if self.provider == "quera":
@@ -194,12 +194,12 @@ class BraketProvider(BaseProvider):
                     print("Task status: ", meta["status"])
 
     def results(self, task_arn=None, verbose=0):
-        if task_arn != None:
+        if task_arn is not None:
             from braket.aws import AwsQuantumTask
 
             task = AwsQuantumTask(arn=task_arn)
         else:
-            if self.task == None:
+            if self.task is None:
                 raise Exception("No submitted job in record.")
             task = self.task
 
@@ -254,8 +254,8 @@ class BraketProvider(BaseProvider):
 
 class IonQProvider(BaseProvider):
     def __init__(self, API_key=None, from_file=None):
-        if API_key == None:
-            if from_file == None:
+        if API_key is None:
+            if from_file is None:
                 raise Exception("No API_key provided.")
             else:
                 with open(from_file, "r") as f:
@@ -315,19 +315,19 @@ class IonQProvider(BaseProvider):
             qs.num_sites, sol_gvars, boxes, edges, backend="qpu." + backend, noise_model=backend
         )
 
-        if state_prep != None:
+        if state_prep is not None:
             self.prog["body"]["circuit"] = state_prep["circuit"] + self.prog["body"]["circuit"]
 
         self.layout = layout
         self.qs_names = qs.print_sites
 
     def print_circuit(self):
-        if self.prog == None:
+        if self.prog is None:
             raise Exception("No compiled job in record.")
         print(self.prog["body"]["circuit"])
 
     def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
-        if self.prog == None:
+        if self.prog is None:
             raise Exception("No compiled job in record.")
 
         import json
@@ -358,13 +358,11 @@ class IonQProvider(BaseProvider):
             print(self.task)
 
     def results(self, job_id=None, verbose=0):
-        if job_id == None:
-            if self.task != None:
+        if job_id is None:
+            if self.task is not None:
                 job_id = self.task["id"]
             else:
                 raise Exception("No submitted job in record.")
-
-        import json
 
         import requests
 
@@ -402,7 +400,7 @@ class IBMProvider(BaseProvider):
     def __init__(self, API_key=None, hub="ibm-q", group="open", project="main", from_file=None):
         from qiskit import IBMQ
 
-        if from_file != None:
+        if from_file is not None:
             with open(from_file, "r") as f:
                 API_key = f.readline().strip()
         self.API_key = API_key
@@ -458,7 +456,7 @@ class IBMProvider(BaseProvider):
         self.prog = transpile_qiskit(self.prog, backend=self.backend)
         self.layout = layout
         self.qs_names = qs.print_sites()
-        if state_prep != None:
+        if state_prep is not None:
             self.prog = self.prog.compose(state_prep, qubits=layout, front=True)
 
     def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
@@ -485,8 +483,8 @@ class IBMProvider(BaseProvider):
             print(self.task)
 
     def results(self, job_id=None, on_simulator=False):
-        if job_id == None:
-            if self.task != None:
+        if job_id is None:
+            if self.task is not None:
                 job_id = self.task.job_id()
             else:
                 raise Exception("No submitted job in record.")
@@ -538,7 +536,7 @@ class QuTiPProvider(BaseProvider):
         import qutip as qp
 
         self.n = qs.num_sites
-        if initial_state == None:
+        if initial_state is None:
             self.init = qp.basis(1 << self.n)
         else:
             self.init = initial_state
@@ -549,9 +547,7 @@ class QuTiPProvider(BaseProvider):
         # return self.prog
 
     def evaluate_Hamiltonian(self, t):
-        import qutip as qp
-
-        if self.prog == None:
+        if self.prog is None:
             raise Exception("No compiled job in record.")
         M = 0
         for i in range(len(self.prog[0])):
@@ -562,7 +558,7 @@ class QuTiPProvider(BaseProvider):
     def run(self, shots=None, on_simulator=None, verbose=0):
         import qutip as qp
 
-        if self.prog == None:
+        if self.prog is None:
             raise Exception("No compiled job in record.")
         self.fin = qp.sesolve(self.prog[0], self.init, [0, self.prog[1]])
         if verbose >= 0:
@@ -572,7 +568,7 @@ class QuTiPProvider(BaseProvider):
     def results(self, verbose=0):
         import numpy as np
 
-        if self.fin == None:
+        if self.fin is None:
             raise Exception("No submitted job in record.")
         self.res = dict()
         for i in range(1 << self.n):

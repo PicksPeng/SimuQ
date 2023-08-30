@@ -7,7 +7,6 @@ def gen_braket_code(pos, clocks, pulse):
     # # pulse = np.array(pulse)
     # print(pulse)
     # print(pulse.shape)
-    import matplotlib.pyplot as plt
     from braket.ahs.atom_arrangement import AtomArrangement
 
     register = AtomArrangement()
@@ -83,7 +82,6 @@ def clean_as(sol_gvars, boxes, ramp_time, state_prep, verbose=0):
         new_x = np.cos(theta) * pos[i][0] - np.sin(theta) * pos[i][1]
         new_y = np.sin(theta) * pos[i][0] + np.cos(theta) * pos[i][1]
         pos[i] = (new_x, new_y)
-    n = len(pos)
     m = len(boxes)
     times = []
     pulse = [[0 for i in range(m)] for k in range(3)]

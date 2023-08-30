@@ -84,7 +84,7 @@ def clean_as(alignment, sol_gvars, boxes):
     for evo_idx in range(m):
         box = boxes[evo_idx]
         times.append(box[1])
-        for ((i, j), ins, h, ins_lvars) in box[0]:
+        for (i, j), ins, h, ins_lvars in box[0]:
             # print(f"i={i}")
             if i == 0:
                 pulse[0][evo_idx] = ins_lvars[0]

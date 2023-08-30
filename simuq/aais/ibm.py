@@ -18,9 +18,7 @@ def generate_qmachine(backend):
         cx_sched = instruction_schedule_map.get("cx", qubits=(q1, q2))
         supported = False
         for time, inst in cx_sched.instructions:
-            if isinstance(inst.channel, DriveChannel) and not isinstance(
-                inst, ShiftPhase
-            ):
+            if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
                 if isinstance(inst.pulse, GaussianSquare):
                     target = inst.channel.index
                     control = q1 if target == q2 else q2
@@ -41,15 +39,13 @@ def generate_qmachine(backend):
         ins1 = L.add_instruction("native", "L{}_X_Y".format(i))
         amp = ins1.add_local_variable()
         phase = ins1.add_local_variable()
-        ins1.set_ham(
-            amp * (Expression.cos(phase) * ql[i].X + Expression.sin(phase) * ql[i].Y)
-        )
+        ins1.set_ham(amp * (Expression.cos(phase) * ql[i].X + Expression.sin(phase) * ql[i].Y))
 
         ins2 = L.add_instruction("derived", "L{}_Z".format(i))
         amp = ins2.add_local_variable()
         ins2.set_ham(amp * ql[i].Z)
 
-    for (q0, q1) in link:
+    for q0, q1 in link:
         L = mach.add_signal_line()
 
         ins = L.add_instruction("derived", "L{}{}_ZX".format(q0, q1))

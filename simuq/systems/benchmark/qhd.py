@@ -7,19 +7,21 @@
 # y = 1/q Σ_j n_{y,j}
 
 import numpy as np
-from simuq.qsystem import QSystem
-from simuq.environment import qubit
 
-def GenQS(q, T, alpha, beta, f = lambda x, y: -x * x + y * y + x * y) :
+from simuq.environment import qubit
+from simuq.qsystem import QSystem
+
+
+def GenQS(q, T, alpha, beta, f=lambda x, y: -x * x + y * y + x * y):
     qs = QSystem()
     x, y = [qubit(qs) for i in range(q)], [qubit(qs) for i in range(q)]
     H, xoper, yoper = 0, 0, 0
-    for i in range(q) :
+    for i in range(q):
         H += alpha * (-0.5) * q**2 * (x[i].X + y[i].X)
-    for i in range(q) :
-        xoper += 1. / q * (x[i].I - x[i].Z) / 2
-        yoper += 1. / q * (y[i].I - y[i].Z) / 2
-    for i in range(q) :
+    for i in range(q):
+        xoper += 1.0 / q * (x[i].I - x[i].Z) / 2
+        yoper += 1.0 / q * (y[i].I - y[i].Z) / 2
+    for i in range(q):
         H += beta * f(xoper, yoper)
     qs.add_evolution(H, T)
     return qs

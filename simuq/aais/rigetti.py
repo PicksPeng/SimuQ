@@ -22,13 +22,18 @@ def generate_qmachine():
                 qubit_index = row * 100 + r * 10 + q
                 qubit_neighbor_index = row * 100 + r * 10 + ((q - 1) % qubits_per_ring)
                 L = mach.add_signal_line()
-                ins1 = L.add_instruction('native', 'L{}_X_Y'.format(qubit_index))
+                ins1 = L.add_instruction("native", "L{}_X_Y".format(qubit_index))
                 amp = ins1.add_local_variable()
                 phase = ins1.add_local_variable()
-                ins1.set_ham(amp * (Expression.cos(phase) * qubits[qubit_index].X + Expression.sin(phase) * qubits[
-                    qubit_index].Y))
+                ins1.set_ham(
+                    amp
+                    * (
+                        Expression.cos(phase) * qubits[qubit_index].X
+                        + Expression.sin(phase) * qubits[qubit_index].Y
+                    )
+                )
 
-                ins2 = L.add_instruction('derived', 'L{}_Z'.format(qubit_index))
+                ins2 = L.add_instruction("derived", "L{}_Z".format(qubit_index))
                 amp = ins2.add_local_variable()
                 ins2.set_ham(amp * qubits[qubit_index].Z)
 
@@ -48,14 +53,14 @@ def generate_qmachine():
             links.append((row * 100 + r * 10 + 7, row * 100 + r * 10 + 104))
             links.append((row * 100 + r * 10, row * 100 + r * 10 + 103))
 
-    for (q0, q1) in links:
+    for q0, q1 in links:
         L = mach.add_signal_line()
 
-        ins = L.add_instruction('derived', 'L{}{}_XX_YY'.format(q0, q1))
+        ins = L.add_instruction("derived", "L{}{}_XX_YY".format(q0, q1))
         amp = ins.add_local_variable()
         ins.set_ham(amp * (qubits[q0].X * qubits[q1].X + qubits[q0].Y + qubits[q1].Y))
 
-        ins = L.add_instruction('derived', 'L{}{}_ZZ'.format(q0, q1))
+        ins = L.add_instruction("derived", "L{}{}_ZZ".format(q0, q1))
         amp = ins.add_local_variable()
         ins.set_ham(amp * qubits[q0].Z * qubits[q1].Z)
 

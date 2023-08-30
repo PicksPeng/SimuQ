@@ -1,5 +1,5 @@
+from simuq.environment import boson, qubit
 from simuq.qsystem import QSystem
-from simuq.environment import qubit, boson
 
 # Jaynes-Cummings model
 qs = QSystem()

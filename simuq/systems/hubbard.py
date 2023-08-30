@@ -1,5 +1,5 @@
-from simuq.qsystem import QSystem
 from simuq.environment import fermion
+from simuq.qsystem import QSystem
 
 # Fermi-Hubbard model on a 1D chain with open-boundary condition,
 # based on arXiv:2010.07965 (but omitted the "spin-dependent local
@@ -24,8 +24,7 @@ ho = 0  # on-site interaction term
 for i in range(L - 1):
     for s in range(2):
         k1, k2 = 2 * i + s, 2 * (i + 1) + s
-        hh += -J * (fermions[k1].c * fermions[k2].a +
-                    fermions[k2].c * fermions[k1].a)
+        hh += -J * (fermions[k1].c * fermions[k2].a + fermions[k2].c * fermions[k1].a)
 for i in range(L):
     ho += U * nops[2 * i] * nops[2 * i + 1]
 

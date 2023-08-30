@@ -1,17 +1,18 @@
 import numpy as np
 
+
 def gen_braket_code(pos, clocks, pulse):
     # print(pos)
     # print(clocks)
     # # pulse = np.array(pulse)
-    #print(pulse)
+    # print(pulse)
     # print(pulse.shape)
     import matplotlib.pyplot as plt
     from braket.ahs.atom_arrangement import AtomArrangement
 
     register = AtomArrangement()
     for posi in pos:
-        register.add(np.array([posi[0]*1e-6, posi[1]*1e-6]))
+        register.add(np.array([posi[0] * 1e-6, posi[1] * 1e-6]))
 
     from braket.ahs.driving_field import DrivingField
     from braket.timings.time_series import TimeSeries
@@ -42,18 +43,20 @@ def gen_braket_code(pos, clocks, pulse):
     ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
 
     from braket.aws import AwsDevice
+
     aquila_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/quera/Aquila")
     discretized_ahs_program = ahs_program.discretize(aquila_qpu)
-    
+
     return discretized_ahs_program
-    
+
     from braket.devices import LocalSimulator
+
     device = LocalSimulator("braket_ahs")
 
     result = device.run(discretized_ahs_program, shots=1_000_000).result()
 
 
-def gen_clocks(times, ramp_time = 0.05):
+def gen_clocks(times, ramp_time=0.05):
     clocks = [0, ramp_time]
     for t in times:
         clocks.append(clocks[-1] + t)
@@ -63,13 +66,13 @@ def gen_clocks(times, ramp_time = 0.05):
 
 
 def clean_as(alignment, sol_gvars, boxes):
-    pos = [(0., 0.) ]
-    for i in range(int(len(sol_gvars) / 2)) :
-        pos.append((sol_gvars[2*i], sol_gvars[2*i+1]))
+    pos = [(0.0, 0.0)]
+    for i in range(int(len(sol_gvars) / 2)):
+        pos.append((sol_gvars[2 * i], sol_gvars[2 * i + 1]))
     # Fix rotation angle
     theta = -np.arctan2(pos[1][1], pos[1][0])
     print("Fixing rotation by ", theta)
-    for i in range(len(pos)) :
+    for i in range(len(pos)):
         new_x = np.cos(theta) * pos[i][0] - np.sin(theta) * pos[i][1]
         new_y = np.sin(theta) * pos[i][0] + np.cos(theta) * pos[i][1]
         pos[i] = (new_x, new_y)
@@ -80,7 +83,7 @@ def clean_as(alignment, sol_gvars, boxes):
     for evo_idx in range(m):
         box = boxes[evo_idx]
         times.append(box[1])
-        for ((i, j), ins, h, ins_lvars) in box[0]:
+        for (i, j), ins, h, ins_lvars in box[0]:
             print(f"i={i}, ins_lvars={ins_lvars}")
             if i == 0:
                 pulse[0][evo_idx] = ins_lvars[0] * 1e6
@@ -91,8 +94,8 @@ def clean_as(alignment, sol_gvars, boxes):
 
 
 def transpile(alignment, sol_gvars, boxes, edges):
-    #print(alignment)
-    #print(sol_gvars)
+    # print(alignment)
+    # print(sol_gvars)
     print(boxes)
     code = gen_braket_code(*clean_as(alignment, sol_gvars, boxes))
     return code

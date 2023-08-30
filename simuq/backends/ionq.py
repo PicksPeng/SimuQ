@@ -56,8 +56,9 @@ class Circuit:
             gate["phases"] = [(phi0 / (2 * np.pi)) % 1, ((phi1 + np.pi) / (2 * np.pi)) % 1]
             gate["angle"] = 1 - theta / (2 * np.pi)
         else:
-            raise ValueError(f"Parameter theta is {theta}, must be between 0 and pi/2 or 3*pi/2 and 2*pi (use two gates instead)")
-        
+            raise ValueError(
+                f"Parameter theta is {theta}, must be between 0 and pi/2 or 3*pi/2 and 2*pi (use two gates instead)"
+            )
 
 
 def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
@@ -68,7 +69,6 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
     topo_order = list(nx.topological_sort(DG))
     circ = Circuit("test", n, backend, noise_model)
     accum_phase = [0 for i in range(n)]
-
 
     for i in range(len(boxes)):
         idx = topo_order[i]
@@ -83,7 +83,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                     if abs(rot) > 1e-5:
                         # Rz(q, phi)
                         accum_phase[q] -= phi
-                        accum_phase[q] %= (2 * np.pi)
+                        accum_phase[q] %= 2 * np.pi
                         # Rx(q, rot)
                         if abs(rot / (2 * np.pi) - 0.25) < 1e-6:
                             circ.gpi2(q, (accum_phase[q] + 0) % (2 * np.pi))
@@ -96,17 +96,17 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                         else:
                             circ.gpi2(q, (accum_phase[q] + 3 * np.pi / 2) % (2 * np.pi))
                             accum_phase[q] -= rot
-                            accum_phase[q] %= (2 * np.pi)
+                            accum_phase[q] %= 2 * np.pi
                             circ.gpi2(q, (accum_phase[q] + np.pi / 2) % (2 * np.pi))
                         # Rz(q, -phi)
                         accum_phase[q] += phi
-                        accum_phase[q] %= (2 * np.pi)
+                        accum_phase[q] %= 2 * np.pi
 
                 else:
                     q = line
                     # Rz(q, 2 * params[0] * t)
                     accum_phase[q] -= 2 * params[0] * t
-                    accum_phase[q] %= (2 * np.pi)
+                    accum_phase[q] %= 2 * np.pi
             else:
                 (q0, q1) = link[line - n]
                 theta = 2 * params[0] * t
@@ -118,28 +118,62 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
                             circ.gpi(q0, accum_phase[q0])
                             circ.gpi(q1, accum_phase[q1])
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi) % (2 * np.pi), accum_phase[q1], np.pi - (theta % (2 * np.pi)))
+                            circ.ms(
+                                q0,
+                                q1,
+                                (accum_phase[q0] + np.pi) % (2 * np.pi),
+                                accum_phase[q1],
+                                np.pi - (theta % (2 * np.pi)),
+                            )
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
                             circ.gpi(q0, accum_phase[q0])
                             circ.gpi(q1, accum_phase[q1])
-                            circ.ms(q0, q1, accum_phase[q0], accum_phase[q1], (theta % (2 * np.pi)) - np.pi)
+                            circ.ms(
+                                q0,
+                                q1,
+                                accum_phase[q0],
+                                accum_phase[q1],
+                                (theta % (2 * np.pi)) - np.pi,
+                            )
                         else:
-                            raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
+                            raise ValueError(
+                                f"Rotation angle is {theta}, should be between 0 and 2*pi"
+                            )
                 elif ins == 1:
                     # R_YY(theta)
                     if abs(theta) > 1e-5:
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), theta % (2 * np.pi))
+                            circ.ms(
+                                q0,
+                                q1,
+                                (accum_phase[q0] + np.pi / 2) % (2 * np.pi),
+                                (accum_phase[q1] + np.pi / 2) % (2 * np.pi),
+                                theta % (2 * np.pi),
+                            )
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
                             circ.gpi(q0, accum_phase[q0])
                             circ.gpi(q1, accum_phase[q1])
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), np.pi - (theta % (2 * np.pi)))
+                            circ.ms(
+                                q0,
+                                q1,
+                                (accum_phase[q0] + np.pi / 2) % (2 * np.pi),
+                                (accum_phase[q1] + np.pi / 2) % (2 * np.pi),
+                                np.pi - (theta % (2 * np.pi)),
+                            )
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
                             circ.gpi(q0, accum_phase[q0])
                             circ.gpi(q1, accum_phase[q1])
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) - np.pi)
+                            circ.ms(
+                                q0,
+                                q1,
+                                (accum_phase[q0] + np.pi / 2) % (2 * np.pi),
+                                (accum_phase[q1] + np.pi / 2) % (2 * np.pi),
+                                (theta % (2 * np.pi)) - np.pi,
+                            )
                         else:
-                            raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
+                            raise ValueError(
+                                f"Rotation angle is {theta}, should be between 0 and 2*pi"
+                            )
                 else:
                     # R_ZZ(theta)
                     if abs(theta) > 1e-5:
@@ -148,17 +182,37 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                         circ.gpi2(q1, (accum_phase[q1] + np.pi) % (2 * np.pi))
                         # R_YY(theta)
                         if (theta / (2 * np.pi)) % 1 <= 0.25 or (theta / (2 * np.pi)) % 1 >= 0.75:
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), theta % (2 * np.pi))
+                            circ.ms(
+                                q0,
+                                q1,
+                                (accum_phase[q0] + np.pi / 2) % (2 * np.pi),
+                                (accum_phase[q1] + np.pi / 2) % (2 * np.pi),
+                                theta % (2 * np.pi),
+                            )
                         elif 0.25 <= (theta / (2 * np.pi)) % 1 <= 0.5:
                             circ.gpi(q0, accum_phase[q0])
                             circ.gpi(q1, accum_phase[q1])
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), np.pi - (theta % (2 * np.pi)))
+                            circ.ms(
+                                q0,
+                                q1,
+                                (accum_phase[q0] + np.pi / 2) % (2 * np.pi),
+                                (accum_phase[q1] + np.pi / 2) % (2 * np.pi),
+                                np.pi - (theta % (2 * np.pi)),
+                            )
                         elif 0.5 <= (theta / (2 * np.pi)) % 1 <= 0.75:
                             circ.gpi(q0, accum_phase[q0])
                             circ.gpi(q1, accum_phase[q1])
-                            circ.ms(q0, q1, (accum_phase[q0] + np.pi / 2) % (2 * np.pi), (accum_phase[q1] + np.pi / 2) % (2 * np.pi), (theta % (2 * np.pi)) - np.pi)
+                            circ.ms(
+                                q0,
+                                q1,
+                                (accum_phase[q0] + np.pi / 2) % (2 * np.pi),
+                                (accum_phase[q1] + np.pi / 2) % (2 * np.pi),
+                                (theta % (2 * np.pi)) - np.pi,
+                            )
                         else:
-                            raise ValueError(f"Rotation angle is {theta}, should be between 0 and 2*pi")
+                            raise ValueError(
+                                f"Rotation angle is {theta}, should be between 0 and 2*pi"
+                            )
                         # R_X(pi/2)
                         circ.gpi2(q0, (accum_phase[q0]) % (2 * np.pi))
                         circ.gpi2(q1, (accum_phase[q1]) % (2 * np.pi))
@@ -167,7 +221,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
 
 
 def transpile(n, sol_gvars, boxes, edges, backend="simulator", noise_model=None):
-    if isinstance(n, list) :
+    if isinstance(n, list):
         n = len(n)
     circ, accum_phase = clean_as(n, boxes, edges, backend, noise_model)
     return circ

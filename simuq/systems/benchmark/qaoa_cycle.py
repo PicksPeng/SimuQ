@@ -14,7 +14,7 @@ def GenQS(n=12, p=3, parameter_list=None):
     qs = QSystem()
     q = [qubit(qs) for i in range(n)]
     link = [(i, (i + 1) % n) for i in range(n)]
-    if parameter_list == None:
+    if parameter_list is None:
         parameter_list = np.random.uniform(0, 1, 2 * p)
     for i in range(p):
         h = 0

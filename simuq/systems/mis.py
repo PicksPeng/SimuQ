@@ -47,7 +47,7 @@ def GenQS(topo="Chain", k=3, dis_num=10, dis_partial=None, Delta=1, Omega=4, alp
     for i in range(n):
         h1 += -Delta * noper[i]
 
-    if dis_partial == None:
+    if dis_partial is None:
         dis_partial = dis_num
     qs.add_time_dependent_evolution(
         adiabatic(h0, h1), np.linspace(0, T, dis_num + 1)[: dis_partial + 1]

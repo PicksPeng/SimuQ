@@ -3,11 +3,11 @@ The class file describing expressions with variables.
 
 Expressions are effectively functions taking a valuation of
 variables and generating (real) results. We support the
-natural construction of expressions, where users write 
+natural construction of expressions, where users write
 +, -, *, / naturally on expressions.
 
-These expressions will be used in representing the 
-coefficients in machine's instruction Hamiltonians, where 
+These expressions will be used in representing the
+coefficients in machine's instruction Hamiltonians, where
 variables belonging to the instruction have effects on
 the Hamiltonian.
 
@@ -89,7 +89,7 @@ class Expression:
 
     @classmethod
     def cos(cls, e):
-        if type(e) == int or type(e) == float:
+        if isinstance(e, (int, float)):
             return math.cos(e)
         if isinstance(e, BaseVar):
             e = e.to_exp()
@@ -98,7 +98,7 @@ class Expression:
 
         def exp(values):
             sub = e.exp(values)
-            if type(sub) == int or type(sub) == float:
+            if isinstance(sub, (int, float)):
                 return math.cos(sub)
             if isinstance(sub, np.float64):
                 return np.cos(sub)
@@ -112,7 +112,7 @@ class Expression:
 
     @classmethod
     def sin(cls, e):
-        if type(e) == int or type(e) == float:
+        if isinstance(e, (int, float)):
             return math.sin(e)
         if isinstance(e, BaseVar):
             e = e.to_exp()
@@ -121,7 +121,7 @@ class Expression:
 
         def exp(values):
             sub = e.exp(values)
-            if type(sub) == int or type(sub) == float:
+            if isinstance(sub, (int, float)):
                 return math.sin(sub)
             if isinstance(sub, np.float64):
                 return np.sin(sub)
@@ -139,7 +139,7 @@ class Expression:
         return e
 
     def __add__(self, other):
-        if type(other) == int or type(other) == float or type(other) == complex:
+        if isinstance(other, (int, float, complex)):
             exp = lambda values: self.exp(values) + other
             e = Expression(exp, self.vars)
             return e
@@ -159,7 +159,7 @@ class Expression:
         return self.__add__(other.__neg__())
 
     def __radd__(self, other):
-        if type(other) == int or type(other) == float or type(other) == complex:
+        if isinstance(other, (int, float, complex)):
             return self.__add__(other)
         elif isinstance(other, BaseVar):
             other = other.to_exp()
@@ -168,7 +168,7 @@ class Expression:
             return NotImplemented
 
     def __mul__(self, other):
-        if type(other) == int or type(other) == float or type(other) == complex:
+        if isinstance(other, (int, float, complex)):
             exp = lambda values: self.exp(values) * other
             e = Expression(exp, self.vars)
             return e
@@ -185,7 +185,7 @@ class Expression:
         return e
 
     def __rmul__(self, other):
-        if type(other) == int or type(other) == float or type(other) == complex:
+        if isinstance(other, (int, float, complex)):
             return self.__mul__(other)
         elif isinstance(other, BaseVar):
             other = other.to_exp()
@@ -194,7 +194,7 @@ class Expression:
             return NotImplemented
 
     def __pow__(self, other):
-        if type(other) == int or type(other) == float or type(other) == complex:
+        if isinstance(other, (int, float, complex)):
             exp = lambda values: self.exp(values) ** other
             e = Expression(exp, self.vars)
             return e
@@ -211,7 +211,7 @@ class Expression:
         return e
 
     def __truediv__(self, other):
-        if type(other) == int or type(other) == float or type(other) == complex:
+        if isinstance(other, (int, float, complex)):
             exp = lambda values: self.exp(values) / other
             e = Expression(exp, self.vars)
             return e
@@ -227,7 +227,7 @@ class Expression:
         return e
 
     def __rtruediv__(self, other):
-        if type(other) == int or type(other) == float or type(other) == complex:
+        if isinstance(other, (int, float, complex)):
             exp = lambda values: other / self.exp(values)
             e = Expression(exp, self.vars)
             return e

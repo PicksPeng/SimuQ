@@ -1,8 +1,6 @@
 # Generate a transverse field chain Ising model
 # H = J Σ_{j=1}^{n-1} Z_jZ_{j+1} + h Σ_{j=1}^n X_j
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

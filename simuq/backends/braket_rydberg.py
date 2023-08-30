@@ -76,7 +76,6 @@ def clean_as(alignment, sol_gvars, boxes):
         new_x = np.cos(theta) * pos[i][0] - np.sin(theta) * pos[i][1]
         new_y = np.sin(theta) * pos[i][0] + np.cos(theta) * pos[i][1]
         pos[i] = (new_x, new_y)
-    n = len(pos)
     m = len(boxes)
     times = []
     pulse = [[0 for i in range(m)] for k in range(3)]

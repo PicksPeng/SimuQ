@@ -1,7 +1,7 @@
 from math import atan2, cos, floor, pi, sin, sqrt
 
 import numpy as np
-from qiskit import IBMQ, Aer, QuantumCircuit, QuantumRegister, schedule, transpile
+from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit.gate import Gate
 from qiskit.circuit.library.standard_gates import (
     HGate,
@@ -11,31 +11,13 @@ from qiskit.circuit.library.standard_gates import (
     RZGate,
     RZXGate,
     RZZGate,
-    SdgGate,
-    SGate,
 )
-from qiskit.compiler import schedule, transpile
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.providers.fake_provider import FakeGuadalupe, FakeJakarta
-from qiskit.pulse import (
-    ControlChannel,
-    Drag,
-    DriveChannel,
-    GaussianSquare,
-    Play,
-    Schedule,
-    ShiftPhase,
-)
+from qiskit.pulse import Drag, DriveChannel, GaussianSquare, Play, Schedule, ShiftPhase
 from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
-from qiskit.tools.monitor import job_monitor
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import TransformationPass
-from qiskit.transpiler.passes import (
-    Collect1qRuns,
-    CollectCliffords,
-    CommutativeCancellation,
-    RZXCalibrationBuilder,
-)
+from qiskit.transpiler.passes import CommutativeCancellation, RZXCalibrationBuilder
 from qiskit.transpiler.passes.calibration.base_builder import CalibrationBuilder
 
 
@@ -177,7 +159,6 @@ class RXXCalibrationBuilder(TransformationPass):
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
         qubit_map = {qubit: i for i, qubit in enumerate(dag.qubits)}
-        params_list = []
         daglist = dag.gate_nodes()
         daglist.reverse()
         for node in daglist:
@@ -230,7 +211,6 @@ class RZZCalibrationBuilder(TransformationPass):
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
         qubit_map = {qubit: i for i, qubit in enumerate(dag.qubits)}
-        params_list = []
         daglist = dag.gate_nodes()
         daglist.reverse()
         for node in daglist:
@@ -283,7 +263,6 @@ class RYYCalibrationBuilder(TransformationPass):
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
         qubit_map = {qubit: i for i, qubit in enumerate(dag.qubits)}
-        params_list = []
         daglist = dag.gate_nodes()
         daglist.reverse()
         for node in daglist:
@@ -331,13 +310,10 @@ class RYXCalibrationBuilder(TransformationPass):
         return isinstance(node_op, RYXGate)
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
-        qubit_map = {qubit: i for i, qubit in enumerate(dag.qubits)}
-        params_list = []
         daglist = dag.gate_nodes()
         daglist.reverse()
         for node in daglist:
             if self.supported(node.op):
-                qubits = [qubit_map[q] for q in node.qargs]
                 mini_dag = DAGCircuit()
                 p = QuantumRegister(2, "p")
                 mini_dag.add_qreg(p)
@@ -367,13 +343,10 @@ class eYZXCalibrationBuilder(TransformationPass):
         return isinstance(node_op, eYZXGate)
 
     def run(self, dag: DAGCircuit) -> DAGCircuit:
-        qubit_map = {qubit: i for i, qubit in enumerate(dag.qubits)}
-        params_list = []
         daglist = dag.gate_nodes()
         daglist.reverse()
         for node in daglist:
             if self.supported(node.op):
-                qubits = [qubit_map[q] for q in node.qargs]
                 mini_dag = DAGCircuit()
 
                 t = node.op.params[0]
@@ -400,7 +373,6 @@ class eYZXCalibrationBuilder(TransformationPass):
 
 def get_pm(backend, for_braiding=False):
     configuration = backend.configuration()
-    properties = backend.properties()
     defaults = backend.defaults()
     instruction_schedule_map = defaults.instruction_schedule_map
     qubit_channel_map = configuration._qubit_channel_map

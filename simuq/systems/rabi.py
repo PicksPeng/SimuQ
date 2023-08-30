@@ -1,7 +1,6 @@
 import math
 
 from simuq.environment import qubit
-from simuq.qmachine import *
 from simuq.qsystem import QSystem
 
 qs = QSystem()

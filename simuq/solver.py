@@ -11,7 +11,6 @@ The detailed descriptions are left in the implementations.
 """
 
 import logging
-import math
 
 import networkx as nx
 import numpy as np
@@ -123,7 +122,7 @@ def solve_aligned(
     equation solving problem ({0, 1} variables and continuous varibales).
 
     Currently, this is solved by first treating the switch variables as
-    continuous variables, truncating them and solving the equations 
+    continuous variables, truncating them and solving the equations
     again with switch variables set to 0 or 1.
     """
 
@@ -196,7 +195,7 @@ def solve_aligned(
                                 break
                 eqs.append((lambda eq_: lambda x: eq_(x))(eq))
                 ind += 1
-            if switch_locator != None:
+            if switch_locator is not None:
                 for i in range(len(mach.lines)):
                     line = mach.lines[i]
                     for j in range(len(line.inss)):
@@ -292,9 +291,9 @@ def solve_aligned(
         ubs = []
         init = []
         map_var = []
-        map_var_revert = [None for i in range(nvar)]
+        map_var_revert = [None for _ in range(nvar)]
         for i in range(nvar):
-            if fixed_values[i] == None:
+            if fixed_values[i] is None:
                 map_var_revert[i] = len(map_var)
                 map_var.append(i)
                 if i < len(mach.gvars):
@@ -320,7 +319,7 @@ def solve_aligned(
         def mapper(x, fixed_values, map_var_revert):
             ret = []
             for i in range(len(fixed_values)):
-                if fixed_values[i] == None:
+                if fixed_values[i] is None:
                     ret.append(x[map_var_revert[i]])
                 else:
                     ret.append(fixed_values[i])
@@ -392,7 +391,7 @@ def solve_aligned(
         new_fixed_values = [fixed_values[i] for i in range(len(fixed_values))]
         new_init = []
         for i in range(nvar):
-            if fixed_values[i] == None:
+            if fixed_values[i] is None:
                 label = len(map_var)
                 map_var_revert[i] = len(map_var)
                 map_var.append(i)
@@ -452,7 +451,7 @@ def solve_aligned(
         map_var = []
         for i in range(nvar):
             value = fixed_values[i]
-            if fixed_values[i] == None:
+            if fixed_values[i] is None:
                 value = sol[len(map_var)]
                 map_var.append(i)
             if (
@@ -526,7 +525,7 @@ def solve_aligned(
 
         f_sat = dr.And(*sats)
         res = dr.CheckSatisfiability(f_sat, tol)
-        if res == None:
+        if res is None:
             return False
 
         sol = [res[Vars[i]].mid() for i in range(len(mach.gvars))]
@@ -739,7 +738,7 @@ def align(i, ali, qs, mach, solver, solver_args, verbose):
             if ali[j] == x:
                 available = False
                 break
-        if available == False:
+        if not available:
             continue
         for h, t in qs.evos:
             for tprod, tc in h.ham:
@@ -791,9 +790,9 @@ def generate_as(
     override_layout=None,
     verbose=0,
 ):
-    if solver_tol != None:
+    if solver_tol is not None:
         solver_args["tol"] = solver_tol
-    ali = [] if override_layout == None else override_layout
+    ali = [] if override_layout is None else override_layout
     mach.instantiate()
     mach.extend_instruction_sites()
     if find_sol(qs, mach, ali=ali, solver=solver, solver_args=solver_args, verbose=verbose):
@@ -863,9 +862,9 @@ def generate_as(
             ].tolist()
             # Detach by touched sites
             """
-            Note that we assume that a derived instruction only 
+            Note that we assume that a derived instruction only
             affects those sites it touches (it commutes with any
-            instruction not touching these sites). We can separate 
+            instruction not touching these sites). We can separate
             the instructions in the box by the sites they touch.
 
             Then we use a connectivity coloring to separate them first.
@@ -988,7 +987,7 @@ def generate_as(
                 all_commute = True
                 for i in range(len(nodes_of_color)):
                     for j in range(i):
-                        if TIHamiltonian.commutativity_test(sumh[i], sumh[j]) == False:
+                        if not TIHamiltonian.commutativity_test(sumh[i], sumh[j]):
                             all_commute = False
                             break
                     if not all_commute:

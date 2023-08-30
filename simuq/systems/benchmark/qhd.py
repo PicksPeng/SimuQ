@@ -6,8 +6,6 @@
 # x = 1/q Σ_j n_{x,j}
 # y = 1/q Σ_j n_{y,j}
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

@@ -1,5 +1,3 @@
-from numpy import linspace
-
 from simuq.environment import fermion
 from simuq.qsystem import QSystem
 

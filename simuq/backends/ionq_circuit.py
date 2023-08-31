@@ -188,6 +188,13 @@ class Circuit:
             circ.gpi2(q, phi)
             circ.rz(q, lamb)
             return
+        res = decomp_gpi2gpigpi2(U)
+        if res != None :
+            theta1,theta2,theta3=res
+            circ.gpi2(q,theta1)
+            circ.gpi(q,theta2)
+            circ.gpi2(q,theta3)
+            return
 
     def optimize(self) :
         new_circ = Circuit(

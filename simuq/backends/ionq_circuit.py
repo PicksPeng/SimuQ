@@ -2,7 +2,7 @@ import numpy as np
 
 
 def to_turns(phi) :
-    return (phi / (2 * np.pi)) % 1
+    return (phi / (2 * np.pi)) % 1.0
 
 def is_close(a, b, tol = 1e-6) :
     return abs(a - b) < tol
@@ -65,7 +65,7 @@ class Circuit:
             gate["gate"] = "ms"
             gate["targets"] = [q0, q1]
             gate["phases"] = [to_turns(phi0 + self.accum_phase[q0]), to_turns(phi1 + np.pi + self.accum_phase[q1])]
-            gate["angle"] = to_turns(2 * pi - theta)
+            gate["angle"] = to_turns(2 * np.pi - theta)
 
     @staticmethod
     def gpi_mat(turns):
@@ -139,15 +139,15 @@ class Circuit:
         if not (is_close(U[1, 0], -1j * np.exp(1j * ph) * (np.exp(1j * psi) + np.exp(1j * phi)))):
             return None
         return psi, phi, lamb
-
+    @staticmethod
     def decomp_gpi2gpigpi2(U) :
         if is_close(abs(U[0, 0]), 0) :
             # In this case, the decomp has psi=phi, absorbed by GPi(theta)
             return None
         U=U/(U[0][0]/abs(U[0][0]))
-        alpha=np.arccos(U[0][0])
-        beta=np.angle(U[1][1])
-        gamma=np.angle(U[1][0])-beta/2
+        alpha=np.arccos(U[0][0].real)
+        beta=-np.angle(U[1][1])
+        gamma=np.angle(U[1][0])+beta/2
 
         theta1=(beta+2*gamma)/2
         theta3=(2*gamma-beta)/2
@@ -156,39 +156,39 @@ class Circuit:
         # GPi2(theta1)@GPi(theta2)@GPi2(theta3)
     
     @staticmethod
-    def decomp_unitary(q, U, circ) :
-        res = decomp_rz(U)
+    def decomp_unitary(self,q, U, circ) :
+        res = self.decomp_rz(U)
         if res != None :
             theta = res
             circ.rz(q, theta)
             return
-        res = decomp_gpirz(U)
+        res = self.decomp_gpirz(U)
         if res != None :
             theta, lamb = res
             circ.gpi(q, theta)
             circ.rz(q, lamb)
             return
-        res = decomp_gpi2rz(U)
+        res = self.decomp_gpi2rz(U)
         if res != None :
             theta, lamb = res
             circ.gpi2(q, theta)
             circ.rz(q, lamb)
             return
-        res = decomp_gpi2gpirz(U)
+        res = self.decomp_gpi2gpirz(U)
         if res != None :
             x, y, z = res
             circ.gpi2(q, x)
             circ.gpi(q, y)
             circ.rz(q, z)
             return
-        res = decomp_gpi2gpi2rz(U)
+        res = self.decomp_gpi2gpi2rz(U)
         if res != None :
             psi, phi, lamb = res
             circ.gpi2(q, psi)
             circ.gpi2(q, phi)
             circ.rz(q, lamb)
             return
-        res = decomp_gpi2gpigpi2(U)
+        res = self.decomp_gpi2gpigpi2(U)
         if res != None :
             theta1,theta2,theta3=res
             circ.gpi2(q,theta1)
@@ -197,14 +197,21 @@ class Circuit:
             return
 
     def optimize(self) :
-        new_circ = Circuit(
-            self.job["name"],
-            self.job["body"]["qubits"],
-            self.job["target"],
-            self.job["noise"]["model"],
-        )
+        if "noise" in self.job: 
+            new_circ = Circuit(
+                self.job["name"],
+                self.job["body"]["qubits"],
+                self.job["target"],
+                self.job["noise"]["model"],
+            )
+        else:
+            new_circ = Circuit(
+                self.job["name"],
+                self.job["body"]["qubits"],
+                self.job["target"],
+            )
         
-        identity = np.arrays([[1, 0], [0, 1]])
+        identity = np.array([[1, 0], [0, 1]])
         n = self.job["body"]["qubits"]
 
         unitaries = [identity.copy() for _ in range(n)]
@@ -212,17 +219,17 @@ class Circuit:
         for ind, gate in enumerate(self.job["body"]["circuit"]):
             if gate["gate"] == "gpi":
                 unitaries[gate["target"]] = np.matmul(
-                    self.gpi_mat(gate["angle"]),
+                    self.gpi_mat(gate["phase"]),
                     unitaries[gate["target"]],
                 )
             elif gate["gate"] == "gpi2":
                 unitaries[gate["target"]] = np.matmul(
-                    self.gpi2_mat(gate["angle"]),
+                    self.gpi2_mat(gate["phase"]),
                     unitaries[gate["target"]],
                 )
             elif gate["gate"] == "ms":
                 for q in gate["targets"] :
-                    self.decomp_unitary(q, unitaries[q], new_circ)
+                    self.decomp_unitary(self,q, unitaries[q], new_circ)
                 q0, q1 = gate["targets"]
                 phi0, phi1 = gate["phases"]
                 phi0 *= 2 * np.pi
@@ -232,7 +239,49 @@ class Circuit:
             else :
                 raise Exception("Unknown gate:", gate["gate"])
         for q in range(n) :
-            self.decomp_unitary(q, unitaries[q], new_circ)
+            self.decomp_unitary(self,q, unitaries[q], new_circ)
             new_circ.accum_phase[q] += self.accum_phase[q]
 
         return new_circ
+
+    def to_matrix(self) :
+        from qiskit import QuantumCircuit
+        from qiskit.quantum_info import Operator
+        circ=QuantumCircuit(self.job["body"]["qubits"])
+        
+        from qiskit_ionq import GPI2Gate, GPIGate, IonQProvider, MSGate
+
+        for ind, gate in enumerate(self.job["body"]["circuit"]):
+            if gate["gate"] == "gpi":
+                circ.append(GPIGate(gate["phase"]),[gate["target"]])
+            elif gate["gate"] == "gpi2":
+                circ.append(GPI2Gate(gate["phase"]),[gate["target"]])
+            else :
+                raise Exception("Unknown gate:", gate["gate"])
+
+        return Operator(circ).data
+def test():
+    circ=Circuit("test", 1, backend="simulator", noise_model=None)
+    from numpy.random import default_rng
+    rng = default_rng()
+    for _ in range(100) :
+        theta1=rng.uniform(0,2*np.pi)
+        theta2=rng.uniform(0,2*np.pi)
+        theta3=rng.uniform(0,2*np.pi)
+        circ.gpi2(0,theta1)
+        circ.gpi(0,theta2)
+        circ.gpi2(0,theta3)
+        new_circ=circ.optimize()
+        mat1=circ.to_matrix()
+        mat1=mat1/(mat1[0][0]/abs(mat1[0][0]))
+        mat2=new_circ.to_matrix()
+        mat2=mat2/(mat2[0][0]/abs(mat2[0][0]))
+        if not is_close(np.linalg.norm(mat1-mat2),0):
+            print("Test failed")
+            print(new_circ.to_matrix())
+            print(circ.to_matrix())
+            return
+        
+    print("Test passed")
+if __name__ == "__main__":
+    test()

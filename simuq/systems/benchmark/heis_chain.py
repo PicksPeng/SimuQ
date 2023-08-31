@@ -2,8 +2,6 @@
 # H = J \sum_{j=1}^{n} σ_j·σ_{j+1} + h \sum_{j=1}^n X_j  (assuming σ_{n+1}=σ_1)
 # Here σ_j=(X_j, Y_j, Z_j)
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

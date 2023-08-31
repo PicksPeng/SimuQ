@@ -4,6 +4,8 @@
 # If you want to use IonQ's device through braket,
 # try qiskit_iontrap.py which generates a circuit in bk_c.
 
+from math import atan2, cos, floor, pi, sin, sqrt
+
 import networkx as nx
 import numpy as np
 from qiskit import QuantumCircuit

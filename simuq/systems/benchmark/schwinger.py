@@ -3,8 +3,6 @@
 # H = m/2 Σ_j (-1)^j Z_n + w/2 Σ_{j=1}^{N-1} (X_jX_{j+1}+Y_jY_{j+1})
 #   + J Σ_{j=1}^{N-1} (eps_0 + 1/2 Σ_{k=1}^j (Z_k+(-1)^k))^2
 
-import numpy as np
-
 from simuq.environment import qubit
 from simuq.qsystem import QSystem
 

@@ -1,21 +1,9 @@
 import warnings
 
-import matplotlib.pyplot as plt
 import numpy as np
-from qiskit import (
-    IBMQ,
-    ClassicalRegister,
-    QuantumCircuit,
-    QuantumRegister,
-    assemble,
-    execute,
-    pulse,
-    schedule,
-    transpile,
-)
+from qiskit import IBMQ, QuantumCircuit, QuantumRegister, schedule, transpile
 from qiskit.providers.aer import PulseSimulator, QasmSimulator
 from qiskit.providers.aer.pulse import PulseSystemModel
-from qiskit.tools.monitor import job_monitor
 
 warnings.filterwarnings("ignore")
 

@@ -1,6 +1,5 @@
 import networkx as nx
-import numpy as np
-from qiskit import IBMQ, QuantumCircuit
+from qiskit import QuantumCircuit
 from qiskit.pulse import DriveChannel, GaussianSquare, ShiftPhase
 
 from simuq.backends.qiskit_transpiler import get_pm

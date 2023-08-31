@@ -26,7 +26,6 @@ def gen_braket_code(pos, clocks, pulse):
     # # pulse = np.array(pulse)
     # print(pulse)
     # print(pulse.shape)
-    import matplotlib.pyplot as plt
     from braket.ahs.atom_arrangement import AtomArrangement
 
     register = AtomArrangement()

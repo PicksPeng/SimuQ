@@ -1,5 +1,4 @@
 import networkx as nx
-import numpy as np
 from qiskit import QuantumCircuit
 from qiskit.circuit.library import RGate
 

@@ -58,7 +58,7 @@ def generate_qmachine(n=3, inits=None):
     rydberg.set_sys_ham(sys_h)
 
     L = rydberg.add_signal_line()
-    ins = L.add_instruction("native", f"Detuning")
+    ins = L.add_instruction("native", "Detuning")
     d = ins.add_local_variable()
     ham_detuning = 0
     for i in range(n):
@@ -66,7 +66,7 @@ def generate_qmachine(n=3, inits=None):
     ins.set_ham(ham_detuning)
 
     L = rydberg.add_signal_line()
-    ins = L.add_instruction("native", f"Rabi")
+    ins = L.add_instruction("native", "Rabi")
     o = ins.add_local_variable()
     p = ins.add_local_variable()
     ham_rabi = 0

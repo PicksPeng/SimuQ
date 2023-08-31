@@ -1,5 +1,4 @@
 import networkx as nx
-import numpy as np
 from qiskit import QuantumCircuit
 
 from simuq.backends.qiskit_transpiler import RYXGate, eYZXGate, get_pm

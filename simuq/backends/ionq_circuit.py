@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def to_turns(phi) :
     return (phi / (2 * np.pi)) % 1
 
@@ -139,6 +140,21 @@ class Circuit:
             return None
         return psi, phi, lamb
 
+    def decomp_gpi2gpigpi2(U) :
+        if is_close(abs(U[0, 0]), 0) :
+            # In this case, the decomp has psi=phi, absorbed by GPi(theta)
+            return None
+        U=U/(U[0][0]/abs(U[0][0]))
+        alpha=np.arccos(U[0][0])
+        beta=np.angle(U[1][1])
+        gamma=np.angle(U[1][0])-beta/2
+
+        theta1=(beta+2*gamma)/2
+        theta3=(2*gamma-beta)/2
+        theta2=gamma-alpha
+        return theta1,theta2,theta3
+        # GPi2(theta1)@GPi(theta2)@GPi2(theta3)
+    
     @staticmethod
     def decomp_unitary(q, U, circ) :
         res = decomp_rz(U)

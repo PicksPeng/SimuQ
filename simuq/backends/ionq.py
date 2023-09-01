@@ -2,6 +2,7 @@ import networkx as nx
 import numpy as np
 from ionq_circuit import Circuit
 
+
 def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
     link = [(i, j) for i in range(n) for j in range(i + 1, n)]
     DG = nx.DiGraph()
@@ -9,7 +10,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
     DG.add_edges_from(edges)
     topo_order = list(nx.topological_sort(DG))
     circ = Circuit("test", n, backend, noise_model)
-    
+
     for i in range(len(boxes)):
         idx = topo_order[i]
         t = boxes[idx][1]
@@ -22,7 +23,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                     phi = params[1]
                     if abs(rot) > 1e-5:
                         circ.rz(q, phi)
-                        
+
                         # Rx(q, rot)
                         turns = rot / (2 * np.pi)
                         if abs(turns - 0.25) < 1e-6:
@@ -35,7 +36,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                             circ.gpi2(q, 3 * np.pi / 2)
                             circ.rz(q, rot)
                             circ.gpi2(q, np.pi / 2)
-                        
+
                         circ.rz(q, -phi)
 
                 else:
@@ -65,7 +66,7 @@ def clean_as(n, boxes, edges, backend="simulator", noise_model=None):
                         # R_X(pi/2)
                         circ.gpi2(q0, 0)
                         circ.gpi2(q1, 0)
-    return circ
+    return circ.optimize()
 
 
 def transpile(n, sol_gvars, boxes, edges, backend="simulator", noise_model=None):

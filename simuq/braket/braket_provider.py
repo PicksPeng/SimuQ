@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from braket.ahs.atom_arrangement import SiteType
-from braket.aws import AwsDevice
+from braket.aws import AwsDevice, AwsQuantumTask
 from braket.devices import LocalSimulator
 
 from simuq import _version
@@ -175,7 +175,6 @@ class BraketProvider(BaseProvider):
 
     def results(self, task_arn=None, verbose=0):
         if task_arn is not None:
-            from braket.aws import AwsQuantumTask
 
             task = AwsQuantumTask(arn=task_arn)
         else:

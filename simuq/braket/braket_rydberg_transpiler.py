@@ -1,9 +1,7 @@
 import numpy as np
 from braket.ahs import AnalogHamiltonianSimulation, AtomArrangement, DrivingField
-from braket.aws import AwsDevice
 from braket.timings.time_series import TimeSeries
 
-from simuq import _version
 from simuq.transpiler import Transpiler
 
 
@@ -39,6 +37,7 @@ def gen_braket_code(pos, clocks, pulse):
 
     ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
     return ahs_program
+
 
 def gen_clocks(times, ramp_time, state_prep_time):
     clocks = [0, ramp_time]

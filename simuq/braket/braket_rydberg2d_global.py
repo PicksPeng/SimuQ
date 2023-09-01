@@ -1,4 +1,8 @@
 import numpy as np
+from braket.ahs import AnalogHamiltonianSimulation, AtomArrangement, DrivingField
+from braket.timings.time_series import TimeSeries
+
+from simuq import _version
 
 
 def gen_braket_code(pos, clocks, pulse):
@@ -7,14 +11,10 @@ def gen_braket_code(pos, clocks, pulse):
     # # pulse = np.array(pulse)
     # print(pulse)
     # print(pulse.shape)
-    from braket.ahs.atom_arrangement import AtomArrangement
 
     register = AtomArrangement()
     for posi in pos:
         register.add(np.array([posi[0] * 1e-6, posi[1] * 1e-6]))
-
-    from braket.ahs.driving_field import DrivingField
-    from braket.timings.time_series import TimeSeries
 
     delta = TimeSeries()
     omega = TimeSeries()
@@ -34,7 +34,6 @@ def gen_braket_code(pos, clocks, pulse):
     phi.put(clocks[-1], 0)
 
     drive = DrivingField(amplitude=omega, phase=phi, detuning=delta)
-    from braket.ahs.analog_hamiltonian_simulation import AnalogHamiltonianSimulation
 
     ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
 
@@ -42,6 +41,8 @@ def gen_braket_code(pos, clocks, pulse):
         from braket.aws import AwsDevice
 
         aquila_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/quera/Aquila")
+        user_agent = f"SimuQ/{_version.__version__}"
+        aquila_qpu.aws_session.add_braket_user_agent(user_agent)
     except:
         raise Exception(
             "Please check your configurations of IAM roles, regions, and credentials according to instructions in: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration"
@@ -50,12 +51,6 @@ def gen_braket_code(pos, clocks, pulse):
     discretized_ahs_program = ahs_program.discretize(aquila_qpu)
 
     return discretized_ahs_program
-
-    from braket.devices import LocalSimulator
-
-    device = LocalSimulator("braket_ahs")
-
-    result = device.run(discretized_ahs_program, shots=1_000_000).result()
 
 
 def gen_clocks(times, ramp_time, state_prep_time):
@@ -72,8 +67,16 @@ def gen_clocks(times, ramp_time, state_prep_time):
 
 def clean_as(sol_gvars, boxes, ramp_time, state_prep, verbose=0):
     pos = [(0.0, 0.0)]
-    for i in range(len(sol_gvars)):
-        pos.append((sol_gvars[i], 0.0))
+    for i in range(int(len(sol_gvars) / 2)):
+        pos.append((sol_gvars[2 * i], sol_gvars[2 * i + 1]))
+    # Fix rotation angle
+    theta = -np.arctan2(pos[1][1], pos[1][0])
+    if verbose > 0:
+        print("Fixing rotation by ", theta)
+    for i in range(len(pos)):
+        new_x = np.cos(theta) * pos[i][0] - np.sin(theta) * pos[i][1]
+        new_y = np.sin(theta) * pos[i][0] + np.cos(theta) * pos[i][1]
+        pos[i] = (new_x, new_y)
     m = len(boxes)
     times = []
     pulse = [[0 for i in range(m)] for k in range(3)]

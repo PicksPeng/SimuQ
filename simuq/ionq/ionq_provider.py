@@ -1,0 +1,146 @@
+from simuq.provider import BaseProvider
+from simuq.solver import generate_as
+
+
+class IonQProvider(BaseProvider):
+    def __init__(self, API_key=None, from_file=None):
+        if API_key is None:
+            if from_file is None:
+                raise Exception("No API_key provided.")
+            else:
+                with open(from_file, "r") as f:
+                    API_key = f.readline()
+        self.API_key = API_key
+        self.all_backends = ["harmony", "aria-1", "aria-2", "forte"]
+
+        super().__init__()
+
+    def supported_backends(self):
+        print(self.all_backends)
+
+    def compile(
+        self,
+        qs,
+        backend="aria-1",
+        aais="heisenberg",
+        tol=0.01,
+        trotter_num=6,
+        state_prep=None,
+        verbose=0,
+    ):
+        if backend == "harmony":
+            nsite = 11
+        elif backend == "aria-1":
+            nsite = 23
+        elif backend == "aria-2":
+            nsite = 23
+        elif backend == "forte":
+            nsite = 32
+        elif isinstance(backend, int):
+            if backend > 0:
+                nsite = backend
+        else:
+            raise Exception("Backend is not supported.")
+
+        if qs.num_sites > nsite:
+            raise Exception("Device has less sites than the target quantum system.")
+
+        if aais == "heisenberg":
+            from simuq.aais import heisenberg
+            from simuq.backends.ionq import transpile
+
+            mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
+            comp = transpile
+
+        layout, sol_gvars, boxes, edges = generate_as(
+            qs,
+            mach,
+            trotter_num,
+            solver="least_squares",
+            solver_args={"tol": tol},
+            override_layout=[i for i in range(qs.num_sites)],
+            verbose=verbose,
+        )
+        self.prog = comp(
+            qs.num_sites, sol_gvars, boxes, edges, backend="qpu." + backend, noise_model=backend
+        )
+
+        if state_prep is not None:
+            self.prog["body"]["circuit"] = state_prep["circuit"] + self.prog["body"]["circuit"]
+
+        self.layout = layout
+        self.qs_names = qs.print_sites
+
+    def print_circuit(self):
+        if self.prog is None:
+            raise Exception("No compiled job in record.")
+        print(self.prog["body"]["circuit"])
+
+    def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
+        if self.prog is None:
+            raise Exception("No compiled job in record.")
+
+        import json
+
+        import requests
+
+        headers = {
+            "Authorization": "apiKey " + self.API_key,
+            "Content-Type": "application/json",
+        }
+
+        data = self.prog.copy()
+
+        data["shots"] = shots
+        if on_simulator:
+            data["target"] = "simulator"
+            if not with_noise:
+                data["noise"] = {"model": "ideal"}
+
+        # print(data)
+
+        response = requests.post(
+            "https://api.ionq.co/v0.3/jobs", headers=headers, data=json.dumps(data)
+        )
+        self.task = response.json()
+
+        if verbose >= 0:
+            print(self.task)
+
+    def results(self, job_id=None, verbose=0):
+        if job_id is None:
+            if self.task is not None:
+                job_id = self.task["id"]
+            else:
+                raise Exception("No submitted job in record.")
+
+        import requests
+
+        headers = {
+            "Authorization": "apiKey " + self.API_key,
+        }
+
+        response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
+        res = response.json()
+
+        if res["status"] != "completed":
+            if verbose >= 0:
+                print("Job is not completed")
+                print(res)
+            return None
+
+        def layout_rev(res):
+            n = len(self.layout)
+            b = IonQProvider.to_bin(res, n)
+            ret = ""
+            for i in range(n):
+                ret += b[self.layout[i]]
+            return ret
+
+        def results_from_data(data):
+            ret = dict()
+            for key in data.keys():
+                ret[layout_rev(int(key))] = data[key]
+            return ret
+
+        return results_from_data(res["data"]["histogram"])

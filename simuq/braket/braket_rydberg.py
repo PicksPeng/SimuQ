@@ -1,4 +1,9 @@
 import numpy as np
+from braket.ahs import AnalogHamiltonianSimulation, AtomArrangement, DrivingField
+from braket.aws import AwsDevice
+from braket.timings.time_series import TimeSeries
+
+from simuq import _version
 
 
 def gen_braket_code(pos, clocks, pulse):
@@ -8,14 +13,10 @@ def gen_braket_code(pos, clocks, pulse):
     # print(pulse)
     # print(pulse.shape)
     import matplotlib.pyplot as plt
-    from braket.ahs.atom_arrangement import AtomArrangement
 
     register = AtomArrangement()
     for posi in pos:
         register.add(np.array([posi[0] * 1e-6, posi[1] * 1e-6]))
-
-    from braket.ahs.driving_field import DrivingField
-    from braket.timings.time_series import TimeSeries
 
     delta = TimeSeries()
     omega = TimeSeries()
@@ -38,22 +39,15 @@ def gen_braket_code(pos, clocks, pulse):
     phi.put(clocks[-1], 0)
 
     drive = DrivingField(amplitude=omega, phase=phi, detuning=delta)
-    from braket.ahs.analog_hamiltonian_simulation import AnalogHamiltonianSimulation
 
     ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
 
-    from braket.aws import AwsDevice
-
     aquila_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/quera/Aquila")
+    user_agent = f"SimuQ/{_version.__version__}"
+    aquila_qpu.aws_session.add_braket_user_agent(user_agent)
     discretized_ahs_program = ahs_program.discretize(aquila_qpu)
 
     return discretized_ahs_program
-
-    from braket.devices import LocalSimulator
-
-    device = LocalSimulator("braket_ahs")
-
-    result = device.run(discretized_ahs_program, shots=1_000_000).result()
 
 
 def gen_clocks(times, ramp_time=0.05):
@@ -89,7 +83,7 @@ def clean_as(alignment, sol_gvars, boxes):
             else:
                 pulse[1][evo_idx] = ins_lvars[0] * 1e6
                 pulse[2][evo_idx] = ins_lvars[1] * 1e6
-    return (pos, gen_clocks(times), pulse)
+    return pos, gen_clocks(times), pulse
 
 
 def transpile(alignment, sol_gvars, boxes, edges):

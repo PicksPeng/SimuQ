@@ -90,58 +90,8 @@ class BraketProvider(BaseProvider):
     def visualize_quera(self):
         braket_prog = self.ahs_prog
 
-        def show_register(register):
-            filled_sites = [
-                site.coordinate for site in register._sites if site.site_type == SiteType.FILLED
-            ]
-            empty_sites = [
-                site.coordinate for site in register._sites if site.site_type == SiteType.VACANT
-            ]
-
-            fig = plt.figure(figsize=(4, 4))
-            if len(filled_sites) > 0:
-                plt.plot(
-                    np.array(filled_sites)[:, 0],
-                    np.array(filled_sites)[:, 1],
-                    "r.",
-                    ms=15,
-                    label="filled",
-                )
-            if len(empty_sites) > 0:
-                plt.plot(
-                    np.array(empty_sites)[:, 0],
-                    np.array(empty_sites)[:, 1],
-                    ".",
-                    color="k",
-                    ms=2,
-                    label="vacant",
-                )
-            plt.legend(bbox_to_anchor=(1.1, 1.05))
-
-            return fig
-
-        def show_global_drive(drive):
-            data = {
-                "detuning [rad/s]": drive.detuning.time_series,
-                "amplitude [rad/s]": drive.amplitude.time_series,
-                "phase [rad]": drive.phase.time_series,
-            }
-
-            fig, axes = plt.subplots(3, 1, figsize=(6, 4), sharex=True)
-            for ax, data_name in zip(axes, data.keys()):
-                if data_name == "phase [rad]":
-                    ax.step(data[data_name].times(), data[data_name].values(), ".-", where="post")
-                else:
-                    ax.plot(data[data_name].times(), data[data_name].values(), ".-")
-                ax.set_ylabel(data_name)
-                ax.grid(ls=":")
-            axes[-1].set_xlabel("time [s]")
-            plt.tight_layout()
-
-            return fig
-
-        fig1 = show_register(braket_prog.register)
-        fig2 = show_global_drive(braket_prog.hamiltonian)
+        fig1 = _show_register(braket_prog.register)
+        fig2 = _show_global_drive(braket_prog.hamiltonian)
         plt.show()
 
     def visualize(self):
@@ -158,7 +108,6 @@ class BraketProvider(BaseProvider):
             if on_simulator:
                 simulator = LocalSimulator("braket_ahs")
                 self.task = simulator.run(self.ahs_prog, shots=shots)
-                meta = self.task.metadata()
                 if verbose >= 0:
                     print("Submitted.")
             else:
@@ -203,29 +152,72 @@ class BraketProvider(BaseProvider):
             else:
                 counts[s] += 1
 
-        def int_to_gr(N, s):
-            ret = ""
-            for i in range(N):
-                ret += "g" if (s >> i) & 1 == 0 else "r"
-            return ret
-
-        def extract_prob(counts):
-            tot = sum(counts.values())
-            freq = dict([])
-            for k in counts.keys():
-                freq[k] = counts[k] / tot
-            exp_prob = []
-            for i in range(1 << N):
-                key = int_to_gr(N, i)
-                if key not in freq.keys():
-                    exp_prob.append(0)
-                else:
-                    exp_prob.append(freq[key])
-            return exp_prob
-
-        prob = extract_prob(counts)
-        ret = dict()
-        for i in range(1 << N):
-            if abs(prob[i]) > 1e-6:
-                ret[BraketProvider.to_bin(i, N)] = prob[i]
+        prob = _extract_prob(counts, N)
+        ret = {BraketProvider.to_bin(i, N): prob[i] for i in range(1 << N) if abs(prob[i]) > 1e-6}
         return ret
+
+
+def _show_register(register):
+    filled_sites = [
+        site.coordinate for site in register._sites if site.site_type == SiteType.FILLED
+    ]
+    empty_sites = [
+        site.coordinate for site in register._sites if site.site_type == SiteType.VACANT
+    ]
+
+    fig = plt.figure(figsize=(4, 4))
+    if len(filled_sites) > 0:
+        plt.plot(
+            np.array(filled_sites)[:, 0],
+            np.array(filled_sites)[:, 1],
+            "r.",
+            ms=15,
+            label="filled",
+        )
+    if len(empty_sites) > 0:
+        plt.plot(
+            np.array(empty_sites)[:, 0],
+            np.array(empty_sites)[:, 1],
+            ".",
+            color="k",
+            ms=2,
+            label="vacant",
+        )
+    plt.legend(bbox_to_anchor=(1.1, 1.05))
+    return fig
+
+
+def _show_global_drive(drive):
+    data = {
+        "detuning [rad/s]": drive.detuning.time_series,
+        "amplitude [rad/s]": drive.amplitude.time_series,
+        "phase [rad]": drive.phase.time_series,
+    }
+
+    fig, axes = plt.subplots(3, 1, figsize=(6, 4), sharex=True)
+    for ax, data_name in zip(axes, data.keys()):
+        if data_name == "phase [rad]":
+            ax.step(data[data_name].times(), data[data_name].values(), ".-", where="post")
+        else:
+            ax.plot(data[data_name].times(), data[data_name].values(), ".-")
+        ax.set_ylabel(data_name)
+        ax.grid(ls=":")
+    axes[-1].set_xlabel("time [s]")
+    plt.tight_layout()
+
+    return fig
+
+
+def _extract_prob(counts, N):
+    tot = sum(counts.values())
+    freq = {k: counts[k] / tot for k in counts.keys()}
+    exp_prob = []
+    for i in range(1 << N):
+        key = _int_to_gr(N, i)
+        exp_prob.append(freq[key] if key in freq.keys() else 0)
+    return exp_prob
+
+
+def _int_to_gr(N, s):
+    ret_list = ["g" if (s >> i) & 1 == 0 else "r" for i in range(N)]
+    return "".join(ret_list)

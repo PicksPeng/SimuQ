@@ -5,6 +5,8 @@ from braket.aws import AwsDevice
 from braket.devices import LocalSimulator
 
 from simuq import _version
+from simuq.aais import rydberg1d_global, rydberg2d_global
+from simuq.braket.braket_rydberg_transpiler import BraketRydbergTranspiler
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
 
@@ -53,15 +55,13 @@ class BraketProvider(BaseProvider):
             nsite = qs.num_sites
 
             if aais == "rydberg1d_global":
-                from simuq.aais import rydberg1d_global
-                from simuq.braket.braket_rydberg1d_global import transpile as comp
-
+                transpiler = BraketRydbergTranspiler(1)
                 mach = rydberg1d_global.generate_qmachine(nsite)
             elif aais == "rydberg2d_global":
-                from simuq.aais import rydberg2d_global
-                from simuq.braket.braket_rydberg2d_global import transpile as comp
-
+                transpiler = BraketRydbergTranspiler(2)
                 mach = rydberg2d_global.generate_qmachine(nsite)
+            else:
+                raise NotImplementedError
 
             if state_prep is None:
                 state_prep = {"times": [], "omega": [], "delta": [], "phi": []}
@@ -81,7 +81,9 @@ class BraketProvider(BaseProvider):
             if no_main_body:
                 for j, (b, t) in enumerate(boxes):
                     boxes[j] = (b, 0.01)
-            self.ahs_prog = comp(sol_gvars, boxes, edges, state_prep=state_prep, verbose=verbose)
+            self.ahs_prog = transpiler.transpile(
+                sol_gvars, boxes, edges, state_prep=state_prep, verbose=verbose
+            )
             self.prog = self.ahs_prog
             self.layout = layout
 

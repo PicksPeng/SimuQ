@@ -41,13 +41,7 @@ def gen_braket_code(pos, clocks, pulse):
     drive = DrivingField(amplitude=omega, phase=phi, detuning=delta)
 
     ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
-
-    aquila_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/quera/Aquila")
-    user_agent = f"SimuQ/{_version.__version__}"
-    aquila_qpu.aws_session.add_braket_user_agent(user_agent)
-    discretized_ahs_program = ahs_program.discretize(aquila_qpu)
-
-    return discretized_ahs_program
+    return ahs_program
 
 
 def gen_clocks(times, ramp_time=0.05):

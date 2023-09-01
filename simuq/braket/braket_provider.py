@@ -165,7 +165,8 @@ class BraketProvider(BaseProvider):
                 aquila_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/quera/" + self.device)
                 user_agent = f"SimuQ/{_version.__version__}"
                 aquila_qpu.aws_session.add_braket_user_agent(user_agent)
-                self.task = aquila_qpu.run(self.ahs_prog, shots=shots)
+                discretized_ahs_program = self.ahs_prog.discretize(aquila_qpu)
+                self.task = aquila_qpu.run(discretized_ahs_program, shots=shots)
                 meta = self.task.metadata()
                 if verbose >= 0:
                     print("Submitted.")

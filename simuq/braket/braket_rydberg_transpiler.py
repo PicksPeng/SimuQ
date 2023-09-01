@@ -7,6 +7,39 @@ from simuq import _version
 from simuq.transpiler import Transpiler
 
 
+def gen_braket_code(pos, clocks, pulse):
+    # print(pos)
+    # print(clocks)
+    # # pulse = np.array(pulse)
+    # print(pulse)
+    # print(pulse.shape)
+
+    register = AtomArrangement()
+    for posi in pos:
+        register.add(np.array([posi[0] * 1e-6, posi[1] * 1e-6]))
+
+    delta = TimeSeries()
+    omega = TimeSeries()
+    phi = TimeSeries()
+
+    delta.put(0, pulse[0][0])
+    for i in range(len(clocks) - 2):
+        delta.put(clocks[i + 1], pulse[0][i])
+    delta.put(clocks[-1], pulse[0][-1])
+    omega.put(0, 0)
+    for i in range(len(clocks) - 2):
+        omega.put(clocks[i + 1], pulse[1][i])
+    omega.put(clocks[-1], 0)
+    phi.put(0, 0)
+    for i in range(len(clocks) - 2):
+        phi.put(clocks[i + 1], pulse[2][i])
+    phi.put(clocks[-1], 0)
+
+    drive = DrivingField(amplitude=omega, phase=phi, detuning=delta)
+
+    ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
+    return ahs_program
+
 def gen_clocks(times, ramp_time, state_prep_time):
     clocks = [0, ramp_time]
     for t in state_prep_time:
@@ -46,6 +79,8 @@ def clean_as(sol_gvars, boxes, ramp_time, state_prep, dimension, verbose=0):
         pos = _initialize_positions_1d(sol_gvars)
     elif dimension == 2:
         pos = _initialize_positions_2d(sol_gvars, verbose)
+    else:
+        raise NotImplementedError
 
     m = len(boxes)
     times = []
@@ -72,7 +107,7 @@ def clean_as(sol_gvars, boxes, ramp_time, state_prep, dimension, verbose=0):
         if pulse[1][i] < 0:
             pulse[1][i] = -pulse[1][i]
             pulse[2][i] += np.pi
-    return (pos, gen_clocks(times, ramp_time, state_prep["times"]), pulse)
+    return pos, gen_clocks(times, ramp_time, state_prep["times"]), pulse
 
 
 class BraketRydbergTranspiler(Transpiler):
@@ -86,49 +121,3 @@ class BraketRydbergTranspiler(Transpiler):
             *clean_as(sol_gvars, boxes, ramp_time, state_prep or {}, self._dimension, verbose)
         )
         return code
-
-    @staticmethod
-    def gen_braket_code(pos, clocks, pulse):
-        # print(pos)
-        # print(clocks)
-        # # pulse = np.array(pulse)
-        # print(pulse)
-        # print(pulse.shape)
-
-        register = AtomArrangement()
-        for posi in pos:
-            register.add(np.array([posi[0] * 1e-6, posi[1] * 1e-6]))
-
-        delta = TimeSeries()
-        omega = TimeSeries()
-        phi = TimeSeries()
-
-        delta.put(0, pulse[0][0])
-        for i in range(len(clocks) - 2):
-            delta.put(clocks[i + 1], pulse[0][i])
-        delta.put(clocks[-1], pulse[0][-1])
-        omega.put(0, 0)
-        for i in range(len(clocks) - 2):
-            omega.put(clocks[i + 1], pulse[1][i])
-        omega.put(clocks[-1], 0)
-        phi.put(0, 0)
-        for i in range(len(clocks) - 2):
-            phi.put(clocks[i + 1], pulse[2][i])
-        phi.put(clocks[-1], 0)
-
-        drive = DrivingField(amplitude=omega, phase=phi, detuning=delta)
-
-        ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
-
-        try:
-            aquila_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/quera/Aquila")
-            user_agent = f"SimuQ/{_version.__version__}"
-            aquila_qpu.aws_session.add_braket_user_agent(user_agent)
-        except:
-            raise Exception(
-                "Please check your configurations of IAM roles, regions, and credentials according to instructions in: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration"
-            )
-
-        discretized_ahs_program = ahs_program.discretize(aquila_qpu)
-
-        return discretized_ahs_program

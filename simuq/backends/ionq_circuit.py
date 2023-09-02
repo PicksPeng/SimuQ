@@ -11,6 +11,7 @@ def is_close(a, b, tol=1e-6):
 
 class Circuit:
     def __init__(self, name, n_qubits, backend="simulator", noise_model=None):
+        # Circuit are stored in turns, accum_phases are stored in rads.
         self.job = {
             "lang": "json",
             "shots": 4096,
@@ -55,7 +56,7 @@ class Circuit:
                 to_turns(phi0 + self.accum_phase[q0]),
                 to_turns(phi1 + self.accum_phase[q1]),
             ]
-            gate["angle"] = to_turns(theta / (2 * np.pi))
+            gate["angle"] = to_turns(theta)
         elif np.pi / 2 < theta <= np.pi:
             self.gpi(q0, phi0)
             self.gpi(q1, phi1)
@@ -262,17 +263,15 @@ class Circuit:
                     new_circ.add_unitary(q, unitaries[q])
                     unitaries[q] = identity.copy()
                 q0, q1 = gate["targets"]
-                phi0, phi1 = gate["phases"]
-                phi0 *= 2 * np.pi
-                phi1 *= 2 * np.pi
+                phi0, phi1 = np.array(gate["phases"]) * 2 * np.pi
                 angle = gate["angle"] * 2 * np.pi
                 new_circ.ms(q0, q1, phi0, phi1, angle)
             else:
                 raise Exception("Unknown gate:", gate["gate"])
 
         for q in range(n):
-            self.add_unitary(self, q, unitaries[q], new_circ)
-            new_circ.accum_phase[q] += self.accum_phase[q]
+            new_circ.add_unitary(q, unitaries[q])
+            new_circ.rz(q, -self.accum_phase[q])
 
         return new_circ
 
@@ -282,27 +281,60 @@ class Circuit:
         from qiskit import QuantumCircuit
         from qiskit.quantum_info import Operator
 
-        circ = QuantumCircuit(self.job["body"]["qubits"])
+        n = self.job["body"]["qubits"]
+        circ = QuantumCircuit(n)
 
         from qiskit.circuit.library import RZGate
         from qiskit_ionq import GPI2Gate, GPIGate, IonQProvider, MSGate
 
         for ind, gate in enumerate(self.job["body"]["circuit"]):
             if gate["gate"] == "gpi":
-                circ.append(GPIGate(gate["phase"]), [gate["target"]])
+                circ.append(GPIGate(gate["phase"]), [n - 1 - gate["target"]])
             elif gate["gate"] == "gpi2":
-                circ.append(GPI2Gate(gate["phase"]), [gate["target"]])
+                circ.append(GPI2Gate(gate["phase"]), [n - 1 - gate["target"]])
+            elif gate["gate"] == "ms":
+                circ.append(MSGate(gate["phases"][1], gate["phases"][0], gate["angle"]), list(n - 1 - np.array(gate["targets"])))
             else:
                 raise Exception("Unknown gate:", gate["gate"])
         for q in range(self.job["body"]["qubits"]):
-            circ.append(RZGate(-self.accum_phase[q]), [q])
+            circ.append(RZGate(-self.accum_phase[q]), [n - 1 - q])
 
-        return Operator(circ).data
+        return Operator(circ).to_matrix()
 
-def test():
+def random_circ(n, m) :
+    if n <= 1 :
+        raise Exception("n must be > 1.")
+    circ = Circuit("random circ", n)
+    for _ in range(m) :
+        g = np.random.randint(4)
+        if g == 0 :
+            q = np.random.randint(n)
+            theta = np.random.uniform(-3 * np.pi, 3 * np.pi)
+            circ.rz(q, theta)
+        elif g == 1 :
+            q = np.random.randint(n)
+            theta = np.random.uniform(-3 * np.pi, 3 * np.pi)
+            circ.gpi(q, theta)
+        elif g == 2 :
+            q = np.random.randint(n)
+            theta = np.random.uniform(-3 * np.pi, 3 * np.pi)
+            circ.gpi2(q, theta)
+        else :
+            q1 = np.random.randint(n)
+            q2 = np.random.randint(n)
+            while q1 == q2 :
+                q2 = np.random.randint(n)
+            phi1 = np.random.uniform(-3 * np.pi, 3 * np.pi)
+            phi2 = np.random.uniform(-3 * np.pi, 3 * np.pi)
+            ang = np.random.uniform(-3 * np.pi, 3 * np.pi)
+            circ.ms(q1, q2, phi1, phi2, ang)
+    return circ
+        
+
+def test_1q(T):
     from scipy.stats import unitary_group
 
-    for _ in range(100):
+    for _ in range(T):
         U = unitary_group.rvs(2)
         circ = Circuit("test", 1)
         circ.add_unitary(0, U)
@@ -314,11 +346,29 @@ def test():
             print(U)
             print(Uc)
             print(Udag_Uc)
-            return
+            return circ
 
     print("Test passed")
 
+def test_rand_circ(n, m, T):
+    for _ in range(T):
+        circ1 = random_circ(n, m)
+        U1 = circ1.to_matrix()
+        circ2 = circ1.optimize()
+        U2 = circ2.to_matrix()
+        identity = np.zeros((1<<n, 1<<n))
+        for i in range(1<<n):
+            identity[i, i] = 1
+        
+        U1dag_U2 = np.matmul(U1.conj().transpose(), U2)
+        Utar = np.array(identity * U1dag_U2[0, 0])
+        if not is_close(np.linalg.norm(U1dag_U2 - Utar), 0, 1e-6 * (1<<n)):
+            print("Test failed")
+            return circ1
+
+    print("Test passed")
 
 if __name__ == "__main__":
-    test()
+    test_1q(100)
+    test_rand_circ(3, 30, 100)
 """

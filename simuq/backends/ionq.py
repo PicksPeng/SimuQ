@@ -1,6 +1,7 @@
 import networkx as nx
 import numpy as np
-from ionq_circuit import Circuit
+
+from simuq.backends.ionq_circuit import Circuit
 
 
 def clean_as(n, boxes, edges, backend="simulator", noise_model=None):

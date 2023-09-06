@@ -1,4 +1,8 @@
 import numpy as np
+from braket.ahs import AnalogHamiltonianSimulation, AtomArrangement, DrivingField
+from braket.timings.time_series import TimeSeries
+
+from simuq.transpiler import Transpiler
 
 
 def gen_braket_code(pos, clocks, pulse):
@@ -7,14 +11,10 @@ def gen_braket_code(pos, clocks, pulse):
     # # pulse = np.array(pulse)
     # print(pulse)
     # print(pulse.shape)
-    from braket.ahs.atom_arrangement import AtomArrangement
 
     register = AtomArrangement()
     for posi in pos:
         register.add(np.array([posi[0] * 1e-6, posi[1] * 1e-6]))
-
-    from braket.ahs.driving_field import DrivingField
-    from braket.timings.time_series import TimeSeries
 
     delta = TimeSeries()
     omega = TimeSeries()
@@ -34,28 +34,9 @@ def gen_braket_code(pos, clocks, pulse):
     phi.put(clocks[-1], 0)
 
     drive = DrivingField(amplitude=omega, phase=phi, detuning=delta)
-    from braket.ahs.analog_hamiltonian_simulation import AnalogHamiltonianSimulation
 
     ahs_program = AnalogHamiltonianSimulation(register=register, hamiltonian=drive)
-
-    try:
-        from braket.aws import AwsDevice
-
-        aquila_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/quera/Aquila")
-    except:
-        raise Exception(
-            "Please check your configurations of IAM roles, regions, and credentials according to instructions in: https://boto3.amazonaws.com/v1/documentation/api/latest/guide/quickstart.html#configuration"
-        )
-
-    discretized_ahs_program = ahs_program.discretize(aquila_qpu)
-
-    return discretized_ahs_program
-
-    from braket.devices import LocalSimulator
-
-    device = LocalSimulator("braket_ahs")
-
-    result = device.run(discretized_ahs_program, shots=1_000_000).result()
+    return ahs_program
 
 
 def gen_clocks(times, ramp_time, state_prep_time):
@@ -70,10 +51,36 @@ def gen_clocks(times, ramp_time, state_prep_time):
     return clocks
 
 
-def clean_as(sol_gvars, boxes, ramp_time, state_prep, verbose=0):
+def _initialize_positions_1d(sol_gvars):
     pos = [(0.0, 0.0)]
     for i in range(len(sol_gvars)):
         pos.append((sol_gvars[i], 0.0))
+    return pos
+
+
+def _initialize_positions_2d(sol_gvars, verbose):
+    pos = [(0.0, 0.0)]
+    for i in range(int(len(sol_gvars) / 2)):
+        pos.append((sol_gvars[2 * i], sol_gvars[2 * i + 1]))
+    # Fix rotation angle
+    theta = -np.arctan2(pos[1][1], pos[1][0])
+    if verbose > 0:
+        print("Fixing rotation by ", theta)
+    for i in range(len(pos)):
+        new_x = np.cos(theta) * pos[i][0] - np.sin(theta) * pos[i][1]
+        new_y = np.sin(theta) * pos[i][0] + np.cos(theta) * pos[i][1]
+        pos[i] = (new_x, new_y)
+    return pos
+
+
+def clean_as(sol_gvars, boxes, ramp_time, state_prep, dimension, verbose=0):
+    if dimension == 1:
+        pos = _initialize_positions_1d(sol_gvars)
+    elif dimension == 2:
+        pos = _initialize_positions_2d(sol_gvars, verbose)
+    else:
+        raise NotImplementedError
+
     m = len(boxes)
     times = []
     pulse = [[0 for i in range(m)] for k in range(3)]
@@ -99,11 +106,17 @@ def clean_as(sol_gvars, boxes, ramp_time, state_prep, verbose=0):
         if pulse[1][i] < 0:
             pulse[1][i] = -pulse[1][i]
             pulse[2][i] += np.pi
-    return (pos, gen_clocks(times, ramp_time, state_prep["times"]), pulse)
+    return pos, gen_clocks(times, ramp_time, state_prep["times"]), pulse
 
 
-def transpile(sol_gvars, boxes, edges, ramp_time=0.05, state_prep={}, verbose=0):
-    # print(sol_gvars)
-    # print(boxes)
-    code = gen_braket_code(*clean_as(sol_gvars, boxes, ramp_time, state_prep, verbose))
-    return code
+class BraketRydbergTranspiler(Transpiler):
+    def __init__(self, dimension):
+        self._dimension = dimension
+
+    def transpile(self, sol_gvars, boxes, edges, ramp_time=0.05, state_prep=None, verbose=0):
+        # print(sol_gvars)
+        # print(boxes)
+        code = gen_braket_code(
+            *clean_as(sol_gvars, boxes, ramp_time, state_prep or {}, self._dimension, verbose)
+        )
+        return code

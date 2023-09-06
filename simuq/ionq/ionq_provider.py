@@ -9,7 +9,7 @@ class IonQProvider(BaseProvider):
                 raise Exception("No API_key provided.")
             else:
                 with open(from_file, "r") as f:
-                    API_key = f.readline()
+                    API_key = f.readline().strip()
         self.API_key = API_key
         self.all_backends = ["harmony", "aria-1", "aria-2", "forte"]
 

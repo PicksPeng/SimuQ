@@ -1,3 +1,5 @@
+from simuq.aais import heisenberg
+from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
 
@@ -46,11 +48,8 @@ class IonQProvider(BaseProvider):
             raise Exception("Device has less sites than the target quantum system.")
 
         if aais == "heisenberg":
-            from simuq.aais import heisenberg
-            from simuq.backends.ionq import transpile
-
             mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
-            comp = transpile
+            comp = IonQAPITranspiler().transpile
 
         layout, sol_gvars, boxes, edges = generate_as(
             qs,
@@ -63,7 +62,7 @@ class IonQProvider(BaseProvider):
         )
         self.prog = comp(
             qs.num_sites, sol_gvars, boxes, edges, backend="qpu." + backend, noise_model=backend
-        )
+        ).job
 
         if state_prep is not None:
             self.prog["body"]["circuit"] = state_prep["circuit"] + self.prog["body"]["circuit"]

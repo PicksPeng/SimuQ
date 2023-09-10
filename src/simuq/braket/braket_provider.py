@@ -124,7 +124,6 @@ class BraketProvider(BaseProvider):
 
     def results(self, task_arn=None, verbose=0):
         if task_arn is not None:
-
             task = AwsQuantumTask(arn=task_arn)
         else:
             if self.task is None:
@@ -161,9 +160,7 @@ def _show_register(register):
     filled_sites = [
         site.coordinate for site in register._sites if site.site_type == SiteType.FILLED
     ]
-    empty_sites = [
-        site.coordinate for site in register._sites if site.site_type == SiteType.VACANT
-    ]
+    empty_sites = [site.coordinate for site in register._sites if site.site_type == SiteType.VACANT]
 
     fig = plt.figure(figsize=(4, 4))
     if len(filled_sites) > 0:

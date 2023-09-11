@@ -1,4 +1,4 @@
-import math
+import cmath
 from abc import ABC, abstractmethod
 
 import numpy as np
@@ -9,7 +9,7 @@ def to_turns(phi):
 
 
 def isclose(a, b, tol=1e-6):
-    return math.isclose(a, b, rel_tol=tol)
+    return cmath.isclose(a, b, rel_tol=tol)
 
 
 class IonQCircuit(ABC):

@@ -50,15 +50,15 @@ class IonQAPICircuit(IonQCircuit):
         """
         if "noise" in self.job:
             new_circ = IonQAPICircuit(
-                self.job["name"],
                 self.job["body"]["qubits"],
+                self.job["name"],
                 self.job["target"],
                 self.job["noise"]["model"],
             )
         else:
             new_circ = IonQAPICircuit(
-                self.job["name"],
                 self.job["body"]["qubits"],
+                self.job["name"],
                 self.job["target"],
             )
 

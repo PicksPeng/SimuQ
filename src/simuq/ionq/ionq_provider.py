@@ -5,14 +5,14 @@ from simuq.solver import generate_as
 
 
 class IonQProvider(BaseProvider):
-    def __init__(self, API_key=None, from_file=None):
-        if API_key is None:
+    def __init__(self, api_key=None, from_file=None):
+        if api_key is None:
             if from_file is None:
                 raise Exception("No API_key provided.")
             else:
                 with open(from_file, "r") as f:
-                    API_key = f.readline().strip()
-        self.API_key = API_key
+                    api_key = f.readline().strip()
+        self.API_key = api_key
         self.all_backends = ["harmony", "aria-1", "aria-2", "forte"]
 
         super().__init__()

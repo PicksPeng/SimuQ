@@ -75,7 +75,7 @@ class IonQProvider(BaseProvider):
             raise Exception("No compiled job in record.")
         print(self.prog["body"]["circuit"])
 
-    def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
+    def run(self, shots, on_simulator=False, with_noise=False, verbose=0):
         if self.prog is None:
             raise Exception("No compiled job in record.")
 

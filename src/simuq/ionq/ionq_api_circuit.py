@@ -9,7 +9,6 @@ class IonQAPICircuit(IonQCircuit):
         # Circuit are stored in turns, accum_phases are stored in rads.
         self.job = {
             "lang": "json",
-            "shots": 4096,
             "name": name,
             "target": backend,
             "body": {
@@ -91,6 +90,6 @@ class IonQAPICircuit(IonQCircuit):
 
         for q in range(n):
             new_circ._add_unitary(q, unitaries[q])
-            new_circ.rz(q, -self._accum_phases[q])  # TODO: is this really necessary?
+            new_circ.rz(q, -self._accum_phases[q])
 
         return new_circ

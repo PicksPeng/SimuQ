@@ -64,6 +64,6 @@ class BraketIonQCircuit(IonQCircuit):
 
         for q in range(n):
             new_circ._add_unitary(q, unitaries[q])
-            new_circ.rz(q, -self._accum_phases[q])  # TODO: is this really necessary?
+            new_circ.rz(q, -self._accum_phases[q])
 
         return new_circ

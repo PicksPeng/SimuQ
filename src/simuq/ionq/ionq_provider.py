@@ -1,16 +1,18 @@
+from simuq.aais import heisenberg
+from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
 
 
 class IonQProvider(BaseProvider):
-    def __init__(self, API_key=None, from_file=None):
-        if API_key is None:
+    def __init__(self, api_key=None, from_file=None):
+        if api_key is None:
             if from_file is None:
                 raise Exception("No API_key provided.")
             else:
                 with open(from_file, "r") as f:
-                    API_key = f.readline().strip()
-        self.API_key = API_key
+                    api_key = f.readline().strip()
+        self.API_key = api_key
         self.all_backends = ["harmony", "aria-1", "aria-2", "forte"]
 
         super().__init__()
@@ -46,11 +48,8 @@ class IonQProvider(BaseProvider):
             raise Exception("Device has less sites than the target quantum system.")
 
         if aais == "heisenberg":
-            from simuq.aais import heisenberg
-            from simuq.backends.ionq import transpile
-
             mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
-            comp = transpile
+            comp = IonQAPITranspiler().transpile
 
         layout, sol_gvars, boxes, edges = generate_as(
             qs,
@@ -63,7 +62,7 @@ class IonQProvider(BaseProvider):
         )
         self.prog = comp(
             qs.num_sites, sol_gvars, boxes, edges, backend="qpu." + backend, noise_model=backend
-        )
+        ).job
 
         if state_prep is not None:
             self.prog["body"]["circuit"] = state_prep["circuit"] + self.prog["body"]["circuit"]
@@ -76,7 +75,7 @@ class IonQProvider(BaseProvider):
             raise Exception("No compiled job in record.")
         print(self.prog["body"]["circuit"])
 
-    def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
+    def run(self, shots, on_simulator=False, with_noise=False, verbose=0):
         if self.prog is None:
             raise Exception("No compiled job in record.")
 

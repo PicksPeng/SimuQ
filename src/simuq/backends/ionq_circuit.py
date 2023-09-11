@@ -9,7 +9,7 @@ def to_turns(phi):
 
 
 def isclose(a, b, tol=1e-6):
-    return cmath.isclose(a, b, rel_tol=tol)
+    return cmath.isclose(a, b, abs_tol=tol)
 
 
 class IonQCircuit(ABC):

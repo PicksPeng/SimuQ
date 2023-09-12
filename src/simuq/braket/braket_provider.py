@@ -92,12 +92,9 @@ class BraketProvider(BaseProvider):
             self.layout = layout
 
         elif self.provider == "ionq":
-            if device == "Harmony":
-                nsite = 11
-            elif device == "Aria-1":
-                nsite = 23
-            elif device == "Aria-2":
-                nsite = 23
+            if isinstance(device, str):
+                ionq_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/ionq/" + self.device)
+                nsite = ionq_qpu.properties.paradigm.qubitCount
             elif isinstance(device, int):
                 if device > 0:
                     nsite = device

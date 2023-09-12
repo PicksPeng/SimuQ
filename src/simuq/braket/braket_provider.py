@@ -5,7 +5,8 @@ from braket.aws import AwsDevice, AwsQuantumTask
 from braket.devices import LocalSimulator
 
 from simuq import _version
-from simuq.aais import rydberg1d_global, rydberg2d_global
+from simuq.aais import heisenberg, rydberg1d_global, rydberg2d_global
+from simuq.braket.braket_ionq_transpiler import BraketIonQTranspiler
 from simuq.braket.braket_rydberg_transpiler import BraketRydbergTranspiler
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
@@ -14,8 +15,9 @@ from simuq.solver import generate_as
 class BraketProvider(BaseProvider):
     def __init__(self):
         self.backend_aais = dict()
-        self.backend_aais[("ionq", "harmony")] = ["heisenberg"]
-        self.backend_aais[("ionq", "aria-1")] = ["heisenberg"]
+        self.backend_aais[("ionq", "Harmony")] = ["heisenberg"]
+        self.backend_aais[("ionq", "Aria-1")] = ["heisenberg"]
+        self.backend_aais[("ionq", "Aria-2")] = ["heisenberg"]
         self.backend_aais[("quera", "Aquila")] = [
             "rydberg1d_global",
             "rydberg2d_global",
@@ -42,6 +44,8 @@ class BraketProvider(BaseProvider):
         verbose=0,
     ):
         if (provider, device) not in self.backend_aais.keys():
+            print(provider)
+            print(device)
             raise Exception("Not supported hardware provider or device.")
         if aais not in self.backend_aais[(provider, device)]:
             raise Exception("Not supported AAIS on this device.")
@@ -87,12 +91,53 @@ class BraketProvider(BaseProvider):
             self.prog = self.ahs_prog
             self.layout = layout
 
+        elif self.provider == "ionq":
+            if device == "Harmony":
+                nsite = 11
+            elif device == "Aria-1":
+                nsite = 23
+            elif device == "Aria-2":
+                nsite = 23
+            elif isinstance(device, int):
+                if device > 0:
+                    nsite = device
+            else:
+                raise Exception("Backend is not supported.")
+
+            if qs.num_sites > nsite:
+                raise Exception("Device has less sites than the target quantum system.")
+
+            if aais == "heisenberg":
+                mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
+                transpiler = BraketIonQTranspiler()
+
+            layout, sol_gvars, boxes, edges = generate_as(
+                qs,
+                mach,
+                trotter_num,
+                solver="least_squares",
+                solver_args={"tol": tol},
+                override_layout=[i for i in range(qs.num_sites)],
+                verbose=verbose,
+            )
+
+            self.prog = transpiler.transpile(qs.num_sites, sol_gvars, boxes, edges).braket_circuit
+
+            if state_prep is not None:
+                self.prog = state_prep.add(self.prog)
+
+            self.layout = layout
+            self.qs_names = qs.print_sites
+
     def visualize_quera(self):
         braket_prog = self.ahs_prog
 
         fig1 = _show_register(braket_prog.register)
         fig2 = _show_global_drive(braket_prog.hamiltonian)
         plt.show()
+
+    def visualize_circuit(self):
+        print(self.prog)
 
     def visualize(self):
         if self.prog is None:
@@ -121,6 +166,22 @@ class BraketProvider(BaseProvider):
                     print("Submitted.")
                     print("Task arn: ", meta["quantumTaskArn"])
                     print("Task status: ", meta["status"])
+        elif self.provider == "ionq":
+            if on_simulator:
+                simulator = LocalSimulator()
+                self.task = simulator.run(self.prog, shots=shots)
+                if verbose >= 0:
+                    print("Submitted.")
+            else:
+                ionq_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/ionq/" + self.device)
+                user_agent = f"SimuQ/{_version.__version__}"
+                ionq_qpu.aws_session.add_braket_user_agent(user_agent)
+                self.task = ionq_qpu.run(self.prog, shots=shots)
+                meta = self.task.metadata()
+                if verbose >= 0:
+                    print("Submitted.")
+                    print("Task arn: ", meta["quantumTaskArn"])
+                    print("Task status: ", meta["status"])
 
     def results(self, task_arn=None, verbose=0):
         if task_arn is not None:
@@ -139,21 +200,24 @@ class BraketProvider(BaseProvider):
 
         result = task.result()
 
-        N = len(self.layout)
-        counts = dict([])
-        for i in range(result.task_metadata.shots):
-            if sum(result.measurements[i].pre_sequence) == N:
-                s = ""
-            for j in range(N):
-                s += "g" if result.measurements[i].post_sequence[j] == 1 else "r"
-            if s not in counts.keys():
-                counts[s] = 1
-            else:
-                counts[s] += 1
+        if self.provider == "quera":
+            N = len(self.layout)
+            counts = dict([])
+            for i in range(result.task_metadata.shots):
+                if sum(result.measurements[i].pre_sequence) == N:
+                    s = ""
+                for j in range(N):
+                    s += "g" if result.measurements[i].post_sequence[j] == 1 else "r"
+                if s not in counts.keys():
+                    counts[s] = 1
+                else:
+                    counts[s] += 1
 
-        prob = _extract_prob(counts, N)
-        ret = {BraketProvider.to_bin(i, N): prob[i] for i in range(1 << N) if abs(prob[i]) > 1e-6}
-        return ret
+            prob = _extract_prob(counts, N)
+            ret = {BraketProvider.to_bin(i, N): prob[i] for i in range(1 << N) if abs(prob[i]) > 1e-6}
+            return ret
+        elif self.provider == "ionq":
+            return dict(sorted(result.measurement_probabilities.items()))
 
 
 def _show_register(register):

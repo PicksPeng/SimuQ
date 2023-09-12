@@ -3,5 +3,5 @@ from simuq.ionq.ionq_api_circuit import IonQAPICircuit
 
 
 class IonQAPITranspiler(IonQTranspiler):
-    def generate_circuit(self, n: int, name: str, backend, noise_model) -> IonQAPICircuit:
+    def generate_circuit(self, n: int, backend, noise_model, name: str = "test") -> IonQAPICircuit:
         return IonQAPICircuit(n, name, backend, noise_model)

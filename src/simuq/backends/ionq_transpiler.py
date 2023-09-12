@@ -81,5 +81,5 @@ class IonQTranspiler(Transpiler, ABC):
         self, n, sol_gvars, boxes, edges, *generate_circuit_args, **generate_circuit_kwargs
     ):
         n = len(n) if isinstance(n, list) else n
-        circ = self.generate_circuit(n, "test", *generate_circuit_args, **generate_circuit_kwargs)
+        circ = self.generate_circuit(n, *generate_circuit_args, **generate_circuit_kwargs)
         return self.clean_as(n, boxes, edges, circ)

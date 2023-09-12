@@ -67,3 +67,7 @@ class BraketIonQCircuit(IonQCircuit):
             new_circ.rz(q, -self._accum_phases[q])
 
         return new_circ
+
+    @property
+    def braket_circuit(self):
+        return Circuit().add_verbatim_box(self._circuit)

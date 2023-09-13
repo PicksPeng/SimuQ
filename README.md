@@ -34,7 +34,7 @@ To enable these backends, you may install the dependencies via
 pip install "simuq[braket]"
 ```
 
-Then you need to configure AWS IAM roles, regions, and AWS credentials. Please refer to [Amazon Braket Python SDK](https://github.com/aws/amazon-braket-sdk-python).
+If running on QPUs, make sure that your AWS account is onboarded to Amazon Braket, as per the instructions [here](https://github.com/amazon-braket/amazon-braket-sdk-python#prerequisites) (this isn't necessary for running on the local simulator).
 
 For examples using Amazon Braket providers of SimuQ, please refer to [Simulating Ising model on QuEra devices](https://github.com/PicksPeng/SimuQ/blob/main/notebooks/ising_quera.ipynb).
 

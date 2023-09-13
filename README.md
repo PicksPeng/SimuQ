@@ -21,7 +21,7 @@ pip install simuq
 Multiple platforms are supported by SimuQ through different APIs and you may optionally install them based on your needs. You may install all optional dependencies, though not recommended, by
 
 ```bash
-pip install simuq[all]
+pip install "simuq[all]"
 ```
 
 ### Amazon Braket
@@ -31,7 +31,7 @@ SimuQ supports compilation to IonQ's trapped-ion devices and QuEra's neutral ato
 To enable these backends, you may install the dependencies via
 
 ```bash
-pip install simuq[braket]
+pip install "simuq[braket]"
 ```
 
 Then you need to configure AWS IAM roles, regions, and AWS credentials. Please refer to [Amazon Braket Python SDK](https://github.com/aws/amazon-braket-sdk-python).
@@ -45,7 +45,7 @@ SimuQ supports compilation to IonQ's trapped-ion devices through IonQ Quantum Cl
 To enable these backends, you may install the dependencies via
 
 ```bash
-pip install simuq[ionq]
+pip install "simuq[ionq]"
 ```
 
 To run through IonQ Quantum Cloud, you must obtain an API key from [IonQ](https://ionq.com/quantum-cloud).
@@ -59,16 +59,12 @@ SimuQ supports compilation to IBM's superconducting devices through Qiskit and I
 To enable these backends, you may install the dependencies via
 
 ```bash
-pip install simuq[qiskit]
+pip install "simuq[qiskit]"
 ```
 
 To run through IBM Quantum, you must obtain an API token from [IBM](https://quantum-computing.ibm.com/).
 
 The examples are TODO.
-
-```bash
-pip install simuq[dreal]
-```
 
 ## Project Structure
 

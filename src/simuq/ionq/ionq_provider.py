@@ -68,7 +68,7 @@ class IonQProvider(BaseProvider):
             self.prog["body"]["circuit"] = state_prep["circuit"] + self.prog["body"]["circuit"]
 
         self.layout = layout
-        self.qs_names = qs.print_sites
+        self.qs_names = qs.print_sites()
 
     def print_circuit(self):
         if self.prog is None:
@@ -106,6 +106,8 @@ class IonQProvider(BaseProvider):
         if verbose >= 0:
             print(self.task)
 
+        return self.task
+
     def results(self, job_id=None, verbose=0):
         if job_id is None:
             if self.task is not None:
@@ -139,7 +141,7 @@ class IonQProvider(BaseProvider):
         def results_from_data(data):
             ret = dict()
             for key in data.keys():
-                ret[layout_rev(int(key))] = data[key]
+                ret[layout_rev(int(key))[-1::-1]] = data[key]
             return ret
 
         return results_from_data(res["data"]["histogram"])

@@ -124,7 +124,7 @@ class BraketProvider(BaseProvider):
                 self.prog = state_prep.add(self.prog)
 
             self.layout = layout
-            self.qs_names = qs.print_sites
+            self.qs_names = qs.print_sites()
 
     def visualize_quera(self):
         braket_prog = self.ahs_prog

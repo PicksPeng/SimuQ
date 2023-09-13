@@ -35,7 +35,7 @@ class IBMProvider(BaseProvider):
 
         if aais == "heisenberg":
             from simuq.aais import ibm
-            from simuq.backends.qiskit_pulse_ibm import transpile
+            from simuq.ibm.qiskit_pulse_ibm import transpile
 
             mach = ibm.generate_qmachine(self.backend)
             comp = transpile

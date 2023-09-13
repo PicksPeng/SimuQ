@@ -10,9 +10,9 @@ We illustrate our design and benefits in our [arXiv paper](https://arxiv.org/abs
 
 We recommend Python 3.9 or greater since many optional dependencies have requirements for Python version.
 
-We encourage using ``pip`` for SimuQ installation. To install the core components of SimuQ, run the following command in shell:
+We encourage using `pip` for SimuQ installation. To install the core components of SimuQ, run the following command in shell:
 
-(Currently we haven't uploaded the repo to PyPI, so please download/clone the repository, enter the (unzipped) folder, and follow the following instructions but substituting ``.`` for ``simuq``, i.e., ``pip install .[all]``.)
+**Note** We haven't uploaded the repo to PyPI yet, so please download/clone the repository, enter the (unzipped) folder, and follow the following instructions by substituting `.` for `simuq`, i.e., `pip install .`. If installing extras (for example, `pip install "simuq[dev]"`), remember to include quotes around the target (for local installations, this means `pip install ".[dev]"`). To install in editable mode, run `pip install` with the `-e` flag: `pip install -e ".[dev]"`.
 
 ```bash
 pip install simuq
@@ -65,12 +65,6 @@ pip install simuq[qiskit]
 To run through IBM Quantum, you must obtain an API token from [IBM](https://quantum-computing.ibm.com/).
 
 The examples are TODO.
-
-### dReal solver
-
-The default solver of SimuQ is based on [SciPy](https://scipy.org/)'s least square solver. Other SMT solvers are also supported in SimuQ compiler, like dReal.
-
-To try dReal solver, please refer to [installation of dReal4](https://github.com/dreal/dreal4), and enable the solver by
 
 ```bash
 pip install simuq[dreal]

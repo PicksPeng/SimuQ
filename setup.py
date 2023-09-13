@@ -24,9 +24,6 @@ setup(
         "ionq": [
             "requests",
         ],
-        "dreal": [
-            "dreal",
-        ],
         "qiskit": [
             "matplotlib",
             "qiskit",
@@ -35,7 +32,7 @@ setup(
         "qutip": [
             "qutip",
         ],
-        "all": ["simuq[braket, ionq, dreal, qiskit, qutip]"],
-        "test": ["tox"],
+        "all": ["simuq[braket, ionq, qiskit, qutip, dev]"],
+        "dev": ["tox"],
     },
 )

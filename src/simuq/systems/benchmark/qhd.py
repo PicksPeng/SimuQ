@@ -6,13 +6,13 @@
 # x = 1/q Σ_j n_{x,j}
 # y = 1/q Σ_j n_{y,j}
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
 def GenQS(q, T, alpha, beta, f=lambda x, y: -x * x + y * y + x * y):
     qs = QSystem()
-    x, y = [qubit(qs) for i in range(q)], [qubit(qs) for i in range(q)]
+    x, y = [Qubit(qs) for i in range(q)], [Qubit(qs) for i in range(q)]
     H, xoper, yoper = 0, 0, 0
     for i in range(q):
         H += alpha * (-0.5) * q**2 * (x[i].X + y[i].X)

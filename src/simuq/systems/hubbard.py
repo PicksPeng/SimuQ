@@ -1,4 +1,4 @@
-from simuq.environment import fermion
+from simuq.environment import Fermion
 from simuq.qsystem import QSystem
 
 # Fermi-Hubbard model on a 1D chain with open-boundary condition,
@@ -13,7 +13,7 @@ L = 5  # number of lattice sites
 N = 2 * L
 
 qs = QSystem()
-fermions = [fermion(qs) for _ in range(N)]
+fermions = [Fermion(qs) for _ in range(N)]
 nops = [fermions[k].c * fermions[k].a for k in range(N)]  # number operators
 
 J = 0.1  # hopping integral

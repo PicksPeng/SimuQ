@@ -4,13 +4,13 @@
 # Hel = 1/2 Σ_j eps_j Z_j + 1/2 Σ_k Σ_j V_jk (X_j X_k + Y_j Y_k)
 # Hph =
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
 def GenQS(n, m, Jx, Jy):
     qs = QSystem()
-    q = [[qubit(qs) for j in range(m)] for i in range(n)]
+    q = [[Qubit(qs) for j in range(m)] for i in range(n)]
     H = 0
     for i in range(n - 1):
         for j in range(m):

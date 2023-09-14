@@ -1,10 +1,10 @@
-from simuq.environment import boson, qubit
+from simuq.environment import Boson, Qubit
 from simuq.qsystem import QSystem
 
 # Jaynes-Cummings model
 qs = QSystem()
-atom = qubit(qs)
-cav = boson(qs)
+atom = Qubit(qs)
+cav = Boson(qs)
 
 omega_a = 0.1
 omega_c = 0.01

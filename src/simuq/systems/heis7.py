@@ -1,11 +1,11 @@
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 qs = QSystem()
 n = 7
-ql = [qubit(qs) for i in range(7)]
+ql = [Qubit(qs) for i in range(7)]
 link = [(0, 1), (1, 2), (1, 3), (3, 5), (4, 5), (5, 6)]
 T = np.pi
 h = 0

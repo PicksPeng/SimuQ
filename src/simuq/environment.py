@@ -54,7 +54,7 @@ class BaseSite:
         return h
 
 
-class qubit(BaseSite):
+class Qubit(BaseSite):
     """The qubit site.
 
     By default, there are X, Y, Z, I defined as site operators
@@ -110,7 +110,7 @@ class BaseParticle(BaseSite):
         return self.createOp("")
 
 
-class fermion(BaseParticle):
+class Fermion(BaseParticle):
     """The fermionic site"""
 
     def __init__(self, qs, name=None):
@@ -120,7 +120,7 @@ class fermion(BaseParticle):
         qs.sites_type[-1] = "fermion"
 
 
-class boson(BaseParticle):
+class Boson(BaseParticle):
     """The bosonic site"""
 
     def __init__(self, qs, name=None):

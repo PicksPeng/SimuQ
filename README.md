@@ -36,8 +36,6 @@ pip install "simuq[braket]"
 
 If running on QPUs, make sure that your AWS account is onboarded to Amazon Braket, as per the instructions [here](https://github.com/amazon-braket/amazon-braket-sdk-python#prerequisites) (this isn't necessary for running on the local simulator).
 
-For examples using Amazon Braket providers of SimuQ, please refer to [Simulating Ising model on QuEra devices](https://github.com/PicksPeng/SimuQ/blob/main/notebooks/ising_quera.ipynb).
-
 ### IonQ Quantum Cloud
 
 SimuQ supports compilation to IonQ's trapped-ion devices through IonQ Quantum Cloud.
@@ -50,7 +48,7 @@ pip install "simuq[ionq]"
 
 To run through IonQ Quantum Cloud, you must obtain an API key from [IonQ](https://ionq.com/quantum-cloud).
 
-When creating IonQ providers in SimuQ, you must provide the API key either through a string or a file storing the key. For further details please refer to [Simulating Ising model on IonQ devices](https://github.com/PicksPeng/SimuQ/blob/main/notebooks/ising_ionq.ipynb).
+When creating IonQ providers in SimuQ, you must provide the API key either through a string or a file storing the key.
 
 ### Qiskit
 
@@ -64,7 +62,9 @@ pip install "simuq[qiskit]"
 
 To run through IBM Quantum, you must obtain an API token from [IBM](https://quantum-computing.ibm.com/).
 
-The examples are TODO.
+## Examples
+
+For examples of SimuQ usage, refer to the notebooks in the [tutorials folder](https://github.com/PicksPeng/SimuQ/tree/main/notebooks/tutorials).
 
 ## Project Structure
 

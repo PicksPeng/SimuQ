@@ -6,13 +6,13 @@
 
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
 def GenQS(n=12, p=3, parameter_list=None):
     qs = QSystem()
-    q = [qubit(qs) for i in range(n)]
+    q = [Qubit(qs) for i in range(n)]
     link = [(i, (i + 1) % n) for i in range(n)]
     if parameter_list is None:
         parameter_list = np.random.uniform(0, 1, 2 * p)

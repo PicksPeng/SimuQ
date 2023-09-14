@@ -1,11 +1,11 @@
-from simuq.environment import boson
+from simuq.environment import Boson
 from simuq.qsystem import QSystem
 
 # Bose-Hubbard model, based on arXiv:2209.11153
 # Assuming a square lattice
 n = 5  # lattice size
 qs = QSystem()
-bosons = [boson(qs) for i in range(n)]
+bosons = [Boson(qs) for i in range(n)]
 
 J = 1
 U = 0.1

@@ -1,6 +1,6 @@
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
@@ -16,7 +16,7 @@ m = 3  # discretization
 T = 1  # evolution time
 
 qs = QSystem()
-q = [qubit(qs) for i in range(n)]
+q = [Qubit(qs) for i in range(n)]
 h0, h1 = 0, 0
 for i in range(n):
     h0 += q[i].X

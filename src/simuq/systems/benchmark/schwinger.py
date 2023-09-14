@@ -3,13 +3,13 @@
 # H = m/2 Σ_j (-1)^j Z_n + w/2 Σ_{j=1}^{N-1} (X_jX_{j+1}+Y_jY_{j+1})
 #   + J Σ_{j=1}^{N-1} (eps_0 + 1/2 Σ_{k=1}^j (Z_k+(-1)^k))^2
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
 def GenQS(n, T=1, m=0.5, w=1, J=1, eps_0=0):
     qs = QSystem()
-    q = [qubit(qs) for i in range(n)]
+    q = [Qubit(qs) for i in range(n)]
     H = 0
     for j in range(n):
         H += m / 2 * (-1) ** j * q[j].Z

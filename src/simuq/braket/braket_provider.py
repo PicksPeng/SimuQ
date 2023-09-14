@@ -211,7 +211,9 @@ class BraketProvider(BaseProvider):
                     counts[s] += 1
 
             prob = _extract_prob(counts, N)
-            ret = {BraketProvider.to_bin(i, N): prob[i] for i in range(1 << N) if abs(prob[i]) > 1e-6}
+            ret = {
+                BraketProvider.to_bin(i, N): prob[i] for i in range(1 << N) if abs(prob[i]) > 1e-6
+            }
             return ret
         elif self.provider == "ionq":
             return dict(sorted(result.measurement_probabilities.items()))

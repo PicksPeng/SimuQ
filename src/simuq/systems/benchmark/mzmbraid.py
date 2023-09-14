@@ -3,13 +3,13 @@
 
 from numpy import linspace
 
-from simuq.environment import fermion
+from simuq.environment import Fermion
 from simuq.qsystem import QSystem
 
 
 def GenQS(tau=3.3, alpha=3, Jmax=1, D=3, segs=6):
     qs = QSystem()
-    f = [fermion(qs) for i in range(3)]
+    f = [Fermion(qs) for i in range(3)]
 
     gamma_x = [f[i].a + f[i].c for i in range(3)]
     gamma_y = [-1j * (f[i].a - f[i].c) for i in range(3)]

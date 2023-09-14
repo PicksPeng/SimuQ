@@ -1,6 +1,6 @@
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.expression import Expression
 from simuq.hamiltonian import TIHamiltonian
 from simuq.qmachine import QMachine
@@ -27,7 +27,7 @@ C_6 = 862690 * 2.0 * np.pi
 def generate_qmachine(n=3, inits=None):
     rydberg = QMachine()
 
-    q = [qubit(rydberg) for i in range(n)]
+    q = [Qubit(rydberg) for i in range(n)]
 
     l = C_6 ** (1.0 / 6)
     if inits is None:

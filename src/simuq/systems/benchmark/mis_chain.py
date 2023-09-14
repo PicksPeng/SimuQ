@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
@@ -18,7 +18,7 @@ def GenQS(n=3, U=1, Omega=4, alpha=4, T=1, D=10):
 
     qs = QSystem()
     link = [(i, (i + 1) % n) for i in range(n - 1)]
-    q = [qubit(qs) for i in range(n)]
+    q = [Qubit(qs) for i in range(n)]
     noper = [(q[i].I - q[i].Z) / 2 for i in range(n)]
     h0 = 0
     for q0, q1 in link:

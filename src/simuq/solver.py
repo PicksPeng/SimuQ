@@ -396,8 +396,9 @@ def solve_aligned(
                 map_var_revert[i] = len(map_var)
                 map_var.append(i)
                 if (
-                    len(mach.gvars) <= i
-                    and i < len(mach.gvars) + len(qs.evos) * (len(mach.lvars) + mach.num_inss)
+                    len(mach.gvars)
+                    <= i
+                    < len(mach.gvars) + len(qs.evos) * (len(mach.lvars) + mach.num_inss)
                     and (i - len(mach.gvars)) % (mach.num_inss + len(mach.lvars)) < mach.num_inss
                 ):
                     temp_store = sol[label]
@@ -473,33 +474,26 @@ def solve_aligned(
         f = (lambda eqs_: lambda x: [(lambda i_: eqs_[i_](x))(i) for i in range(len(eqs_))])(eqs)
         lbs = [gvar.lower_bound for gvar in mach.gvars]
         ubs = [gvar.upper_bound for gvar in mach.gvars]
-        is_switch = [False for _ in mach.gvars]
         init = [gvar.init_value for gvar in mach.gvars]
         for i in range(len(qs.evos)):
             if mach.with_sys_ham:
-                lbs += (
-                    [0 for j in range(mach.num_inss - 1)]
-                    + [1]
-                    + [lvar.lower_bound for lvar in mach.lvars]
-                )
+                lbs += [0] * (mach.num_inss - 1) + [1] + [lvar.lower_bound for lvar in mach.lvars]
                 ubs += (
-                    [1 for j in range(mach.num_inss - 1)]
+                    [1] * (mach.num_inss - 1)
                     + [1 + 0.01]
                     + [lvar.upper_bound for lvar in mach.lvars]
                 )
                 init += (
-                    [0.5 for j in range(mach.num_inss - 1)]
+                    [0.5] * (mach.num_inss - 1)
                     + [1 + 0.005]
                     + [lvar.init_value for lvar in mach.lvars]
                 )
             else:
-                lbs += [0 for j in range(mach.num_inss)] + [lvar.lower_bound for lvar in mach.lvars]
-                ubs += [1 for j in range(mach.num_inss)] + [lvar.upper_bound for lvar in mach.lvars]
-                init += [0.5 for j in range(mach.num_inss)] + [
-                    lvar.init_value for lvar in mach.lvars
-                ]
-        lbs += [0 for j in range(len(qs.evos))]
-        ubs += [np.inf for j in range(len(qs.evos))]
+                lbs += ([0] * mach.num_inss) + [lvar.lower_bound for lvar in mach.lvars]
+                ubs += ([1] * mach.num_inss) + [lvar.upper_bound for lvar in mach.lvars]
+                init += ([0.5] * mach.num_inss) + [lvar.init_value for lvar in mach.lvars]
+        lbs += [0] * len(qs.evos)
+        ubs += [np.inf] * len(qs.evos)
         init += [qs.evos[j][1] for j in range(len(qs.evos))]
 
         nvar = len(lbs)
@@ -679,9 +673,10 @@ def align(i, ali, qs, mach, solver, solver_args, verbose):
     return False
 
 
-def find_sol(qs, mach, ali=[], solver="least_squares", solver_args={"tol": 1e-2}, verbose=0):
-    if ali == []:
-        return align(0, [0 for i in range(qs.num_sites)], qs, mach, solver, solver_args, verbose)
+def find_sol(qs, mach, ali=None, solver="least_squares", solver_args=None, verbose=0):
+    solver_args = solver_args or {"tol": 1e-2}
+    if ali:
+        return align(0, [0] * qs.num_sites, qs, mach, solver, solver_args, verbose)
     else:
         return solve_aligned_wrapper(ali, qs, mach, solver, solver_args, verbose)
 
@@ -695,10 +690,11 @@ def generate_as(
     trotter_num=4,
     solver="least_squares",
     solver_tol=None,
-    solver_args={"tol": 1e-1, "with_time_penalty": False},
+    solver_args=None,
     override_layout=None,
     verbose=0,
 ):
+    solver_args = solver_args or {"tol": 1e-1, "with_time_penalty": False}
     if solver_tol is not None:
         solver_args["tol"] = solver_tol
     ali = [] if override_layout is None else override_layout
@@ -717,7 +713,6 @@ def generate_as(
         # Deal with machines with system Hamiltonian first.
         if mach.with_sys_ham:
             for evo_index in range(len(qs.evos)):
-                (h, t) = qs.evos[evo_index]
                 if len(sol) > 0:
                     sol_lvars = sol[
                         locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(
@@ -743,7 +738,7 @@ def generate_as(
                                     ins_lvars,
                                 )
                             )
-                if box != []:
+                if box:
                     boxes.append(box)
 
             logger.info(alignment)
@@ -763,7 +758,6 @@ def generate_as(
 
         # Then deal with other cases
         for evo_index in range(len(qs.evos)):
-            (h, t) = qs.evos[evo_index]
             next_ending_boxes = []
             coloring = [i for i in range(mach.num_sites)]
             sol_lvars = sol[
@@ -814,7 +808,7 @@ def generate_as(
                                     ins_lvars,
                                 )
                             )
-                if ins_set != []:
+                if ins_set:
                     color_part.append(ins_set)
             # Detach if commute with all others
             """
@@ -979,7 +973,7 @@ def generate_as(
             logger.info(output_boxes[-1])
         for edge in edges:
             logger.info(edge)
-        return (alignment, sol_gvars, output_boxes, edges)
+        return alignment, sol_gvars, output_boxes, edges
     else:
         logger.info("No solution is found.")
         raise Exception("No solution is found.")

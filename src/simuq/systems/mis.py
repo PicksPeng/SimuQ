@@ -1,6 +1,6 @@
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
@@ -32,7 +32,7 @@ def GenQS(topo="Chain", k=3, dis_num=10, dis_partial=None, Delta=1, Omega=4, alp
                 if i < k - 1:
                     link.append((i * k + j, (i + 1) * k + j))
 
-    ql = [qubit(qs) for i in range(n)]
+    ql = [Qubit(qs) for i in range(n)]
     noper = [(ql[i].I - ql[i].Z) / 2 for i in range(n)]
     Omega = 4
     alpha = 4

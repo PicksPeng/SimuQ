@@ -1,11 +1,11 @@
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.expression import Expression
 from simuq.qmachine import QMachine
 
 
 def generate_qmachine(n=3):
     mach = QMachine()
-    ql = [qubit(mach) for i in range(n)]
+    ql = [Qubit(mach) for i in range(n)]
     link = [(i, i + 1) for i in range(n - 1)]
 
     for i in range(n):

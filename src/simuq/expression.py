@@ -102,10 +102,6 @@ class Expression:
                 return math.cos(sub)
             if isinstance(sub, np.float64):
                 return np.cos(sub)
-            import dreal as dr
-
-            if isinstance(sub, dr._dreal_py.Variable) or isinstance(sub, dr._dreal_py.Expression):
-                return dr.cos(sub)
             return NotImplemented
 
         return cls(exp, e.vars)
@@ -125,10 +121,6 @@ class Expression:
                 return math.sin(sub)
             if isinstance(sub, np.float64):
                 return np.sin(sub)
-            import dreal as dr
-
-            if type(sub) == dr._dreal_py.Variable or type(sub) == dr._dreal_py.Expression:
-                return dr.sin(sub)
             return NotImplemented
 
         return cls(exp, e.vars)

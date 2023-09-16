@@ -1,4 +1,4 @@
-from simuq.environment import fermion
+from simuq.environment import Fermion
 from simuq.qsystem import QSystem
 
 tau = 3.3
@@ -7,7 +7,7 @@ Jmax = 1
 D = 3
 
 qs = QSystem()
-f = [fermion(qs) for i in range(3)]
+f = [Fermion(qs) for i in range(3)]
 
 gamma_x = [f[i].a + f[i].c for i in range(3)]
 gamma_y = [-1j * (f[i].a - f[i].c) for i in range(3)]

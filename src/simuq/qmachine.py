@@ -54,10 +54,10 @@ class QMachine(BaseQuantumEnvironment):
     def instantiate(self):
         if not self.instantiated:
             if self.with_sys_ham:
-                SysLine = self.add_signal_line()
-                SysIns = SysLine.add_instruction("native", "System Hamiltonian")
-                SysIns.set_ham(self.sys_ham)
-                SysIns.is_sys_ham = True
+                sys_line = self.add_signal_line()
+                sys_ins = sys_line.add_instruction("native", "System Hamiltonian")
+                sys_ins.set_ham(self.sys_ham)
+                sys_ins.is_sys_ham = True
 
             # Add indices to global variables
             for index, gvar in enumerate(self.gvars):

@@ -285,10 +285,7 @@ class TIHamiltonian:
         abs_sum = 0
         for prod, c in self.ham:
             abs_sum += abs(c)
-        if abs_sum < 1e-8:
-            return True
-        else:
-            return False
+        return abs_sum < 1e-8
 
     @staticmethod
     def commutativity_test(h1, h2, derived=False):

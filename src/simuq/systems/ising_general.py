@@ -1,7 +1,7 @@
 import numpy as np
 from scipy.constants import h
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 n = 3
@@ -10,7 +10,7 @@ T = 1
 tmp = np.random.uniform(0, 1, (n, n))
 J = (tmp + tmp.T) / 2
 qs = QSystem()
-qubits = [qubit(qs) for i in range(n)]
+qubits = [Qubit(qs) for i in range(n)]
 H0 = 0
 H1 = 0
 for i in range(n):

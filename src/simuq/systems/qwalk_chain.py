@@ -1,4 +1,4 @@
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 # Quantum walk on a 1D chain
@@ -11,7 +11,7 @@ def GenQS(N, lamb, T, encoding="antiferromagnetic"):
     if encoding == "antiferromagnetic":
         n = N - 1
         qs = QSystem()
-        ql = [qubit(qs) for i in range(n)]
+        ql = [Qubit(qs) for i in range(n)]
 
         Hpen = 0
         for j in range(n - 1):

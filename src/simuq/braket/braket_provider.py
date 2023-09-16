@@ -92,9 +92,12 @@ class BraketProvider(BaseProvider):
             self.layout = layout
 
         elif self.provider == "ionq":
-            if isinstance(device, str):
-                ionq_qpu = AwsDevice("arn:aws:braket:us-east-1::device/qpu/ionq/" + self.device)
-                nsite = ionq_qpu.properties.paradigm.qubitCount
+            if device == "Harmony":
+                nsite = 11
+            elif device == "Aria-1":
+                nsite = 23
+            elif device == "Aria-2":
+                nsite = 23
             elif isinstance(device, int):
                 if device > 0:
                     nsite = device
@@ -142,7 +145,7 @@ class BraketProvider(BaseProvider):
         if self.provider == "quera":
             self.visualize_quera()
 
-    def run(self, shots=1000, on_simulator=False, verbose=0):
+    def run(self, shots, on_simulator=False, verbose=0):
         if self.prog is None:
             raise Exception("No compiled job in record.")
 
@@ -166,7 +169,16 @@ class BraketProvider(BaseProvider):
         elif self.provider == "ionq":
             if on_simulator:
                 simulator = LocalSimulator()
-                self.task = simulator.run(self.prog, shots=shots)
+
+                # Insert identity when a qubit is not targeted by any gates
+                prog = self.prog.copy()
+                used_qubits = {qubit for inst in prog.instructions for qubit in inst.target}
+                max_qubit = max(used_qubits)
+                for index in range(max_qubit):
+                    if index not in used_qubits:
+                        prog.i(index)
+
+                self.task = simulator.run(prog, shots=shots)
                 if verbose >= 0:
                     print("Submitted.")
             else:
@@ -211,7 +223,9 @@ class BraketProvider(BaseProvider):
                     counts[s] += 1
 
             prob = _extract_prob(counts, N)
-            ret = {BraketProvider.to_bin(i, N): prob[i] for i in range(1 << N) if abs(prob[i]) > 1e-6}
+            ret = {
+                BraketProvider.to_bin(i, N): prob[i] for i in range(1 << N) if abs(prob[i]) > 1e-6
+            }
             return ret
         elif self.provider == "ionq":
             return dict(sorted(result.measurement_probabilities.items()))

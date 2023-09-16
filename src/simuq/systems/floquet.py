@@ -1,6 +1,6 @@
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 # The Floquet Hamiltonian system in arXiv:2107.07311
@@ -20,7 +20,7 @@ t3 = 0.5
 
 FloquetQS = QSystem()
 qs = FloquetQS
-ql = [qubit(qs) for i in range(L)]
+ql = [Qubit(qs) for i in range(L)]
 
 hflip = 0
 for i in range(L):

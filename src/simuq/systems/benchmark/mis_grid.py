@@ -5,7 +5,7 @@
 
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 
@@ -25,7 +25,7 @@ def GenQS(k=3, U=1, Omega=4, alpha=4, T=1, D=10):
                 link.append((i * k + j, i * k + j + 1))
             if i < k - 1:
                 link.append((i * k + j, (i + 1) * k + j))
-    q = [qubit(qs) for i in range(n)]
+    q = [Qubit(qs) for i in range(n)]
     noper = [(q[i].I - q[i].Z) / 2 for i in range(n)]
     h0 = 0
     for q0, q1 in link:

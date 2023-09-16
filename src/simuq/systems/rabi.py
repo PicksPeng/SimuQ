@@ -1,10 +1,10 @@
 import math
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qsystem import QSystem
 
 qs = QSystem()
-q = qubit(qs)
+q = Qubit(qs)
 n_step = 5
 T = 1.0
 omega0 = 0.1

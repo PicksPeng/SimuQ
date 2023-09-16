@@ -1,10 +1,10 @@
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.expression import Expression
 from simuq.qmachine import *
 
 mach = QMachine()
 n = 7
-ql = [qubit(mach) for i in range(27)]
+ql = [Qubit(mach) for i in range(27)]
 
 IBMQ.load_account()
 

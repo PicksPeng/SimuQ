@@ -1,10 +1,10 @@
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.expression import Expression
 from simuq.qmachine import *
 
 mach = QMachine()
 n = 7
-ql = [qubit(mach) for i in range(7)]
+ql = [Qubit(mach) for i in range(7)]
 link = [(0, 1), (1, 2), (1, 3), (3, 5), (4, 5), (5, 6)]
 
 for i in range(n):

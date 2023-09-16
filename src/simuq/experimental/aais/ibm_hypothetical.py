@@ -1,6 +1,6 @@
 from qiskit.pulse import DriveChannel, GaussianSquare, ShiftPhase
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.qmachine import *
 
 
@@ -23,7 +23,7 @@ def get_mach(backend):
                     control = q1 if target == q2 else q2
         return control
 
-    ql = [qubit(mach) for i in range(n)]
+    ql = [Qubit(mach) for i in range(n)]
     link = []
     for item in connected_pairs_cnot:
         if get_control_qubit(item[0], item[1]) == item[0]:

@@ -1,6 +1,6 @@
 from qiskit.pulse import DriveChannel, GaussianSquare, ShiftPhase
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.expression import Expression
 from simuq.qmachine import QMachine
 
@@ -27,7 +27,7 @@ def generate_qmachine(backend):
             raise ValueError("This machine is not supported!")
         return control
 
-    ql = [qubit(mach) for i in range(n)]
+    ql = [Qubit(mach) for i in range(n)]
     link = []
     for item in connected_pairs_cnot:
         if get_control_qubit(item[0], item[1]) == item[0]:

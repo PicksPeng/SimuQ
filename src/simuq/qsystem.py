@@ -5,7 +5,7 @@ It is a container of the desired piecewise
 constant evolution.
 """
 
-from simuq.environment import BaseQuantumEnvironment, boson, fermion, qubit
+from simuq.environment import BaseQuantumEnvironment, Boson, Fermion, Qubit
 
 
 class QSystem(BaseQuantumEnvironment):
@@ -70,4 +70,4 @@ class QSystem(BaseQuantumEnvironment):
 
 if __name__ == "__main__":
     # This is to keep the classes under qsystem.
-    tmp = qubit(), boson(), fermion()
+    tmp = Qubit(), Boson(), Fermion()

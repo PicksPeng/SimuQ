@@ -1,4 +1,4 @@
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.expression import Expression
 from simuq.qmachine import QMachine
 
@@ -13,7 +13,7 @@ def generate_qmachine():
         for r in range(rings_per_row):
             for q in range(qubits_per_ring):
                 qubit_index = row * 100 + r * 10 + q
-                qubits[qubit_index] = qubit(mach)
+                qubits[qubit_index] = Qubit(mach)
 
     links = []
     for row in range(row_count):

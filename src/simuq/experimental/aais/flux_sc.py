@@ -1,13 +1,13 @@
 import numpy as np
 
-from simuq.environment import qubit
+from simuq.environment import Qubit
 from simuq.expression import Expression
 from simuq.qmachine import *
 
 FluxSCMach = QMachine()
 mach = FluxSCMach
 L = 5
-ql = [qubit(mach) for i in range(L)]
+ql = [Qubit(mach) for i in range(L)]
 Js = [
     2 * np.pi * 0.01084,
     2 * np.pi * 0.00028,

@@ -24,9 +24,7 @@ pip install "simuq[all]"
 
 ### Amazon Braket
 
-SimuQ supports compilation to IonQ's trapped-ion devices and QuEra's neutral atom devices through Amazon Braket.
-
-To enable these backends, you may install the dependencies via
+SimuQ supports compilation to IonQ's trapped-ion devices and QuEra's neutral atom devices through Amazon Braket. Install the Amazon Braket provider and its dependencies by running
 
 ```bash
 pip install "simuq[braket]"
@@ -36,29 +34,31 @@ If running on QPUs, make sure that your AWS account is onboarded to Amazon Brake
 
 ### IonQ Quantum Cloud
 
-SimuQ supports compilation to IonQ's trapped-ion devices through IonQ Quantum Cloud.
-
-To enable these backends, you may install the dependencies via
+SimuQ supports compilation to IonQ's trapped-ion devices through IonQ Quantum Cloud. Install the IonQ provider and its dependencies by running
 
 ```bash
 pip install "simuq[ionq]"
 ```
 
-To run through IonQ Quantum Cloud, you must obtain an API key from [IonQ](https://ionq.com/quantum-cloud).
-
-When creating IonQ providers in SimuQ, you must provide the API key either through a string or a file storing the key.
+To run through IonQ Quantum Cloud, you must obtain an API key from [IonQ](https://ionq.com/quantum-cloud). When creating IonQ providers in SimuQ, you must provide the API key either through a string or a file storing the key.
 
 ### Qiskit
 
-SimuQ supports compilation to IBM's superconducting devices through Qiskit and IBM Quantum.
-
-To enable these backends, you may install the dependencies via
+SimuQ supports compilation to IBM's superconducting devices through Qiskit and IBM Quantum. Install the Qiskit provider and its dependencies by running
 
 ```bash
 pip install "simuq[qiskit]"
 ```
 
 To run through IBM Quantum, you must obtain an API token from [IBM](https://quantum-computing.ibm.com/).
+
+### QuTiP
+
+You can simulate the dynamics of a SimuQ Hamiltonian with QuTiP. Install the QuTiP provider and its dependencies by running
+
+```bash
+pip install "simuq[qutip]"
+```
 
 ### Installing from source
 

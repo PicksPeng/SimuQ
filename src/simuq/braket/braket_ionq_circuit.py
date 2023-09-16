@@ -10,25 +10,26 @@ class BraketIonQCircuit(IonQCircuit):
         self._circuit = Circuit()
 
     def gpi(self, q, phi):
-        self._circuit.gpi(q, to_turns(phi + self._accum_phases[q]))
+        self._circuit.gpi(q, phi + self._accum_phases[q])
 
     def gpi2(self, q, phi):
-        self._circuit.gpi2(q, to_turns(phi + self._accum_phases[q]))
+        self._circuit.gpi2(q, phi + self._accum_phases[q])
 
     def ms_quarter(self, q0, q1, phi0, phi1, theta):
         self._circuit.ms(
             q0,
             q1,
-            to_turns(phi0 + self._accum_phases[q0]),
-            to_turns(phi0 + self._accum_phases[q1]),
-            to_turns(theta),
+            phi0 + self._accum_phases[q0],
+            phi1 + self._accum_phases[q1],
+            theta,
         )
 
     def optimize(self):
         """
         Optimize 1q gate sequences
         """
-        new_circ = BraketIonQCircuit(self._circuit.qubit_count)
+        # Not self._circuit.qubit_count because sometimes that's smaller
+        new_circ = BraketIonQCircuit(len(self._accum_phases))
 
         n = len(self._accum_phases)
 
@@ -40,13 +41,13 @@ class BraketIonQCircuit(IonQCircuit):
             if isinstance(gate, gates.GPi):
                 qubit = target[0]
                 unitaries[qubit] = np.matmul(
-                    self._gpi_mat(gate.angle),
+                    self._gpi_mat(to_turns(gate.angle)),
                     unitaries[qubit],
                 )
             elif isinstance(gate, gates.GPi2):
                 qubit = target[0]
                 unitaries[qubit] = np.matmul(
-                    self._gpi2_mat(gate.angle),
+                    self._gpi2_mat(to_turns(gate.angle)),
                     unitaries[qubit],
                 )
             elif isinstance(gate, gates.MS):
@@ -55,9 +56,9 @@ class BraketIonQCircuit(IonQCircuit):
                     # Reset accumulated matrix
                     unitaries[q] = np.eye(2)
                 q0, q1 = target
-                phi0 = gate.angle_1 * 2 * np.pi
-                phi1 = gate.angle_2 * 2 * np.pi
-                angle = gate.angle_3 * 2 * np.pi
+                phi0 = gate.angle_1
+                phi1 = gate.angle_2
+                angle = gate.angle_3
                 new_circ.ms(q0, q1, phi0, phi1, angle)
             else:
                 raise Exception("Unknown gate:", gate["gate"])

@@ -169,7 +169,16 @@ class BraketProvider(BaseProvider):
         elif self.provider == "ionq":
             if on_simulator:
                 simulator = LocalSimulator()
-                self.task = simulator.run(self.prog, shots=shots)
+
+                # Insert identity when a qubit is not targeted by any gates
+                prog = self.prog.copy()
+                used_qubits = {qubit for inst in prog.instructions for qubit in inst.target}
+                max_qubit = max(used_qubits)
+                for index in range(max_qubit):
+                    if index not in used_qubits:
+                        prog.i(index)
+
+                self.task = simulator.run(prog, shots=shots)
                 if verbose >= 0:
                     print("Submitted.")
             else:

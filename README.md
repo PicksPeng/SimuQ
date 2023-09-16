@@ -8,11 +8,9 @@ We illustrate our design and benefits in our [arXiv paper](https://arxiv.org/abs
 
 ## Installation
 
-We recommend Python 3.9 or greater since many optional dependencies have requirements for Python version.
+We recommend Python 3.9 or greater since many optional dependencies have a minimum Python version requirement.
 
 We encourage using `pip` for SimuQ installation. To install the core components of SimuQ, run the following command in shell:
-
-**Note** We haven't uploaded the repo to PyPI yet, so please download/clone the repository, enter the (unzipped) folder, and follow the following instructions by substituting `.` for `simuq`, i.e., `pip install .`. If installing extras (for example, `pip install "simuq[dev]"`), remember to include quotes around the target (for local installations, this means `pip install ".[dev]"`). To install in editable mode, run `pip install` with the `-e` flag: `pip install -e ".[dev]"`.
 
 ```bash
 pip install simuq
@@ -26,9 +24,7 @@ pip install "simuq[all]"
 
 ### Amazon Braket
 
-SimuQ supports compilation to IonQ's trapped-ion devices and QuEra's neutral atom devices through Amazon Braket.
-
-To enable these backends, you may install the dependencies via
+SimuQ supports compilation to IonQ's trapped-ion devices and QuEra's neutral atom devices through Amazon Braket. Install the Amazon Braket provider and its dependencies by running
 
 ```bash
 pip install "simuq[braket]"
@@ -38,29 +34,43 @@ If running on QPUs, make sure that your AWS account is onboarded to Amazon Brake
 
 ### IonQ Quantum Cloud
 
-SimuQ supports compilation to IonQ's trapped-ion devices through IonQ Quantum Cloud.
-
-To enable these backends, you may install the dependencies via
+SimuQ supports compilation to IonQ's trapped-ion devices through IonQ Quantum Cloud. Install the IonQ provider and its dependencies by running
 
 ```bash
 pip install "simuq[ionq]"
 ```
 
-To run through IonQ Quantum Cloud, you must obtain an API key from [IonQ](https://ionq.com/quantum-cloud).
-
-When creating IonQ providers in SimuQ, you must provide the API key either through a string or a file storing the key.
+To run through IonQ Quantum Cloud, you must obtain an API key from [IonQ](https://ionq.com/quantum-cloud). When creating IonQ providers in SimuQ, you must provide the API key either through a string or a file storing the key.
 
 ### Qiskit
 
-SimuQ supports compilation to IBM's superconducting devices through Qiskit and IBM Quantum.
-
-To enable these backends, you may install the dependencies via
+SimuQ supports compilation to IBM's superconducting devices through Qiskit and IBM Quantum. Install the Qiskit provider and its dependencies by running
 
 ```bash
 pip install "simuq[qiskit]"
 ```
 
 To run through IBM Quantum, you must obtain an API token from [IBM](https://quantum-computing.ibm.com/).
+
+### QuTiP
+
+You can simulate the dynamics of a SimuQ Hamiltonian with QuTiP. Install the QuTiP provider and its dependencies by running
+
+```bash
+pip install "simuq[qutip]"
+```
+
+### Installing from source
+
+You can also install from source by cloning this repository and running a pip install command in the root directory of the repository:
+
+```bash
+git clone git@github.com:PicksPeng/SimuQ.git
+cd SimuQ
+pip install .
+```
+
+If installing extras, remember to include quotes around the target (for example, `pip install ".[dev]"`). To install in editable mode, run `pip install` with the `-e` flag: `pip install -e ".[dev]"`.
 
 ## Examples
 
@@ -70,15 +80,12 @@ For examples of SimuQ usage, refer to the notebooks in the [tutorials folder](ht
 
 `notebooks/`: Example notebooks of running SimuQ and obtaining results.
 
-`simuq/`: The core compiler and language implementation of SimuQ.
+`src/simuq/`: The core compiler and language implementation of SimuQ.
 
-`simuq/aais/`: AAIS of many backends in AAIS Specification Language.
+`src/simuq/aais/`: AAIS of many backends in AAIS Specification Language.
 
-`simuq/backends/`: The translation to API languages of different machine backends.
+`src/simuq/backends/`: The translation to API languages of different machine backends.
 
-`simuq/systems/`: Hamiltonian evolution implemented in Hamiltonian Modeling Language.
+`src/simuq/systems/`: Hamiltonian evolution implemented in Hamiltonian Modeling Language.
 
-`simuq/systems/benchmark/`: A small benchmark of quantum Hamiltonian simulation as reported in our arXiv paper.
-
-
-
+`src/simuq/systems/benchmark/`: A small benchmark of quantum Hamiltonian simulation as reported in our arXiv paper.

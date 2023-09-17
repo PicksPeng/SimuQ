@@ -28,6 +28,7 @@ class IonQProvider(BaseProvider):
         tol=0.01,
         trotter_num=6,
         state_prep=None,
+        meas_prep=None,
         verbose=0,
     ):
         if backend == "harmony":
@@ -62,10 +63,15 @@ class IonQProvider(BaseProvider):
         )
         self.prog = comp(
             qs.num_sites, sol_gvars, boxes, edges, backend="qpu." + backend, noise_model=backend
-        ).job
+        )
 
         if state_prep is not None:
-            self.prog["body"]["circuit"] = state_prep["circuit"] + self.prog["body"]["circuit"]
+            self.prog = state_prep.copy().add(self.prog)
+
+        if meas_prep is not None:
+            self.prog.add(meas_prep)
+
+        self.prog = self.prog.job
 
         self.layout = layout
         self.qs_names = qs.print_sites()

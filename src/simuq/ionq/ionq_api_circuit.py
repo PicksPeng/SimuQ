@@ -4,7 +4,7 @@ from simuq.backends.ionq_circuit import IonQCircuit, to_turns
 
 
 class IonQAPICircuit(IonQCircuit):
-    def __init__(self, n_qubits, name, backend="simulator", noise_model=None):
+    def __init__(self, n_qubits, name="circuit", backend="simulator", noise_model=None):
         super().__init__(n_qubits)
         # Circuit are stored in turns, accum_phases are stored in rads.
         self.job = {
@@ -24,11 +24,13 @@ class IonQAPICircuit(IonQCircuit):
         self.job["body"]["circuit"].append(
             {"gate": "gpi", "target": q, "phase": to_turns(phi + self._accum_phases[q])}
         )
+        return self
 
     def gpi2(self, q, phi):
         self.job["body"]["circuit"].append(
             {"gate": "gpi2", "target": q, "phase": to_turns(phi + self._accum_phases[q])}
         )
+        return self
 
     def ms_quarter(self, q0, q1, phi0, phi1, theta):
         self.job["body"]["circuit"].append(
@@ -42,6 +44,7 @@ class IonQAPICircuit(IonQCircuit):
                 "angle": to_turns(theta),
             }
         )
+        return self
 
     def optimize(self):
         """
@@ -93,3 +96,41 @@ class IonQAPICircuit(IonQCircuit):
             new_circ.rz(q, -self._accum_phases[q])
 
         return new_circ
+
+    def add(self, circ):
+        """
+        Append a circuit behind self
+        """
+        if len(circ._accum_phases) != len(self._accum_phases) :
+            raise Exception("Circuit sizes are different.")
+
+        for gate in circ.job["body"]["circuit"]:
+            if gate["gate"] == "gpi":
+                qubit = gate["target"]
+                angle = self._accum_phases[qubit] + gate["phase"] * 2 * np.pi
+                self.gpi(qubit, angle)
+            elif gate["gate"] == "gpi2":
+                qubit = gate["target"]
+                angle = self._accum_phases[qubit] + gate["phase"] * 2 * np.pi
+                self.gpi2(qubit, angle)
+            elif gate["gate"] == "ms":
+                q0, q1 = gate["targets"]
+                phi0 = self._accum_phases[q0] + gate["phases"][0] * 2 * np.pi
+                phi1 = self._accum_phases[q1] + gate["phases"][1] * 2 * np.pi
+                angle = gate["angle"] * 2 * np.pi
+                self.ms(q0, q1, phi0, phi1, angle)
+            else:
+                raise Exception("Unknown gate:", gate["gate"])
+
+        for q, phi in enumerate(circ._accum_phases):
+            self._accum_phases[q] += phi
+
+        return self
+
+    def copy(self):
+        """
+        Generate a copy of self
+        """
+        circ = IonQAPICircuit(len(self._accum_phases))
+        circ.add(self)
+        return circ

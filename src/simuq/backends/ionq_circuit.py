@@ -26,6 +26,7 @@ class IonQCircuit(ABC):
 
     def rz(self, q, phi):
         self._accum_phases[q] -= phi
+        return self
 
     def ms(self, q0, q1, phi0, phi1, theta):
         theta = theta % (2 * np.pi)
@@ -41,6 +42,7 @@ class IonQCircuit(ABC):
             self.ms(q0, q1, phi0, phi1, theta - np.pi)
         elif 3 * np.pi / 2 <= theta <= 2 * np.pi:
             self.ms_quarter(q0, q1, phi0, phi1 + np.pi, 2 * np.pi - theta)
+        return self
 
     @abstractmethod
     def ms_quarter(self, q0, q1, phi0, phi1, theta):
@@ -172,6 +174,14 @@ class IonQCircuit(ABC):
 
     @abstractmethod
     def optimize(self):
+        pass
+
+    @abstractmethod
+    def add(self):
+        pass
+
+    @abstractmethod
+    def copy(self):
         pass
 
     # @staticmethod

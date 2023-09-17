@@ -3,6 +3,7 @@ import numpy as np
 from braket.ahs.atom_arrangement import SiteType
 from braket.aws import AwsDevice, AwsQuantumTask
 from braket.devices import LocalSimulator
+from braket.circuits import Circuit
 
 from simuq import _version
 from simuq.aais import heisenberg, rydberg1d_global, rydberg2d_global
@@ -40,6 +41,7 @@ class BraketProvider(BaseProvider):
         tol=0.01,
         trotter_num=6,
         state_prep=None,
+        meas_prep=None,
         no_main_body=False,
         verbose=0,
     ):
@@ -69,6 +71,9 @@ class BraketProvider(BaseProvider):
 
             if state_prep is None:
                 state_prep = {"times": [], "omega": [], "delta": [], "phi": []}
+                
+            if meas_prep is not None:
+                raise Exception("Currently SimuQ does not support measurement preparation pulses for QuEra devices.")
 
             layout, sol_gvars, boxes, edges = generate_as(
                 qs,
@@ -95,9 +100,9 @@ class BraketProvider(BaseProvider):
             if device == "Harmony":
                 nsite = 11
             elif device == "Aria-1":
-                nsite = 23
+                nsite = 25
             elif device == "Aria-2":
-                nsite = 23
+                nsite = 25
             elif isinstance(device, int):
                 if device > 0:
                     nsite = device
@@ -121,10 +126,15 @@ class BraketProvider(BaseProvider):
                 verbose=verbose,
             )
 
-            self.prog = transpiler.transpile(qs.num_sites, sol_gvars, boxes, edges).braket_circuit
+            self.prog = transpiler.transpile(qs.num_sites, sol_gvars, boxes, edges)
 
             if state_prep is not None:
-                self.prog = state_prep.add(self.prog)
+                self.prog = state_prep.copy().add(self.prog)
+
+            if meas_prep is not None:
+                self.prog.add(meas_prep)
+
+            self.prog = Circuit().add_verbatim_box(self.prog.braket_circuit)
 
             self.layout = layout
             self.qs_names = qs.print_sites()

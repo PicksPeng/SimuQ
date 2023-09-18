@@ -1,5 +1,8 @@
 # SimuQ
 
+[![Latest Version](https://img.shields.io/pypi/v/simuq.svg)](https://pypi.python.org/pypi/simuq)
+[![Supported Python Versions](https://img.shields.io/pypi/pyversions/simuq.svg)](https://pypi.python.org/pypi/simuq)
+
 **SimuQ** is a domain-specific language for quantum simulation with analog compilation.
 
 Our [project website](https://pickspeng.github.io/SimuQ/) includes use cases and documentation of SimuQ.

@@ -7,7 +7,7 @@ with open("src/simuq/_version.py") as f:
     version = f.readlines()[-1].split()[-1].strip("\"'")
 
 setup(
-    name="SimuQ",
+    name="simuq",
     version=version,
     description="A Python package for quantum simulation with analog compilation",
     long_description=long_description,

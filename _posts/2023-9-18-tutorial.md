@@ -1,0 +1,35 @@
+---
+layout: post
+title:  "Tutorial of SimuQ in IEEE Quantum Week"
+date:   2023-09-18 12:00:00
+categories: examples
+description: "A 3-hr tutorial session in IEEE Quantum Week, Seattle, 2023"
+image: /SimuQ/img/qce.png
+published: true
+author: Yuxiang Peng
+---
+
+We gladly announce that we will organize a 3-hour tutorial session on 09/20/2023 in IEEE Quantum Week at Seattle.
+
+*We will have free Amazon Braket credits for distribution on the event!* Come and claim your credits!
+
+The presenters feature Yuxiang Peng, Pengyu Liu, and Jiaqi Leng. Our tutorial will start from the basics of SimuQ, and employ notebook sessions to let everyone have hands-on experience with SimuQ!
+
+The organization of the tutorial is:
+
+- First session
+	- Motivation and introduction (~40 min)
+	- Installation guide (~10 min)
+	- Notebook session 1: basics (~40 min)
+		- Preliminary
+		- Simulate Ising model on multiple devices
+- Break
+- Second session
+	- Notebook session 2: advanced (~50 min)
+		- Quantum walk on graphs
+		- Simulate high-energy physics dynamics
+	- Advanced discussions (~30 min)
+		- AAIS design on devices
+		- SimuQ compiler details
+		- Potential usage of SimuQ
+	- Open discussion (~10 min)

@@ -73,10 +73,11 @@ class IBMProvider(BaseProvider):
                 from qiskit_aer.noise import NoiseModel
 
                 self.simulator = self.provider.get_backend("ibmq_qasm_simulator")
-                # currently a bug in ibm's backend
-                from qiskit.providers.fake_provider import FakeGuadalupe
 
-                noise_model = NoiseModel.from_backend(FakeGuadalupe()).to_dict()
+                try:
+                    noise_model = NoiseModel.from_backend(self.backend).to_dict()
+                except:
+                    raise Exception("This backend's noise model is not available.")
 
                 self.simulator.options.update_options(noise_model=noise_model)
             else:

@@ -675,7 +675,7 @@ def align(i, ali, qs, mach, solver, solver_args, verbose):
 
 def find_sol(qs, mach, ali=None, solver="least_squares", solver_args=None, verbose=0):
     solver_args = solver_args or {"tol": 1e-2}
-    if ali:
+    if ali == []:
         return align(0, [0] * qs.num_sites, qs, mach, solver, solver_args, verbose)
     else:
         return solve_aligned_wrapper(ali, qs, mach, solver, solver_args, verbose)

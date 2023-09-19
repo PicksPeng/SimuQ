@@ -2,8 +2,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from braket.ahs.atom_arrangement import SiteType
 from braket.aws import AwsDevice, AwsQuantumTask
-from braket.devices import LocalSimulator
 from braket.circuits import Circuit
+from braket.devices import LocalSimulator
 
 from simuq import _version
 from simuq.aais import heisenberg, rydberg1d_global, rydberg2d_global
@@ -71,9 +71,11 @@ class BraketProvider(BaseProvider):
 
             if state_prep is None:
                 state_prep = {"times": [], "omega": [], "delta": [], "phi": []}
-                
+
             if meas_prep is not None:
-                raise Exception("Currently SimuQ does not support measurement preparation pulses for QuEra devices.")
+                raise Exception(
+                    "Currently SimuQ does not support measurement preparation pulses for QuEra devices."
+                )
 
             layout, sol_gvars, boxes, edges = generate_as(
                 qs,

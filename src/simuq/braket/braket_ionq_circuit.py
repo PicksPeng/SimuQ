@@ -77,7 +77,7 @@ class BraketIonQCircuit(IonQCircuit):
         Append a circuit behind self
         """
 
-        if len(circ._accum_phases) != len(self._accum_phases) :
+        if len(circ._accum_phases) != len(self._accum_phases):
             raise Exception("Circuit sizes are different.")
 
         for instruction in circ._circuit.instructions:

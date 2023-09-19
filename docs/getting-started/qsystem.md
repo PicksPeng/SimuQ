@@ -13,16 +13,16 @@ We start with programming the Ising model on a 3 qubit chain.
 
 Run Python where Python path equals to the SimuQ folder.
 ```python
-from simuq.qsystem import QSystem, qubit
+from simuq import QSystem, Qubit
 ```
-Here `QSystem` is the class for quantum systems, and `qubit` is the class for qubit sites.
+Here `QSystem` is the class for quantum systems, and `Qubit` is the class for qubit sites.
 
 ## Define the evolution
 
 First we create a quantum system and a list of qubit sites.
 ```python
 qs = QSystem()
-q = [qubit(qs) for i in range(n)]
+q = [Qubit(qs) for i in range(n)]
 ```
 
 Our target is a short evolution governed by an Ising Hamiltonian $$H=X_1X_2+X_2X_3+Z_1+Z_2+Z_3$$ over the list of qubits, which can be programmed by

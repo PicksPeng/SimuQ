@@ -12,7 +12,7 @@ Following [programming an Ising model](/SimuQ/docs/qsystem), we have `qs` storin
 
 ## Install dependencies
 
-To enable QuTiP providers, we need to install [QuTiP](https://qutip.org/) first. This can be easily done by running
+To enable QuTiP providers, we need to install the related dependencies by
 
 ```bash
 pip install simuq[qutip]
@@ -25,7 +25,7 @@ A provider is a user interface for convenient manipulations of functionalities o
 We can create a QuTiP provider via the following code
 
 ```python
-from simuq.providers import QuTiPProvider
+from simuq.qutip import QuTiPProvider
 qpp = QuTiPProvider()
 ```
 

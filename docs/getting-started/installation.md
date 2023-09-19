@@ -15,9 +15,18 @@ You may install SimuQ directly via `pip`:
 pip install simuq
 ```
 
-(Not uploaded to PyPI yet. Please refer to the following.)
+## Providers
 
-## Installation
+Currently, most functionalities of SimuQ can be accessed via providers, interfaces for different cloud services. To enable a specific provider, for example Amazon Braket, you may install via
+
+```python
+pip install "simuq[braket]"
+```
+
+SimuQ now supports Amazon Braket `[braket]`, IonQ Quantum Cloud `[ionq]`, and IBM Quantum Experience `[ibm]`. For numerical simulation, it also supports QuTiP `[qutip]`.
+
+
+## Installation from source
 
 To install from source code, download SimuQ from [GitHub](https://github.com/PicksPeng/SimuQ) or [.zip](https://github.com/PicksPeng/SimuQ/archive/refs/heads/main.zip).
 
@@ -28,5 +37,3 @@ pip install .
 ```
 
 For specific backends and providers, you may optionally install other dependencies according to your need.
-
-For the installation of Julia, please refer to [Julialang website](https://julialang.org/downloads/platform/). To install Bloqade, input `]` in Julia to enter the package manager, and run `add Bloqade`.

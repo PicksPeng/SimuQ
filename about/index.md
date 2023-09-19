@@ -6,8 +6,11 @@ title: About SimuQ
 ## Main contributors
 
 (Alphabetic order)
+* Joseph Li
+* Cedric Lin
 * Pengyu Liu
 * Yuxiang Peng
+* Cody Wang
 * Xiaodi Wu
 * Jacob Young
 

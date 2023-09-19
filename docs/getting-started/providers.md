@@ -19,12 +19,12 @@ pip install simuq[ionq]
 
 ## Declare IonQ providers
 
-Accesses to IonQ Quantum Cloud require an API key from [IonQ](https://ionq.com/).
+Accesses to IonQ Quantum Cloud require an API key from [IonQ](https://ionq.com/). It directly gives you access to IonQ's noisy and ideal simulators for free. 
 
 Assuming that you have a string `API_key` storing it, we can declare an IonQ provider in SimuQ by
 
 ```python
-from simuq.providers import IonQProvider
+from simuq.ionq import IonQProvider
 iqp = IonQProvider(API_key)
 ```
 

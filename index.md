@@ -56,4 +56,4 @@ If you are using SimuQ in your work, please cite [our arXiv paper](https://arxiv
 
 # Acknowledgements
 
-This project was partially funded by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, Quantum Testbed Pathfinder Program under Award Number DE-SC0019040, Air Force Office of Scientific Research under award number FA9550-21-1-0209, and  the U.S. National Science Foundation grant CCF-1942837 (CAREER).
+We thank all the [contributors](/SimuQ/about). This project was partially funded by the U.S. Department of Energy, Office of Science, Office of Advanced Scientific Computing Research, Quantum Testbed Pathfinder Program under Award Number DE-SC0019040, Air Force Office of Scientific Research under award number FA9550-21-1-0209, and  the U.S. National Science Foundation grant CCF-1942837 (CAREER). This research used resources of the Oak Ridge Leadership Computing Facility, which is a DOE Office of Science User Facility supported under Contract DE-AC05-00OR22725.

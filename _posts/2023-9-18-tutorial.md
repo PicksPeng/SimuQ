@@ -11,6 +11,8 @@ author: Yuxiang Peng
 
 We gladly announce that we will organize a 3-hour tutorial session on 09/20/2023 in IEEE Quantum Week at Seattle.
 
+The videos of our tutorial can be found at [(part 1)](https://events.rdmobile.com/Sessions/Details/1957458) and [(part 2)](https://events.rdmobile.com/Sessions/Details/1957459). The notebooks in the tutorial can be access at [(notebooks)](https://github.com/PicksPeng/SimuQ/tree/main/notebooks/tutorials). The slides in the tutorial can be accessed at [(slides)](https://pickspeng.github.io/files/simuq_tutorial.pdf).
+
 *We will have free Amazon Braket credits for distribution on the event!* Come and claim your credits!
 
 The presenters feature Yuxiang Peng, Pengyu Liu, and Jiaqi Leng. Our tutorial will start from the basics of SimuQ, and employ notebook sessions to let everyone have hands-on experience with SimuQ!

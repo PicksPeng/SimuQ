@@ -681,22 +681,43 @@ def find_sol(qs, mach, ali=None, solver="least_squares", solver_args=None, verbo
         return solve_aligned_wrapper(ali, qs, mach, solver, solver_args, verbose)
 
 
+def write_default(args, default_args):
+    for k in default_args:
+        if k not in args:
+            args[k] = default_args[k]
+
+
 # The generation of abstract schedule
 # Trotterize the solution provided by the second step.
 # Arg solver_tol will be deprecated. Please avoid its usage and use solver_args.
+# Arg trotter_num will be deprecated. Please avoid its usage and use solver_args.
 def generate_as(
     qs,
     mach,
-    trotter_num=4,
+    trotter_num=None,
+    trotter_args=None,
     solver="least_squares",
     solver_tol=None,
     solver_args=None,
     override_layout=None,
     verbose=0,
 ):
-    solver_args = solver_args or {"tol": 1e-1, "with_time_penalty": False}
+    default_solver_args = {"tol": 1e-1, "with_time_penalty": False}
+    solver_args = solver_args or default_solver_args
     if solver_tol is not None:
         solver_args["tol"] = solver_tol
+    write_default(solver_args, default_solver_args)
+
+    # "sequential" means whether temporal graph is sequential.
+    # If True, the solver will generate parallel blocks for each Trotter step
+    default_trotter_args = {"num": 6, "order": 1, "sequential": False}
+    if trotter_num is not None:
+        trotter_args["num"] = trotter_num
+    write_default(trotter_args, default_trotter_args)
+
+    if trotter_args["order"] > 2:
+        raise Exception("Trotter order > 2 is not supported.")
+
     ali = [] if override_layout is None else override_layout
     mach.instantiate()
     mach.extend_instruction_sites()
@@ -895,31 +916,46 @@ def generate_as(
                             break
                     if not all_commute:
                         break
+
                 if all_commute:
+                    order = 1
                     steps = 1
+                    sequential = False
                 else:
-                    steps = trotter_num
+                    order = trotter_args["order"]
+                    steps = trotter_args["num"] * (1 << (order - 1))
+                    sequential = trotter_args["sequential"]
+
                 for i in range(steps):
-                    next_local_ending_boxes = []
+                    new_boxes = []
                     for k in range(len(nodes_of_color)):
                         list_ins = nodes_of_color[k]
-                        box_label = len(boxes)
+                        new_boxes.append(len(boxes))
                         box_ins = []
                         for j in range(len(list_ins)):
                             box_ins.append(ins_set[list_ins[j]])
                         boxes.append((box_ins, sol_time[evo_index] / steps, sumh[k]))
-                        for label in local_ending_boxes:
-                            edges.append((label, box_label))
 
-                        #'''
-                        # 1st order Trotter
-                        if k > 0:
-                            edges.append((box_label - 1, box_label))
-                        #'''
+                    if sequential:
+                        if order == 1 or (order == 2 and i % 2 == 0):
+                            for b in local_ending_boxes:
+                                edges.append((b, new_boxes[0]))
+                            for j in range(1, len(new_boxes)):
+                                edges.append((new_boxes[j - 1], new_boxes[j]))
+                            local_ending_boxes = [new_boxes[-1]]
+                        elif order == 2 and i % 2 == 1:
+                            for b in local_ending_boxes:
+                                edges.append((b, new_boxes[-1]))
+                            for j in range(len(new_boxes) - 1, 0, -1):
+                                edges.append((new_boxes[j], new_boxes[j - 1]))
+                            local_ending_boxes = [new_boxes[0]]
+                    else:
+                        for j in new_boxes:
+                            for b in local_ending_boxes:
+                                edges.append((b, j))
+                        local_ending_boxes = new_boxes
 
-                        next_local_ending_boxes.append(box_label)
-                    local_ending_boxes = next_local_ending_boxes
-                next_ending_boxes += next_local_ending_boxes
+                next_ending_boxes += local_ending_boxes
 
             ending_boxes = next_ending_boxes
 

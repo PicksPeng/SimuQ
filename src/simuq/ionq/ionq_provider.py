@@ -66,7 +66,7 @@ class IonQProvider(BaseProvider):
         )
 
         if state_prep is not None:
-            self.prog = state_prep.copy().add(self.prog)
+            self.prog = state_prep.copy().add(self.prog, inherit_from_back=True)
 
         if meas_prep is not None:
             self.prog.add(meas_prep)

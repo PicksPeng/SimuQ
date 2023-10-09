@@ -97,7 +97,7 @@ class IonQAPICircuit(IonQCircuit):
 
         return new_circ
 
-    def add(self, circ):
+    def add(self, circ, inherit_from_back=False):
         """
         Append a circuit behind self
         """
@@ -124,7 +124,10 @@ class IonQAPICircuit(IonQCircuit):
 
         for q, phi in enumerate(circ._accum_phases):
             self._accum_phases[q] += phi
-
+        if inherit_from_back:
+            self.job["target"] = circ.job["target"]
+            if "noise" in circ.job:
+                self.job["noise"] = circ.job["noise"]
         return self
 
     def copy(self):

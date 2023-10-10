@@ -34,7 +34,7 @@ def get_n_link(backend):
     return n, link
 
 
-def clean_as(boxes, edges, backend):
+def clean_as(boxes, edges, backend, with_measure=True):
     n, link = get_n_link(backend)
     circ = QuantumCircuit(n)
     DG = nx.DiGraph()
@@ -67,7 +67,8 @@ def clean_as(boxes, edges, backend):
                     circ.ryy(theta, q0, q1)
                 else:
                     circ.rzz(theta, q0, q1)
-    circ.measure_all()
+    if with_measure:
+        circ.measure_all()
     return circ
 
 
@@ -76,10 +77,10 @@ def transpile_to_circ(backend, alignment, sol_gvars, boxes, edges):
     return circ
 
 
-def transpile(backend, alignment, sol_gvars, boxes, edges, use_pulse=True):
+def transpile(backend, alignment, sol_gvars, boxes, edges, use_pulse=True, with_measure=True):
     if use_pulse:
         pm = get_pm(backend)
         # return clean_as(boxes, edges, backend)
-        return pm.run(clean_as(boxes, edges, backend))
+        return pm.run(clean_as(boxes, edges, backend, with_measure))
     else:
-        return clean_as(boxes, edges, backend)
+        return clean_as(boxes, edges, backend, with_measure)

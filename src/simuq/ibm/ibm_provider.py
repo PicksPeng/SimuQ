@@ -35,6 +35,7 @@ class IBMProvider(BaseProvider):
         use_pulse=True,
         state_prep=None,
         use_fake_backend=False,
+        with_measure=True
     ):
         if not use_fake_backend:
             self.backend = self.provider.get_backend(backend)
@@ -68,6 +69,7 @@ class IBMProvider(BaseProvider):
             boxes,
             edges,
             use_pulse=use_pulse,
+            with_measure=with_measure
         )
         from qiskit import transpile as transpile_qiskit
 

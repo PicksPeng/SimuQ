@@ -17,7 +17,6 @@ import enum
 import numpy as np
 from qiskit import QuantumCircuit, schedule, transpile
 from qiskit.circuit import Gate
-from qiskit_ibm_provider import IBMProvider
 from math import erf
 from typing import List, Tuple
 
@@ -271,28 +270,36 @@ def _filter_comp_tone(time_inst_tup):
     return False
 
 
-def build_zxi_ixz(backend):
-    if backend.name == "ibmq_lima":
+def build_zxi_ixz(backend, with_measure = True):
+    if isinstance(backend.name, str) :
+        name = backend.name
+    else :
+        name = backend.name()
+    if name == "ibmq_lima":
         qubit_z1 = 0
         qubit_x = 1
         qubit_z2 = 2
-    elif backend.name == "ibmq_guadalupe":
+    elif name == "ibmq_guadalupe":
         qubit_z1 = 0
         qubit_x = 1
         qubit_z2 = 2
-    elif backend.name == "ibmq_jakarta":
+    elif name == "ibmq_jakarta":
         qubit_z1 = 0
         qubit_x = 1
         qubit_z2 = 2
-    elif backend.name == "ibmq_mumbai":
+    elif name == "ibm_lagos":
         qubit_z1 = 0
         qubit_x = 1
         qubit_z2 = 2
-    elif backend.name == "ibm_cairo":
+    elif name == "ibmq_mumbai":
+        qubit_z1 = 0
+        qubit_x = 1
+        qubit_z2 = 2
+    elif name == "ibm_cairo":
         qubit_z1 = 1
         qubit_x = 2
         qubit_z2 = 3
-    elif backend.name == "ibm_hanoi":
+    elif name == "ibm_hanoi":
         qubit_z1 = 10
         qubit_x = 12
         qubit_z2 = 13
@@ -313,7 +320,8 @@ def build_zxi_ixz(backend):
     # circ.measure(qubit_z1,0)
     # circ.measure(qubit_z2,1)
     # circ.measure(qubit_x,2)
-    # circ.measure_all()
+    if with_measure :
+        circ.measure_all()
     # sched = schedule(circ, backend)
     # return sched.duration
     return circ

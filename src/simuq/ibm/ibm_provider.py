@@ -3,7 +3,6 @@ from qiskit import IBMQ
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
 
-
 class IBMProvider(BaseProvider):
     def __init__(self, api_key=None, hub="ibm-q", group="open", project="main", from_file=None):
         if from_file is not None:
@@ -16,6 +15,15 @@ class IBMProvider(BaseProvider):
     def supported_backends(self):
         print(self.provider.backends())
 
+    def get_fake_backend(self, backend):
+        from qiskit.providers.fake_provider import FakeWashington, FakeGuadalupe
+        if backend == "ibmq_washington":
+            return FakeWashington()
+        elif backend == "ibmq_guadalupe":
+            return FakeGuadalupe()
+        else:
+            raise Exception("Unsupported backend")
+
     def compile(
         self,
         qs,
@@ -26,8 +34,12 @@ class IBMProvider(BaseProvider):
         verbose=0,
         use_pulse=True,
         state_prep=None,
+        use_fake_backend=False,
     ):
-        self.backend = self.provider.get_backend(backend)
+        if not use_fake_backend:
+            self.backend = self.provider.get_backend(backend)
+        else:
+            self.backend = self.get_fake_backend(backend)
         nsite = self.backend.configuration().n_qubits
 
         if qs.num_sites > nsite:

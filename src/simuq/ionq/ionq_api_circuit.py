@@ -107,16 +107,16 @@ class IonQAPICircuit(IonQCircuit):
         for gate in circ.job["body"]["circuit"]:
             if gate["gate"] == "gpi":
                 qubit = gate["target"]
-                angle = self._accum_phases[qubit] + gate["phase"] * 2 * np.pi
+                angle = gate["phase"] * 2 * np.pi
                 self.gpi(qubit, angle)
             elif gate["gate"] == "gpi2":
                 qubit = gate["target"]
-                angle = self._accum_phases[qubit] + gate["phase"] * 2 * np.pi
+                angle = gate["phase"] * 2 * np.pi
                 self.gpi2(qubit, angle)
             elif gate["gate"] == "ms":
                 q0, q1 = gate["targets"]
-                phi0 = self._accum_phases[q0] + gate["phases"][0] * 2 * np.pi
-                phi1 = self._accum_phases[q1] + gate["phases"][1] * 2 * np.pi
+                phi0 = gate["phases"][0] * 2 * np.pi
+                phi1 = gate["phases"][1] * 2 * np.pi
                 angle = gate["angle"] * 2 * np.pi
                 self.ms(q0, q1, phi0, phi1, angle)
             else:

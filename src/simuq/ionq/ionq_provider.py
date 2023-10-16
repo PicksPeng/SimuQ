@@ -93,7 +93,7 @@ class IonQProvider(BaseProvider):
     def print_circuit(self):
         if self.prog is None:
             raise Exception("No compiled job in record.")
-        print(self.prog["body"]["circuit"])
+        print(self.prog["input"]["circuit"])
 
     def run(self, shots, on_simulator=False, with_noise=False, verbose=0):
         if self.prog is None:

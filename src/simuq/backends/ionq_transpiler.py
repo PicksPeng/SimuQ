@@ -7,18 +7,42 @@ from simuq.backends.ionq_circuit import IonQCircuit
 from simuq.transpiler import Transpiler
 
 
+def randomized_topo_sort(G):
+    n = len(G)
+    ret = []
+    cand = []
+    for i in range(n):
+        if G.in_degree(i) == 0:
+            cand.append(i)
+    for _ in range(n):
+        j = cand[np.random.randint(len(cand))]
+        cand.remove(j)
+        ret.append(j)
+        nxts = list(G.neighbors(j))
+        for k in nxts:
+            if G.in_degree(k) == 0:
+                continue
+            G.remove_edge(j, k)
+            if G.in_degree(k) == 0:
+                cand.append(k)
+    return ret
+
+
 class IonQTranspiler(Transpiler, ABC):
     @abstractmethod
     def generate_circuit(self, n: int, *args, **kwargs) -> IonQCircuit:
         pass
 
     @staticmethod
-    def clean_as(n, boxes, edges, circ: IonQCircuit) -> IonQCircuit:
+    def clean_as(n, boxes, edges, circ: IonQCircuit, randomized=False) -> IonQCircuit:
         link = [(i, j) for i in range(n) for j in range(i + 1, n)]
         dg = nx.DiGraph()
         dg.add_nodes_from([i for i in range(len(boxes))])
         dg.add_edges_from(edges)
-        topo_order = list(nx.topological_sort(dg))
+        if randomized:
+            topo_order = randomized_topo_sort(dg)
+        else:
+            topo_order = list(nx.topological_sort(dg))
 
         for i in range(len(boxes)):
             idx = topo_order[i]
@@ -81,5 +105,10 @@ class IonQTranspiler(Transpiler, ABC):
         self, n, sol_gvars, boxes, edges, *generate_circuit_args, **generate_circuit_kwargs
     ):
         n = len(n) if isinstance(n, list) else n
+        if "randomized" in generate_circuit_kwargs:
+            randomized = generate_circuit_kwargs["randomized"]
+            del generate_circuit_kwargs["randomized"]
+        else:
+            randomized = False
         circ = self.generate_circuit(n, *generate_circuit_args, **generate_circuit_kwargs)
-        return self.clean_as(n, boxes, edges, circ)
+        return self.clean_as(n, boxes, edges, circ, randomized)

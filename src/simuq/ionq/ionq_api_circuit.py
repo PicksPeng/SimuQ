@@ -11,7 +11,7 @@ class IonQAPICircuit(IonQCircuit):
             "lang": "json",
             "name": name,
             "target": backend,
-            "body": {
+            "input": {
                 "gateset": "native",
                 "qubits": n_qubits,
                 "circuit": [],
@@ -21,19 +21,19 @@ class IonQAPICircuit(IonQCircuit):
             self.job["noise"] = {"model": noise_model}
 
     def gpi(self, q, phi):
-        self.job["body"]["circuit"].append(
+        self.job["input"]["circuit"].append(
             {"gate": "gpi", "target": q, "phase": to_turns(phi + self._accum_phases[q])}
         )
         return self
 
     def gpi2(self, q, phi):
-        self.job["body"]["circuit"].append(
+        self.job["input"]["circuit"].append(
             {"gate": "gpi2", "target": q, "phase": to_turns(phi + self._accum_phases[q])}
         )
         return self
 
     def ms_quarter(self, q0, q1, phi0, phi1, theta):
-        self.job["body"]["circuit"].append(
+        self.job["input"]["circuit"].append(
             {
                 "gate": "ms",
                 "targets": [q0, q1],
@@ -52,14 +52,14 @@ class IonQAPICircuit(IonQCircuit):
         """
         if "noise" in self.job:
             new_circ = IonQAPICircuit(
-                self.job["body"]["qubits"],
+                self.job["input"]["qubits"],
                 self.job["name"],
                 self.job["target"],
                 self.job["noise"]["model"],
             )
         else:
             new_circ = IonQAPICircuit(
-                self.job["body"]["qubits"],
+                self.job["input"]["qubits"],
                 self.job["name"],
                 self.job["target"],
             )
@@ -68,7 +68,7 @@ class IonQAPICircuit(IonQCircuit):
 
         unitaries = [np.eye(2)] * n
 
-        for gate in self.job["body"]["circuit"]:
+        for gate in self.job["input"]["circuit"]:
             if gate["gate"] == "gpi":
                 unitaries[gate["target"]] = np.matmul(
                     self._gpi_mat(gate["phase"]),
@@ -104,19 +104,19 @@ class IonQAPICircuit(IonQCircuit):
         if len(circ._accum_phases) != len(self._accum_phases):
             raise Exception("Circuit sizes are different.")
 
-        for gate in circ.job["body"]["circuit"]:
+        for gate in circ.job["input"]["circuit"]:
             if gate["gate"] == "gpi":
                 qubit = gate["target"]
-                angle = self._accum_phases[qubit] + gate["phase"] * 2 * np.pi
+                angle = gate["phase"] * 2 * np.pi
                 self.gpi(qubit, angle)
             elif gate["gate"] == "gpi2":
                 qubit = gate["target"]
-                angle = self._accum_phases[qubit] + gate["phase"] * 2 * np.pi
+                angle = gate["phase"] * 2 * np.pi
                 self.gpi2(qubit, angle)
             elif gate["gate"] == "ms":
                 q0, q1 = gate["targets"]
-                phi0 = self._accum_phases[q0] + gate["phases"][0] * 2 * np.pi
-                phi1 = self._accum_phases[q1] + gate["phases"][1] * 2 * np.pi
+                phi0 = gate["phases"][0] * 2 * np.pi
+                phi1 = gate["phases"][1] * 2 * np.pi
                 angle = gate["angle"] * 2 * np.pi
                 self.ms(q0, q1, phi0, phi1, angle)
             else:

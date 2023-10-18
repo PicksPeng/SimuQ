@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 import networkx as nx
 import numpy as np
+import scipy as sp
 
 from simuq.backends.ionq_circuit import IonQCircuit
 from simuq.transpiler import Transpiler
@@ -55,6 +56,12 @@ class IonQTranspiler(Transpiler, ABC):
                         rot = 2 * params[0] * t
                         phi = params[1]
                         if abs(rot) > 1e-5:
+                            cosphi = np.cos(phi)
+                            sinphi = np.sin(phi)
+                            U = sp.linalg.expm(-1j * (rot / 2) * np.array([[0, cosphi - 1j * sinphi], [cosphi + 1j * sinphi, 0]]))
+                            circ._add_unitary(q, U)
+
+                            """
                             circ.rz(q, phi)
 
                             # Rx(q, rot)
@@ -71,7 +78,7 @@ class IonQTranspiler(Transpiler, ABC):
                                 circ.gpi2(q, np.pi / 2)
 
                             circ.rz(q, -phi)
-
+                            """
                     else:
                         q = line
                         # expm(-i*(rot/2)*Z)

@@ -85,6 +85,8 @@ class IonQProvider(BaseProvider):
         if meas_prep is not None:
             self.prog.add(meas_prep)
 
+        self.prog = self.prog.optimize()
+
         self.prog = self.prog.job
 
         self.layout = layout

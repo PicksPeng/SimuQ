@@ -711,6 +711,8 @@ def generate_as(
     # "sequential" means whether temporal graph is sequential.
     # If True, the solver will generate parallel blocks for each Trotter step
     default_trotter_args = {"num": 6, "order": 1, "sequential": False}
+    if trotter_args == None:
+        trotter_args = default_trotter_args
     if trotter_num is not None:
         trotter_args["num"] = trotter_num
     write_default(trotter_args, default_trotter_args)

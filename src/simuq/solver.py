@@ -455,13 +455,13 @@ def solve_aligned(
             if fixed_values[i] is None:
                 value = sol[len(map_var)]
                 map_var.append(i)
-            if (
+            if i >= len(mach.gvars) + len(qs.evos) * (len(mach.lvars) + mach.num_inss):
+                gtime.append(value)
+            elif (
                 i < len(mach.gvars)
                 or (i - len(mach.gvars)) % (mach.num_inss + len(mach.lvars)) >= mach.num_inss
             ):
                 gsol.append(value)
-            elif i >= len(mach.gvars) + len(qs.evos) * (len(mach.lvars) + mach.num_inss):
-                gtime.append(value)
         gsol = np.array(gsol)
         return True
 

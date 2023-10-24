@@ -8,9 +8,11 @@ from simuq.dwave.dwave_transpiler import DwaveTranspiler
 
 
 class DWaveProvider(BaseProvider):
-    def __init__(self):
+    def __init__(self, api_key):
         # insert all log in details
         super().__init__()
+        self._samples = None
+        self.api_key = api_key
 
     def compile(self,
                 qs,
@@ -35,4 +37,9 @@ class DWaveProvider(BaseProvider):
         qpu = DWaveSampler()
         sampler = EmbeddingComposite(qpu)
         h, J, anneal_schedule = self.prog
-        response_qhd = sampler.sample_ising(h, J, anneal_schedule, return_embedding=True)
+        self._samples = sampler.sample_ising(h, J, anneal_schedule, return_embedding=True, token=self.api_key).samples()
+
+    def results(self):
+        if self._samples == None:
+            raise Exception("Job has not been run yet.")
+        return self._samples

@@ -83,12 +83,29 @@ For examples of SimuQ usage, refer to the notebooks in the [tutorials folder](ht
 
 `notebooks/`: Example notebooks of running SimuQ and obtaining results.
 
+`notebooks/tutorials`: Tutorial notebooks on usage of SimuQ.
+
+`notebooks/artifact_evaluation`: AE notebooks to reproduce the data in our paper.
+
 `src/simuq/`: The core compiler and language implementation of SimuQ.
 
 `src/simuq/aais/`: AAIS of many backends in AAIS Specification Language.
 
 `src/simuq/backends/`: The translation to API languages of different machine backends.
 
-`src/simuq/systems/`: Hamiltonian evolution implemented in Hamiltonian Modeling Language.
+`src/simuq/systems/`: Hamiltonian systems implemented in Hamiltonian Modeling Language.
 
-`src/simuq/systems/benchmark/`: A small benchmark of quantum Hamiltonian simulation as reported in our arXiv paper.
+`src/simuq/systems/benchmark/`: A small benchmark of quantum Hamiltonian simulation as reported in our paper.
+
+## Citations
+
+If you use SimuQ in your work, please cite our paper.
+
+```
+@article{peng2023simuq,
+  title    = {SimuQ: A Domain-Specific Language For Quantum Simulation With Analog Compilation},
+  author   = {Peng, Yuxiang and Young, Jacob and Liu, Pengyu and Wu, Xiaodi},
+  journal  = {arXiv preprint arXiv:2303.02775},
+  year     = {2023}
+}
+```

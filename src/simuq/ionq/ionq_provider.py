@@ -27,6 +27,7 @@ class IonQProvider(BaseProvider):
         aais="heisenberg",
         tol=0.01,
         trotter_num=6,
+        trotter_mode=1,
         state_prep=None,
         meas_prep=None,
         verbose=0,
@@ -52,24 +53,39 @@ class IonQProvider(BaseProvider):
             mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
             comp = IonQAPITranspiler().transpile
 
+        if trotter_mode == "random":
+            trotter_args = {"num": trotter_num, "order": 1, "sequential": False}
+            randomized = True
+        else:
+            trotter_args = {"num": trotter_num, "order": trotter_mode, "sequential": True}
+            randomized = False
+
         layout, sol_gvars, boxes, edges = generate_as(
             qs,
             mach,
-            trotter_num,
+            trotter_args=trotter_args,
             solver="least_squares",
             solver_args={"tol": tol},
             override_layout=[i for i in range(qs.num_sites)],
             verbose=verbose,
         )
         self.prog = comp(
-            qs.num_sites, sol_gvars, boxes, edges, backend="qpu." + backend, noise_model=backend
+            qs.num_sites,
+            sol_gvars,
+            boxes,
+            edges,
+            randomized=randomized,
+            backend="qpu." + backend,
+            noise_model=backend,
         )
 
         if state_prep is not None:
-            self.prog = state_prep.copy().add(self.prog)
+            self.prog = state_prep.copy().add(self.prog, inherit_from_back=True)
 
         if meas_prep is not None:
             self.prog.add(meas_prep)
+
+        self.prog = self.prog.optimize()
 
         self.prog = self.prog.job
 
@@ -79,7 +95,7 @@ class IonQProvider(BaseProvider):
     def print_circuit(self):
         if self.prog is None:
             raise Exception("No compiled job in record.")
-        print(self.prog["body"]["circuit"])
+        print(self.prog["input"]["circuit"])
 
     def run(self, shots, on_simulator=False, with_noise=False, verbose=0):
         if self.prog is None:

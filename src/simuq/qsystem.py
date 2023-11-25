@@ -23,7 +23,7 @@ class QSystem(BaseQuantumEnvironment):
         self.evos = []
 
     def add_evolution(self, h, t):
-        h.extend_ham_by_sites()
+        #h.extend_ham_by_sites()
         self.evos.append((h, t))
 
     def add_time_dependent_evolution(self, ht, ts):
@@ -49,7 +49,7 @@ class QSystem(BaseQuantumEnvironment):
         ret = []
         sumt = 0
         for h, t in self.evos:
-            h.extend_ham_by_sites()
+            #h.extend_ham_by_sites()
             ret.append([h.to_qutip_qobj(), time_indicator(sumt, sumt + t)])
             sumt += t
 

@@ -136,6 +136,7 @@ class Instruction:
         for i in range(len(h.ham)):
             if not isinstance(h.ham[i][1], Expression):
                 newh.ham[i] = (h.ham[i][0], h.ham[i][1] * Expression.unit())
+        newh.cleanHam()
         self.h = newh
 
     def exp_eval(self, gvars, lvars):

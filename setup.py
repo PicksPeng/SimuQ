@@ -33,6 +33,7 @@ setup(
             "matplotlib",
             "qiskit",
             "qiskit-terra",
+            "qiskit-ibmq-provider",
         ],
         "qutip": [
             "qutip",

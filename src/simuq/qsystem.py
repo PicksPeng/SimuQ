@@ -24,6 +24,7 @@ class QSystem(BaseQuantumEnvironment):
 
     def add_evolution(self, h, t):
         #h.extend_ham_by_sites()
+        h.cleanHam()
         self.evos.append((h, t))
 
     def add_time_dependent_evolution(self, ht, ts):

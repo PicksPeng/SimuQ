@@ -354,6 +354,8 @@ def solve_aligned(
         #    for j in range(len(qs.evos)) :
         #        fixed_values[locate_timevar(mach, len(qs.evos), j)] = qs.evos[j][1]
         offset = np.sqrt(1e5 * tol / np.sqrt(nvar))
+        if verbose > 1 :
+            print("offset: ", offset)
         # offset = 0
         f, lbs, ubs, init = build_obj([lambda x: offset] + eqs, fixed_values)
         if time_penalty != 0:
@@ -365,6 +367,8 @@ def solve_aligned(
 
         if verbose > 0:
             print("#vars", nvar, "#eqs", len(eqs))
+            print("inits: ", init)
+            print("f_init:", f_solve(init))
 
         import time
 

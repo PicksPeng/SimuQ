@@ -30,10 +30,14 @@ class QuTiPProvider(BaseProvider):
             M += H * f(t, None)
         return M
 
-    def run(self, shots=None, on_simulator=None, verbose=0):
+    def run(self, shots=None, on_simulator=None, nsteps = None, verbose=0):
         if self.prog is None:
             raise Exception("No compiled job in record.")
-        self.fin = qp.sesolve(self.prog[0], self.init, [0, self.prog[1]])
+        if nsteps == None :
+            options = qp.solver.Options()
+        else :
+            options = qp.solver.Options(nsteps = nsteps)
+        self.fin = qp.sesolve(self.prog[0], self.init, [0, self.prog[1]], options = options)
         if verbose >= 0:
             print("Solved.")
         # return self.fin

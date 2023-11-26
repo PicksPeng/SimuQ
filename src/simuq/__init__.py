@@ -1,6 +1,6 @@
 from simuq.environment import BaseParticle, BaseQuantumEnvironment, BaseSite, Boson, Fermion, Qubit
 from simuq.expression import BaseVar, Expression
-from simuq.hamiltonian import TIHamiltonian
+from simuq.hamiltonian import TIHamiltonian, hlist_sum
 from simuq.provider import BaseProvider
 from simuq.qmachine import Instruction, QMachine, SignalLine
 from simuq.qsystem import QSystem

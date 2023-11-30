@@ -70,6 +70,6 @@ class DWaveProvider(BaseProvider):
         self.samples = list(response.samples())
 
     def results(self):
-        if self._samples == None:
+        if self.samples == None:
             raise Exception("Job has not been run yet.")
-        return self._samples
+        return self.samples

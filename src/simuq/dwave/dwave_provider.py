@@ -11,12 +11,13 @@ from simuq.dwave.dwave_transpiler import DwaveTranspiler
 
 
 class DWaveProvider(BaseProvider):
-    def __init__(self, api_key, numruns=100):
+    def __init__(self, api_key, numruns=100, chain_strength_ratio=1.1):
         # insert all log in details
         super().__init__()
         self._samples = None
         self.api_key = api_key
         self.numruns = numruns
+        self.chain_strength_ratio = chain_strength_ratio
 
     def compile(self,
                 qs,
@@ -65,7 +66,8 @@ class DWaveProvider(BaseProvider):
         h = {i: h[i] for i in range(len(h))}
         qubo = self.isingToqubo(h, J)
         max_interaction_qhd = np.max(np.abs(np.array(list(qubo.values()))))
-        response = sampler.sample_qubo(qubo, chain_strength=max_interaction_qhd,
+        response = sampler.sample_qubo(qubo, 
+                                       chain_strength = self.chain_strength_ratio * max_interaction_qhd,
                                        num_reads=self.numruns)
         self.samples = list(response.samples())
 

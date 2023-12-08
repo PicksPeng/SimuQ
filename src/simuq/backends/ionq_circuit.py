@@ -208,32 +208,36 @@ class IonQCircuit(ABC):
     # def decomp_gpigpi2rz(U):
     #     return None
 
-
-"""
     def to_matrix(self):
         from qiskit import QuantumCircuit
         from qiskit.quantum_info import Operator
 
-        n = self.job["body"]["qubits"]
+        print(self.job)
+        n = self.job["input"]["qubits"]
         circ = QuantumCircuit(n)
 
         from qiskit.circuit.library import RZGate
         from qiskit_ionq import GPI2Gate, GPIGate, IonQProvider, MSGate
 
-        for ind, gate in enumerate(self.job["body"]["circuit"]):
+        for ind, gate in enumerate(self.job["input"]["circuit"]):
             if gate["gate"] == "gpi":
                 circ.append(GPIGate(gate["phase"]), [n - 1 - gate["target"]])
             elif gate["gate"] == "gpi2":
                 circ.append(GPI2Gate(gate["phase"]), [n - 1 - gate["target"]])
             elif gate["gate"] == "ms":
-                circ.append(MSGate(gate["phases"][1], gate["phases"][0], gate["angle"]), list(n - 1 - np.array(gate["targets"])))
+                circ.append(
+                    MSGate(gate["phases"][1], gate["phases"][0], gate["angle"]),
+                    list(n - 1 - np.array(gate["targets"])),
+                )
             else:
                 raise Exception("Unknown gate:", gate["gate"])
-        for q in range(self.job["body"]["qubits"]):
-            circ.append(RZGate(-self.accum_phase[q]), [n - 1 - q])
+        # for q in range(self.job["input"]["qubits"]):
+        #     circ.append(RZGate(-self.accum_phase[q]), [n - 1 - q])
 
         return Operator(circ).to_matrix()
 
+
+"""
 def random_circ(n, m) :
     if n <= 1 :
         raise Exception("n must be > 1.")

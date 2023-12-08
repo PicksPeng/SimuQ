@@ -72,26 +72,66 @@ class IonQTranspiler(Transpiler, ABC):
                         rot = 2 * params[0] * t
                         circ.rz(q, rot)
                 else:
+                    trotter_method = "first_order"
+                    trotter_steps = 5
+
                     (q0, q1) = link[line - n]
                     params = 2 * np.array(params) * t
                     decomposed_params = decompose_ham(params)
                     n_terms = decomposed_params.shape[2]
-                    # TODO add trotter
-                    for term_idx in range(n_terms):
-                        u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
-                        circ._add_unitary(q0, u0)
-                        u1, theta1 = rotate_to_x(decomposed_params[1, :, term_idx])
-                        circ._add_unitary(q1, u1)
+                    if trotter_method == "first_order" or n_terms == 1:
+                        for _ in range(trotter_steps):
+                            for term_idx in range(n_terms):
+                                u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
+                                circ._add_unitary(q0, u0)
+                                u1, theta1 = rotate_to_x(decomposed_params[1, :, term_idx])
+                                circ._add_unitary(q1, u1)
 
-                        circ.ms(
-                            q0,
-                            q1,
-                            0,
-                            0,
-                            theta0 * theta1,
-                        )
-                        circ._add_unitary(q0, u0.conj().transpose())
-                        circ._add_unitary(q1, u1.conj().transpose())
+                                circ.ms(
+                                    q0,
+                                    q1,
+                                    0,
+                                    0,
+                                    theta0 * theta1 / trotter_steps,
+                                )
+                                circ._add_unitary(q0, u0.conj().transpose())
+                                circ._add_unitary(q1, u1.conj().transpose())
+                    elif trotter_method == "second_order":
+                        for trotter_id in range(trotter_steps):
+                            for term_idx in range(n_terms):
+                                if trotter_id % 2 == 0:
+                                    term_idx = n_terms - 1 - term_idx
+                                u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
+                                circ._add_unitary(q0, u0)
+                                u1, theta1 = rotate_to_x(decomposed_params[1, :, term_idx])
+                                circ._add_unitary(q1, u1)
+
+                                circ.ms(
+                                    q0,
+                                    q1,
+                                    0,
+                                    0,
+                                    theta0 * theta1 / trotter_steps,
+                                )
+                                circ._add_unitary(q0, u0.conj().transpose())
+                                circ._add_unitary(q1, u1.conj().transpose())
+                    elif trotter_method == "random":
+                        for _ in range(trotter_steps):
+                            for term_idx in np.random.permutation(n_terms):
+                                u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
+                                circ._add_unitary(q0, u0)
+                                u1, theta1 = rotate_to_x(decomposed_params[1, :, term_idx])
+                                circ._add_unitary(q1, u1)
+
+                                circ.ms(
+                                    q0,
+                                    q1,
+                                    0,
+                                    0,
+                                    theta0 * theta1 / trotter_steps,
+                                )
+                                circ._add_unitary(q0, u0.conj().transpose())
+                                circ._add_unitary(q1, u1.conj().transpose())
         return circ.optimize()
 
     def transpile(
@@ -119,8 +159,10 @@ def rotate_to_x(params):
     if eigvals[0] > eigvals[1]:
         unitary = eigvecs
     else:
-        unitary = eigvecs[:, ::-1]
-    unitary = unitary @ Hadmard
+        unitary = eigvecs @ X
+    # print(unitary @ unitary.conj().T)
+    # ham=unitary @ Z @ unitary^dagger
+    unitary = Hadmard @ unitary.conj().T
     return unitary, theta
 
 

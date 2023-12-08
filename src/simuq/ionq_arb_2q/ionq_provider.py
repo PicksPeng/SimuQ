@@ -74,6 +74,7 @@ class IonQProvider(BaseProvider):
             sol_gvars,
             boxes,
             edges,
+            trotter_args=trotter_args,
             randomized=randomized,
             backend="qpu." + backend,
             noise_model=backend,

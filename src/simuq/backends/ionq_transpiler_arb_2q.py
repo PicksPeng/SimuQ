@@ -37,7 +37,7 @@ class IonQTranspiler(Transpiler, ABC):
         pass
 
     @staticmethod
-    def clean_as(n, boxes, edges, circ: IonQCircuit, randomized=False) -> IonQCircuit:
+    def clean_as(n, boxes, edges, circ: IonQCircuit, trotter_args, randomized=False) -> IonQCircuit:
         link = [(i, j) for i in range(n) for j in range(i + 1, n)]
         dg = nx.DiGraph()
         dg.add_nodes_from([i for i in range(len(boxes))])
@@ -72,15 +72,20 @@ class IonQTranspiler(Transpiler, ABC):
                         rot = 2 * params[0] * t
                         circ.rz(q, rot)
                 else:
-                    trotter_method = "first_order"
-                    trotter_steps = 5
+                    if trotter_args["order"] == 1 and trotter_args["sequential"]:
+                        trotter_mode = "first_order"
+                    elif trotter_args["order"] == 2 and trotter_args["sequential"]:
+                        trotter_mode = "second_order"
+                    else:
+                        trotter_mode = "random"
+                    trotter_num = trotter_args["num"]
 
                     (q0, q1) = link[line - n]
                     params = 2 * np.array(params) * t
                     decomposed_params = decompose_ham(params)
                     n_terms = decomposed_params.shape[2]
-                    if trotter_method == "first_order" or n_terms == 1:
-                        for _ in range(trotter_steps):
+                    if trotter_mode == "first_order" or n_terms == 1:
+                        for _ in range(trotter_num):
                             for term_idx in range(n_terms):
                                 u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
                                 circ._add_unitary(q0, u0)
@@ -92,12 +97,12 @@ class IonQTranspiler(Transpiler, ABC):
                                     q1,
                                     0,
                                     0,
-                                    theta0 * theta1 / trotter_steps,
+                                    theta0 * theta1 / trotter_num,
                                 )
                                 circ._add_unitary(q0, u0.conj().transpose())
                                 circ._add_unitary(q1, u1.conj().transpose())
-                    elif trotter_method == "second_order":
-                        for trotter_id in range(trotter_steps):
+                    elif trotter_mode == "second_order":
+                        for trotter_id in range(trotter_num):
                             for term_idx in range(n_terms):
                                 if trotter_id % 2 == 0:
                                     term_idx = n_terms - 1 - term_idx
@@ -111,12 +116,12 @@ class IonQTranspiler(Transpiler, ABC):
                                     q1,
                                     0,
                                     0,
-                                    theta0 * theta1 / trotter_steps,
+                                    theta0 * theta1 / trotter_num,
                                 )
                                 circ._add_unitary(q0, u0.conj().transpose())
                                 circ._add_unitary(q1, u1.conj().transpose())
-                    elif trotter_method == "random":
-                        for _ in range(trotter_steps):
+                    elif trotter_mode == "random":
+                        for _ in range(trotter_num):
                             for term_idx in np.random.permutation(n_terms):
                                 u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
                                 circ._add_unitary(q0, u0)
@@ -128,14 +133,21 @@ class IonQTranspiler(Transpiler, ABC):
                                     q1,
                                     0,
                                     0,
-                                    theta0 * theta1 / trotter_steps,
+                                    theta0 * theta1 / trotter_num,
                                 )
                                 circ._add_unitary(q0, u0.conj().transpose())
                                 circ._add_unitary(q1, u1.conj().transpose())
         return circ.optimize()
 
     def transpile(
-        self, n, sol_gvars, boxes, edges, *generate_circuit_args, **generate_circuit_kwargs
+        self,
+        n,
+        sol_gvars,
+        boxes,
+        edges,
+        trotter_args,
+        *generate_circuit_args,
+        **generate_circuit_kwargs
     ):
         n = len(n) if isinstance(n, list) else n
         if "randomized" in generate_circuit_kwargs:
@@ -144,7 +156,7 @@ class IonQTranspiler(Transpiler, ABC):
         else:
             randomized = False
         circ = self.generate_circuit(n, *generate_circuit_args, **generate_circuit_kwargs)
-        return self.clean_as(n, boxes, edges, circ, randomized)
+        return self.clean_as(n, boxes, edges, circ, trotter_args, randomized)
 
 
 def rotate_to_x(params):

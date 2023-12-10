@@ -58,7 +58,11 @@ class IonQTranspiler(Transpiler, ABC):
                         if abs(rot) > 1e-5:
                             cosphi = np.cos(phi)
                             sinphi = np.sin(phi)
-                            U = sp.linalg.expm(-1j * (rot / 2) * np.array([[0, cosphi - 1j * sinphi], [cosphi + 1j * sinphi, 0]]))
+                            U = sp.linalg.expm(
+                                -1j
+                                * (rot / 2)
+                                * np.array([[0, cosphi - 1j * sinphi], [cosphi + 1j * sinphi, 0]])
+                            )
                             circ._add_unitary(q, U)
 
                             """
@@ -119,50 +123,3 @@ class IonQTranspiler(Transpiler, ABC):
             randomized = False
         circ = self.generate_circuit(n, *generate_circuit_args, **generate_circuit_kwargs)
         return self.clean_as(n, boxes, edges, circ, randomized)
-
-def decompose_4x4_hermitian(H):
-    import numpy as np
-    import torch
-    H=torch.tensor(H,dtype=torch.complex128)
-    X=torch.tensor([[0,1],[1,0]],dtype=torch.complex128)
-    Y=torch.tensor([[0,-1j],[1j,0]],dtype=torch.complex128)
-    Z=torch.tensor([[1,0],[0,-1]],dtype=torch.complex128)
-    I=torch.tensor([[1,0],[0,1]],dtype=torch.complex128)
-
-    def create_2x2_hermitian(x,y,z,i):
-        return x*X+y*Y+z*Z+i*I
-
-    def empty_4x4_hermitian():
-        return torch.zeros(4,4,dtype=torch.complex128)
-
-    def cal_commutator(A,B):
-        return A@B-B@A
-    for n in range(1,4):
-        params=torch.rand((2,4,n),dtype=torch.float,requires_grad=True)
-        optimizer = torch.optim.Adam([params], lr=0.1)
-        for i in range(1000):
-            optimizer.zero_grad()
-            guess=empty_4x4_hermitian()
-            commutator=0
-            Hamiltonian_terms=[]
-            for j in range(n):
-                A = create_2x2_hermitian(params[0,0,j],params[0,1,j],params[0,2,j],params[0,3,j])
-                B = create_2x2_hermitian(params[1,0,j],params[1,1,j],params[1,2,j],params[1,3,j])
-                Hamiltonian_terms.append(torch.kron(A, B))
-                C = torch.kron(A, B)
-            
-                guess+=C
-            for j in range(n):
-                for k in range(j+1,n):
-                    commutator+=cal_commutator(Hamiltonian_terms[j],Hamiltonian_terms[k]).norm()
-            l=(guess-H).norm()+0.01*torch.sum(abs(params))+0.01*commutator
-            l.backward()
-            optimizer.step()
-            # weight decay
-
-        if (guess-H).norm()<0.01:
-            print("decomposable with",n,"terms")
-            # print(params)
-            # print(guess)
-            break
-    return params

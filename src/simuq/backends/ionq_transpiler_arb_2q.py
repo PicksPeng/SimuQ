@@ -6,8 +6,8 @@ import scipy as sp
 
 from simuq.backends.ionq_circuit import IonQCircuit
 from simuq.transpiler import Transpiler
-import torch
 from qiskit import QuantumCircuit
+from scipy.optimize import dual_annealing
 
 
 def randomized_topo_sort(G):
@@ -83,13 +83,13 @@ class IonQTranspiler(Transpiler, ABC):
                     (q0, q1) = link[line - n]
                     params = 2 * np.array(params) * t
                     decomposed_params = decompose_ham(params)
-                    n_terms = decomposed_params.shape[2]
+                    n_terms = decomposed_params.shape[0]
                     if trotter_mode == "first_order" or n_terms == 1:
                         for _ in range(trotter_num):
                             for term_idx in range(n_terms):
-                                u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
+                                u0, theta0 = rotate_to_x(decomposed_params[term_idx, 0, :])
                                 circ._add_unitary(q0, u0)
-                                u1, theta1 = rotate_to_x(decomposed_params[1, :, term_idx])
+                                u1, theta1 = rotate_to_x(decomposed_params[term_idx, 1, :])
                                 circ._add_unitary(q1, u1)
 
                                 circ.ms(
@@ -179,57 +179,81 @@ def rotate_to_x(params):
 
 
 def decompose_ham(thetas):
-    X = torch.tensor([[0, 1], [1, 0]], dtype=torch.complex128)
-    Y = torch.tensor([[0, -1j], [1j, 0]], dtype=torch.complex128)
-    Z = torch.tensor([[1, 0], [0, -1]], dtype=torch.complex128)
-    I = torch.tensor([[1, 0], [0, 1]], dtype=torch.complex128)
+    # change this to scipy
+    X = np.array([[0, 1], [1, 0]], dtype=np.complex128)
+    Y = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
+    Z = np.array([[1, 0], [0, -1]], dtype=np.complex128)
+    I = np.array([[1, 0], [0, 1]], dtype=np.complex128)
     H = (
-        thetas[0] * torch.kron(X, X)
-        + thetas[1] * torch.kron(X, Y)
-        + thetas[2] * torch.kron(X, Z)
-        + thetas[3] * torch.kron(Y, X)
-        + thetas[4] * torch.kron(Y, Y)
-        + thetas[5] * torch.kron(Y, Z)
-        + thetas[6] * torch.kron(Z, X)
-        + thetas[7] * torch.kron(Z, Y)
-        + thetas[8] * torch.kron(Z, Z)
+        thetas[0] * np.kron(X, X)
+        + thetas[1] * np.kron(X, Y)
+        + thetas[2] * np.kron(X, Z)
+        + thetas[3] * np.kron(Y, X)
+        + thetas[4] * np.kron(Y, Y)
+        + thetas[5] * np.kron(Y, Z)
+        + thetas[6] * np.kron(Z, X)
+        + thetas[7] * np.kron(Z, Y)
+        + thetas[8] * np.kron(Z, Z)
     )
+    total_amp = np.sqrt(np.trace(H @ H.conj().T))
 
-    def create_local_ham(x, y, z):
-        return x * X + y * Y + z * Z
+    def create_tensor_ham(amp, theta1, theta2, phi1, phi2):
+        H1 = amp * (
+            np.cos(theta1) * X
+            + np.sin(theta1) * np.cos(theta2) * Y
+            + np.sin(theta1) * np.sin(theta2)
+        )
+        H2 = amp * (
+            np.cos(phi1) * X + np.sin(phi1) * np.cos(phi2) * Y + np.sin(phi1) * np.sin(phi2)
+        )
+        return np.kron(H1, H2)
 
     def create_zero_ham():
-        return torch.zeros(4, 4, dtype=torch.complex128)
+        return np.zeros((4, 4), dtype=np.complex128)
 
-    def cal_commutator(A, B):
-        return A @ B - B @ A
+    def calc_loss(params):
+        params = params.reshape(-1, 5)
+        n_terms = params.shape[0]
+        guess = create_zero_ham()
+        for i in range(n_terms):
+            guess += create_tensor_ham(
+                params[i, 0], params[i, 1], params[i, 2], params[i, 3], params[i, 4]
+            )
+        return np.linalg.norm(guess - H)
 
-    for n in range(1, 4):
-        params = torch.rand((2, 3, n), dtype=torch.float, requires_grad=True)
-        optimizer = torch.optim.Adam([params], lr=0.01)
-        for i in range(2000):
-            optimizer.zero_grad()
-            guess = create_zero_ham()
-            commutator = 0
-            Hamiltonian_terms = []
-            for j in range(n):
-                A = create_local_ham(params[0, 0, j], params[0, 1, j], params[0, 2, j])
-                B = create_local_ham(params[1, 0, j], params[1, 1, j], params[1, 2, j])
-                Hamiltonian_terms.append(torch.kron(A, B))
-                C = torch.kron(A, B)
+    def transform_params(params):
+        params = params.reshape(-1, 5)
+        n_terms = params.shape[0]
+        new_params = np.zeros((n_terms, 2, 3))
+        for i in range(n_terms):
+            new_params[i, 0, 0] = params[i, 0] * np.cos(params[i, 1])
+            new_params[i, 0, 1] = params[i, 0] * np.sin(params[i, 1]) * np.cos(params[i, 2])
+            new_params[i, 0, 2] = params[i, 0] * np.sin(params[i, 1]) * np.sin(params[i, 2])
+            new_params[i, 1, 0] = params[i, 0] * np.cos(params[i, 3])
+            new_params[i, 1, 1] = params[i, 0] * np.sin(params[i, 3]) * np.cos(params[i, 4])
+            new_params[i, 1, 2] = params[i, 0] * np.sin(params[i, 3]) * np.sin(params[i, 4])
 
-                guess += C
-            for j in range(n):
-                for k in range(j + 1, n):
-                    commutator += cal_commutator(Hamiltonian_terms[j], Hamiltonian_terms[k]).norm()
-            l = (guess - H).norm() + 0.001 * torch.sum(abs(params))
-            # + 0.01 * commutator
-            l.backward()
-            optimizer.step()
+        return new_params
 
-        if (guess - H).norm() < 0.01:
-            print("decomposable with", n, "terms")
-            # print(params)
-            # print(guess)
+    # def cal_commutator(A, B):
+    #     return A @ B - B @ A
+    for i in range(1, 4):
+        bounds = np.array(
+            [(0, total_amp), (0, np.pi), (0, np.pi), (0, np.pi), (0, np.pi)] * i, dtype=np.float64
+        )
+        x0 = (
+            0.5
+            * np.random.rand(5 * i)
+            * np.array([total_amp, np.pi, np.pi, np.pi, np.pi] * i, dtype=np.float64)
+        )
+        res = dual_annealing(
+            calc_loss,
+            bounds=bounds,
+            x0=x0,
+        )
+        if res.fun < 0.01:
+            print("success with ", i, " terms")
             break
-    return params.detach().numpy()
+    new_params = transform_params(res.x)
+    print(new_params)
+    return transform_params(res.x)

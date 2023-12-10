@@ -82,6 +82,7 @@ class IonQTranspiler(Transpiler, ABC):
 
                     (q0, q1) = link[line - n]
                     params = 2 * np.array(params) * t
+                    # TODO add optimization, if already decomposed, use a dict to store the decomposed params
                     decomposed_params = decompose_ham(params)
                     n_terms = decomposed_params.shape[0]
                     if trotter_mode == "first_order" or n_terms == 1:
@@ -172,13 +173,13 @@ def rotate_to_x(params):
         unitary = eigvecs
     else:
         unitary = eigvecs @ X
-    # print(unitary @ unitary.conj().T)
-    # ham=unitary @ Z @ unitary^dagger
     unitary = Hadmard @ unitary.conj().T
+    assert np.allclose(unitary @ unitary.conj().T, np.eye(2))
     return unitary, theta
 
 
 def decompose_ham(thetas):
+    print(thetas)
     # change this to scipy
     X = np.array([[0, 1], [1, 0]], dtype=np.complex128)
     Y = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
@@ -195,16 +196,16 @@ def decompose_ham(thetas):
         + thetas[7] * np.kron(Z, Y)
         + thetas[8] * np.kron(Z, Z)
     )
-    total_amp = np.sqrt(np.trace(H @ H.conj().T))
+    total_amp = np.sqrt(np.trace(H @ H.conj().T).real)
 
     def create_tensor_ham(amp, theta1, theta2, phi1, phi2):
         H1 = amp * (
             np.cos(theta1) * X
             + np.sin(theta1) * np.cos(theta2) * Y
-            + np.sin(theta1) * np.sin(theta2)
+            + np.sin(theta1) * np.sin(theta2) * Z
         )
         H2 = amp * (
-            np.cos(phi1) * X + np.sin(phi1) * np.cos(phi2) * Y + np.sin(phi1) * np.sin(phi2)
+            np.cos(phi1) * X + np.sin(phi1) * np.cos(phi2) * Y + np.sin(phi1) * np.sin(phi2) * Z
         )
         return np.kron(H1, H2)
 
@@ -235,17 +236,12 @@ def decompose_ham(thetas):
 
         return new_params
 
-    # def cal_commutator(A, B):
-    #     return A @ B - B @ A
+    success = False
     for i in range(1, 4):
         bounds = np.array(
-            [(0, total_amp), (0, np.pi), (0, np.pi), (0, np.pi), (0, np.pi)] * i, dtype=np.float64
+            [(0, 5), (0, np.pi), (0, np.pi), (0, np.pi), (0, np.pi)] * i, dtype=np.float64
         )
-        x0 = (
-            0.5
-            * np.random.rand(5 * i)
-            * np.array([total_amp, np.pi, np.pi, np.pi, np.pi] * i, dtype=np.float64)
-        )
+        x0 = np.random.rand(5 * i) * np.array([5, np.pi, np.pi, np.pi, np.pi] * i, dtype=np.float64)
         res = dual_annealing(
             calc_loss,
             bounds=bounds,
@@ -253,7 +249,8 @@ def decompose_ham(thetas):
         )
         if res.fun < 0.01:
             print("success with ", i, " terms")
+            success = True
             break
-    new_params = transform_params(res.x)
-    print(new_params)
+    if not success:
+        raise Exception("decomposition failed")
     return transform_params(res.x)

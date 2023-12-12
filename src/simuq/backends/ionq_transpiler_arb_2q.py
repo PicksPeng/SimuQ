@@ -42,6 +42,8 @@ class IonQTranspiler(Transpiler, ABC):
         dg = nx.DiGraph()
         dg.add_nodes_from([i for i in range(len(boxes))])
         dg.add_edges_from(edges)
+        seen_params = {}
+        precision = 1e-5
         if randomized:
             topo_order = randomized_topo_sort(dg)
         else:
@@ -83,7 +85,12 @@ class IonQTranspiler(Transpiler, ABC):
                     (q0, q1) = link[line - n]
                     params = 2 * np.array(params) * t
                     # TODO add optimization, if already decomposed, use a dict to store the decomposed params
-                    decomposed_params = decompose_ham(params)
+                    key = (params / precision).astype(int).tostring()
+                    if key in seen_params:
+                        decomposed_params = seen_params[key]
+                    else:
+                        decomposed_params = decompose_ham(params)
+                        seen_params[key] = decomposed_params
                     n_terms = decomposed_params.shape[0]
                     if trotter_mode == "first_order" or n_terms == 1:
                         for _ in range(trotter_num):

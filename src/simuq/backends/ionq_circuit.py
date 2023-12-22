@@ -72,8 +72,8 @@ class IonQCircuit(ABC):
     @staticmethod
     # _GPi(theta)_Rz(phi*2)_ = GPi(theta + phi)
     def _decomp_gpirz(U):
-        if isclose(U[0, 0], 0) and isclose(U[1, 1], 0) and isclose(U[0, 1], np.conjugate(U[1, 0])):
-            return np.angle(U[1, 0]), 0
+        if isclose(U[0, 0], 0) and isclose(U[1, 1], 0) and isclose(abs(U[0, 1]), 1) and isclose(abs(U[1, 0]), 1):
+            return np.angle(U[1, 0] / U[0, 1]) / 2, 0
         return None
 
     @staticmethod

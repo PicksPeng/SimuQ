@@ -54,19 +54,11 @@ class DWaveProvider(BaseProvider):
         qpu = DWaveSampler(token=self.api_key)
         sampler = EmbeddingComposite(qpu)
         h, J, anneal_schedule = self.prog
-
-        #uncomment to check qubos equality
-        # print("Qubos equal:")
-        # print(self.compare_qubo(self.qubo, self.isingToqubo(h, J)))
-
         response = sampler.sample_ising(h, J,
-                                       chain_strength=0.5,
-                                       num_reads=1000,
-                                       anneal_schedule=[[0, 0], [20, 1]]
+                                       chain_strength=self.chain_strength,
+                                       num_reads=self.numruns,
+                                       anneal_schedule=anneal_schedule
                                         )
-        # embedding = response.info["embedding_context"]["embedding"]
-        # with open("instance_0_embedding.json", "w") as outfile:
-        #     json.dump(embedding, outfile)
         self.samples = list(response.samples())
 
     def isingToqubo(self, h, J):

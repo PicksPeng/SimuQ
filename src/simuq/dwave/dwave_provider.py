@@ -3,7 +3,7 @@ from simuq.solver import generate_as
 import numpy as np
 import json
 import re
-from dwave.system import DWaveSampler, EmbeddingComposite
+from dwave.system import DWaveSampler, EmbeddingComposite, FixedEmbeddingComposite
 from dimod import ising_to_qubo
 
 from simuq.aais import ising
@@ -11,13 +11,14 @@ from simuq.dwave.dwave_transpiler import DwaveTranspiler
 
 
 class DWaveProvider(BaseProvider):
-    def __init__(self, api_key, numruns=100, chain_strength):
+    def __init__(self, api_key, chain_strength, numruns=100, qubo=None):
         # insert all log in details
         super().__init__()
         self._samples = None
         self.api_key = api_key
         self.numruns = numruns
         self.chain_strength = chain_strength
+        self.qubo = qubo
 
     def compile(self,
                 qs,
@@ -26,7 +27,6 @@ class DWaveProvider(BaseProvider):
                 trotter_num=6,
                 verbose=0):
         h = [0 for _ in range(qs.num_sites)]
-        #J = {(i, j): 0 for i in range(qs.num_sites) for j in range(i + 1, qs.num_sites)}
         J = {}
         for ham in qs.evos[0][0].ham:
             keys = list(ham[0].d.keys())
@@ -39,16 +39,34 @@ class DWaveProvider(BaseProvider):
 
         self.prog = h, J, anneal_schedule
 
+    def compare_qubo(self, q1, q2):
+        numDifferent = 0
+        if len(q1.keys()) != len(q2.keys()): return False
+        for (d1, d2) in q1.keys():
+            if abs(q1[(d1, d2)] - q2[(int(d1), int(d2))]) > 10**-3:
+                numDifferent += 1
+        return numDifferent
+
+
     def run(self):
         if self.prog is None:
             raise Exception("No compiled job in record.")
         qpu = DWaveSampler(token=self.api_key)
         sampler = EmbeddingComposite(qpu)
         h, J, anneal_schedule = self.prog
-        response = sampler.sample_ising(h, J, 
-                                       chain_strength=self.chain_strength,
-                                       num_reads=self.numruns,
-                                       anneal_schedule=anneal_schedule)
+
+        #uncomment to check qubos equality
+        # print("Qubos equal:")
+        # print(self.compare_qubo(self.qubo, self.isingToqubo(h, J)))
+
+        response = sampler.sample_ising(h, J,
+                                       chain_strength=0.5,
+                                       num_reads=1000,
+                                       anneal_schedule=[[0, 0], [20, 1]]
+                                        )
+        # embedding = response.info["embedding_context"]["embedding"]
+        # with open("instance_0_embedding.json", "w") as outfile:
+        #     json.dump(embedding, outfile)
         self.samples = list(response.samples())
 
     def isingToqubo(self, h, J):
@@ -83,7 +101,11 @@ class DWaveProvider(BaseProvider):
         response = sampler.sample_qubo(qubo,
                                        num_reads=self.numruns,
                                        anneal_schedule=anneal_schedule,
-                                       anneal_schedule=1.1*max_interaction_qhd)
+                                       chain_strength=1.1*max_interaction_qhd)
+        self.response_dwave = response
+        embedding = response.info["embedding_context"]["embedding"]
+        with open("instance_0_embedding.json", "w") as outfile:
+            json.dump(embedding, outfile)
         self.samples = list(response.samples())
 
     def results(self):

@@ -60,6 +60,7 @@ class DWaveProvider(BaseProvider):
                                        anneal_schedule=anneal_schedule
                                         )
         self.samples = list(response.samples())
+        self.num_occurrences = list(response.data_vectors['num_occurrences'])
 
     def isingToqubo(self, h, J):
         n = len(h)

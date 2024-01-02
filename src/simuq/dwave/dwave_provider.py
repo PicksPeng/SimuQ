@@ -11,13 +11,13 @@ from simuq.dwave.dwave_transpiler import DwaveTranspiler
 
 
 class DWaveProvider(BaseProvider):
-    def __init__(self, api_key, numruns=100, chain_strength):
+    def __init__(self, api_key, chain_strength, numruns=100):
         # insert all log in details
         super().__init__()
         self._samples = None
         self.api_key = api_key
-        self.numruns = numruns
         self.chain_strength = chain_strength
+        self.numruns = numruns
 
     def compile(self,
                 qs,
@@ -83,7 +83,7 @@ class DWaveProvider(BaseProvider):
         response = sampler.sample_qubo(qubo,
                                        num_reads=self.numruns,
                                        anneal_schedule=anneal_schedule,
-                                       anneal_schedule=1.1*max_interaction_qhd)
+                                       chain_strength=1.1*max_interaction_qhd)
         self.samples = list(response.samples())
 
     def results(self):

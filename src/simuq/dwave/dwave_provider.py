@@ -11,14 +11,13 @@ from simuq.dwave.dwave_transpiler import DwaveTranspiler
 
 
 class DWaveProvider(BaseProvider):
-    def __init__(self, api_key, chain_strength, numruns=100, qubo=None):
+    def __init__(self, api_key, chain_strength, numruns=100):
         # insert all log in details
         super().__init__()
         self._samples = None
         self.api_key = api_key
-        self.numruns = numruns
         self.chain_strength = chain_strength
-        self.qubo = qubo
+        self.numruns = numruns
 
     def compile(self,
                 qs,
@@ -95,10 +94,6 @@ class DWaveProvider(BaseProvider):
                                        num_reads=self.numruns,
                                        anneal_schedule=anneal_schedule,
                                        chain_strength=1.1*max_interaction_qhd)
-        self.response_dwave = response
-        embedding = response.info["embedding_context"]["embedding"]
-        with open("instance_0_embedding.json", "w") as outfile:
-            json.dump(embedding, outfile)
         self.samples = list(response.samples())
 
     def results(self):

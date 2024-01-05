@@ -35,8 +35,8 @@ class DWaveProvider(BaseProvider):
                     h[keys[0]] = ham[1]
                 elif len(vals) == 2 and ham[1] != 0:
                     J[(keys[0], keys[1])] = ham[1]
-
         self.prog = h, J, anneal_schedule
+        return h, J
 
     def compare_qubo(self, q1, q2):
         numDifferent = 0
@@ -56,7 +56,8 @@ class DWaveProvider(BaseProvider):
         response = sampler.sample_ising(h, J,
                                        chain_strength=self.chain_strength,
                                        num_reads=self.numruns,
-                                       anneal_schedule=anneal_schedule
+                                       anneal_schedule=anneal_schedule,
+                                       answer_mode="raw"
                                         )
         self.samples = list(response.samples())
         self.num_occurrences = list(response.data_vectors['num_occurrences'])

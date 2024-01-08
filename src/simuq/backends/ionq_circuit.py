@@ -44,6 +44,10 @@ class IonQCircuit(ABC):
             self.ms_quarter(q0, q1, phi0, phi1 + np.pi, 2 * np.pi - theta)
         return self
 
+    def hadamard(self, q):
+        self.gpi2(q, 1.5 * np.pi)
+        self.rz(q, np.pi)
+
     @abstractmethod
     def ms_quarter(self, q0, q1, phi0, phi1, theta):
         pass

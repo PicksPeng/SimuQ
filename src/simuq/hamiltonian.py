@@ -62,7 +62,7 @@ class productHamiltonian(MutableMapping):
     def __eq__(self, other) :
         keys = set(self.d.keys()).union(other.d.keys())
         for k in keys :
-            if self.d[k] != other.d[k] :
+            if self[k] != other[k] :
                 return False
         return True
 

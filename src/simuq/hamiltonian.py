@@ -355,6 +355,16 @@ class TIHamiltonian:
         h.cleanHam()
         return h
 
+    def __pow__(self, exponent):
+        if exponent < 0:
+            raise ValueError("Negative exponent is not supported")
+        if exponent == 0:
+            return 1
+        result = self
+        for _ in range(exponent - 1):
+            result = result * self
+        return result
+
     def __truediv__(self, other):
         if isinstance(other, (int, float, complex, Expression)):
             return self.scalar_mul(1 / other)

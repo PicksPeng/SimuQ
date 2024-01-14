@@ -16,7 +16,7 @@ that commutativity test is possible.
 """
 
 from copy import copy, deepcopy
-from collections import MutableMapping
+from collections.abc import MutableMapping
 
 from simuq.expression import Expression
 

@@ -16,7 +16,7 @@ that commutativity test is possible.
 """
 
 from copy import copy, deepcopy
-from collections import MutableMapping
+from collections.abc import MutableMapping
 
 from simuq.expression import Expression
 
@@ -62,7 +62,7 @@ class productHamiltonian(MutableMapping):
     def __eq__(self, other) :
         keys = set(self.d.keys()).union(other.d.keys())
         for k in keys :
-            if self.d[k] != other.d[k] :
+            if self[k] != other[k] :
                 return False
         return True
 

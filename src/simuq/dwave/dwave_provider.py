@@ -11,19 +11,21 @@ from simuq.dwave.dwave_transpiler import DwaveTranspiler
 
 
 class DWaveProvider(BaseProvider):
-    def __init__(self, api_key, chain_strength, numruns=100):
+    def __init__(self, api_key=None, from_file = None):
         # insert all log in details
         super().__init__()
         self._samples = None
         self.api_key = api_key
-        self.chain_strength = chain_strength
-        self.numruns = numruns
+        if from_file is not None:
+            with open(from_file, "r") as f:
+                self.api_key = f.readline().strip()
+        if self.api_key is None:
+            raise Exception("No API key provided.")
 
     def compile(self,
                 qs,
-                anneal_schedule,
-                tol=0.01,
-                trotter_num=6,
+                anneal_schedule=[[0, 0], [20, 1]],
+                chain_strength=0.5,
                 verbose=0):
         h = [0 for _ in range(qs.num_sites)]
         J = {}
@@ -36,6 +38,7 @@ class DWaveProvider(BaseProvider):
                 elif len(vals) == 2 and ham[1] != 0:
                     J[(keys[0], keys[1])] = ham[1]
         self.prog = h, J, anneal_schedule
+        self.chain_strength = chain_strength
         return h, J
 
     def compare_qubo(self, q1, q2):
@@ -47,7 +50,8 @@ class DWaveProvider(BaseProvider):
         return numDifferent
 
 
-    def run(self):
+    def run(self, shots = 100):
+        self.shots = shots
         if self.prog is None:
             raise Exception("No compiled job in record.")
         qpu = DWaveSampler(token=self.api_key, solver="Advantage_system6.3")
@@ -55,7 +59,7 @@ class DWaveProvider(BaseProvider):
         h, J, anneal_schedule = self.prog
         response = sampler.sample_ising(h, J,
                                        chain_strength=self.chain_strength,
-                                       num_reads=self.numruns,
+                                       num_reads=self.shots,
                                        anneal_schedule=anneal_schedule,
                                        answer_mode="raw"
                                         )
@@ -93,7 +97,7 @@ class DWaveProvider(BaseProvider):
         qubo = self.isingToqubo(h, J)
         max_interaction_qhd = np.max(np.abs(np.array(list(qubo.values()))))
         response = sampler.sample_qubo(qubo,
-                                       num_reads=self.numruns,
+                                       num_reads=self.shots,
                                        anneal_schedule=anneal_schedule,
                                        chain_strength=1.1*max_interaction_qhd)
         self.samples = list(response.samples())

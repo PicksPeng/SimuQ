@@ -38,6 +38,9 @@ setup(
         "qutip": [
             "qutip",
         ],
+        "dwave": [
+            "dwave-system"
+        ],
         "all": ["simuq[braket, ionq, qiskit, qutip, dev]"],
         "dev": ["tox"],
     },

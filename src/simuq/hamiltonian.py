@@ -69,6 +69,9 @@ class productHamiltonian(MutableMapping):
     def keys(self) :
         return self.d.keys()
 
+    def values(self) :
+        return self.d.values()
+
     def __repr__(self) :
         return f"<prodHam d={self.d}>"
 

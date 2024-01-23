@@ -64,8 +64,8 @@ class DWaveProvider(BaseProvider):
                                        answer_mode="raw"
                                         )
         self.samples = list(response.samples())
-        self.avg_qpu_time = response.info['timing']['qpu_access_time'] * 1e-6 / self.shots
-        self.time_on_machine = (response.info['timing']['qpu_access_time'] + response.info['timing']['total_post_processing_time'])*1e-6
+        self.time_on_machine = response.info['timing']['qpu_access_time'] * 1e-6
+        self.avg_qpu_time = response.info['timing']['qpu_access_time'] * 10e-6 / self.shots
         self.num_occurrences = list(response.data_vectors['num_occurrences'])
 
     def isingToqubo(self, h, J):

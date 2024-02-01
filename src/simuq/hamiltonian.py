@@ -73,7 +73,7 @@ class productHamiltonian(MutableMapping):
         return self.d.values()
 
     def __repr__(self) :
-        return f"<prodHam d={self.d}>"
+        return f"<productHamiltonian d={self.d}>"
 
 
 class TIHamiltonian:
@@ -93,33 +93,34 @@ class TIHamiltonian:
     trivially on.
     """
 
-    def __init__(self, sites_type, ham):
+    def __init__(self, sites_type, sites_name, ham):
         self.sites_type = sites_type
+        self.sites_name = sites_name
         self.ham = ham
         self.saved_t_sites = None
         #self.cleanHam()
 
     @classmethod
-    def empty(cls, sites_type):
+    def empty(cls, sites_type, sites_name):
         ham = []
-        return cls(sites_type, ham)
+        return cls(sites_type, sites_name, ham)
 
     @classmethod
-    def identity(cls, sites_type):
+    def identity(cls, sites_type, sites_name):
         #num_sites = len(sites_type)
         #prod = ["" for i in range(num_sites)]
         prod = productHamiltonian()
         ham = [(prod, 1)]
-        return cls(sites_type, ham)
+        return cls(sites_type, sites_name, ham)
 
     @classmethod
-    def op(cls, sites_type, index, op):
+    def op(cls, sites_type, sites_name, index, op):
         #num_sites = len(sites_type)
         #prod = ["" for i in range(num_sites)]
         prod = productHamiltonian()
         prod[index] = op
         ham = [(prod, 1)]
-        return cls(sites_type, ham)
+        return cls(sites_type, sites_name, ham)
 
     def operAlgebra(self):
         #self.extend_ham_by_sites()
@@ -200,7 +201,7 @@ class TIHamiltonian:
                 self.ham[i] = (h, coef)
     """
 
-    def extend_sites(self, new_sites_type):
+    def extend_sites(self, new_sites_type, new_sites_name):
         if new_sites_type is self.sites_type :
             return
         if new_sites_type == self.sites_type :
@@ -214,6 +215,7 @@ class TIHamiltonian:
         """
         add_num = len(new_sites_type) - len(self.sites_type)
         self.sites_type = new_sites_type
+        self.sites_name = new_sites_name
         """
         new_ham = [(self.ham[i][0] + [""] * add_num, self.ham[i][1]) for i in range(len(self.ham))]
         self.ham = new_ham
@@ -221,68 +223,65 @@ class TIHamiltonian:
         if self.saved_t_sites is not None:
             self.saved_t_sites += [0 for j in range(add_num)]
 
+    def sync_sites(self, other):
+        if self.sites_type is not other.sites_type:
+            self.extend_sites(other.sites_type, other.sites_name)
+            other.extend_sites(self.sites_type, self.sites_name)
+
     def __neg__(self):
         ham = copy(self.ham)
         for i in range(len(ham)):
             ham[i] = (ham[i][0], -ham[i][1])
-        h = TIHamiltonian(self.sites_type, ham)
+        h = TIHamiltonian(self.sites_type, self.sites_name, ham)
         return h
 
     def __add__(self, other):
         # need more typing restrictions
         if isinstance(other, (int, float, complex, Expression)):
-            other = other * TIHamiltonian.identity(self.sites_type)
-        if self.sites_type is not other.sites_type:
-            self.extend_sites(other.sites_type)
-            other.extend_sites(self.sites_type)
+            other = other * TIHamiltonian.identity(self.sites_type, self.sites_name)
+        self.sync_sites(other)
         ham = copy(self.ham)
         ham += other.ham
-        h = TIHamiltonian(self.sites_type, ham)
+        h = TIHamiltonian(self.sites_type, self.sites_name, ham)
         #h.cleanHam()
         return h
 
     def __radd__(self, other):
         if isinstance(other, (int, float, complex, Expression)):
-            return self.__add__(other * TIHamiltonian.identity(self.sites_type))
+            return self.__add__(other * TIHamiltonian.identity(self.sites_type, self.sites_name))
         else:
             return NotImplemented
 
     def __iadd__(self, other):
         # need more typing restrictions
         if isinstance(other, (int, float, complex, Expression)):
-            other = other * TIHamiltonian.identity(self.sites_type)
-        if self.sites_type != other.sites_type:
-            self.extend_sites(other.sites_type)
-            other.extend_sites(self.sites_type)
+            other = other * TIHamiltonian.identity(self.sites_type, self.sites_name)
+        self.sync_sites(other)
         self.ham += other.ham
         return self
 
     def __sub__(self, other):
         # need more typing restrictions
         if isinstance(other, (int, float, complex, Expression)):
-            other = other * TIHamiltonian.identity(self.sites_type)
-        if self.sites_type is not other.sites_type:
-            self.extend_sites(other.sites_type)
-            other.extend_sites(self.sites_type)
+            other = other * TIHamiltonian.identity(self.sites_type, self.sites_name)
+        self.sync_sites(other)
         ham = copy(self.ham)
         ham += other.__neg__().ham
-        h = TIHamiltonian(self.sites_type, ham)
+        h = TIHamiltonian(self.sites_type, self.sites_name, ham)
         #h.cleanHam()
         return h
 
     def __rsub__(self, other):
         if isinstance(other, (int, float, complex, Expression)):
-            return (other * TIHamiltonian.identity(self.sites_type)) - self
+            return (other * TIHamiltonian.identity(self.sites_type, self.sites_name)) - self
         else:
             return NotImplemented
 
     def __isub__(self, other):
         # need more typing restrictions
         if isinstance(other, (int, float, complex, Expression)):
-            other = other * TIHamiltonian.identity(self.sites_type)
-        if self.sites_type != other.sites_type:
-            self.extend_sites(other.sites_type)
-            other.extend_sites(self.sites_type)
+            other = other * TIHamiltonian.identity(self.sites_type, self.sites_name)
+        self.sync_sites(other)
         self.ham += other.__neg__().ham
         return self
 
@@ -335,7 +334,7 @@ class TIHamiltonian:
         ham = copy(self.ham)
         for i in range(len(ham)):
             ham[i] = (ham[i][0], ham[i][1] * other)
-        h = TIHamiltonian(self.sites_type, ham)
+        h = TIHamiltonian(self.sites_type, self.sites_name, ham)
         return h
 
     def __mul__(self, other):
@@ -344,9 +343,7 @@ class TIHamiltonian:
             return self.scalar_mul(other)
         #self.extend_ham_by_sites()
         #other.extend_ham_by_sites()
-        if self.sites_type is not other.sites_type:
-            self.extend_sites(other.sites_type)
-            other.extend_sites(self.sites_type)
+        self.sync_sites(other)
         self.cleanHam()
         other.cleanHam()
         ham = []
@@ -354,7 +351,7 @@ class TIHamiltonian:
             for prod2, coef2 in other.ham:
                 (prod, coef3) = self.strlist_mul(self.sites_type, prod1, prod2)
                 ham.append((prod, coef1 * coef2 * coef3))
-        h = TIHamiltonian(self.sites_type, ham)
+        h = TIHamiltonian(self.sites_type, self.sites_name, ham)
         h.cleanHam()
         return h
 
@@ -384,7 +381,7 @@ class TIHamiltonian:
         ham = copy(self.ham)
         for i in range(len(ham)):
             ham[i] = (ham[i][0], ham[i][1].exp_eval(gvars, lvars))
-        h = TIHamiltonian(self.sites_type, ham)
+        h = TIHamiltonian(self.sites_type, self.sites_name, ham)
         return h
 
     def is_empty(self):
@@ -464,7 +461,7 @@ class TIHamiltonian:
                     ret.append(sigmaz())
             return ret
 
-        ret = 0
+        ret = tensor(strlist_to_oplist(productHamiltonian(), len(self.sites_type))) * 0
         for prod, c in self.ham:
             ret = ret + tensor(strlist_to_oplist(prod, len(self.sites_type))) * c
 
@@ -477,13 +474,33 @@ class TIHamiltonian:
         if n == 0:
             return 0
         sites_type = hlist[0].sites_type
+        sites_name = hlist[0].sites_name
         for i in range(n):
             if hlist[i].sites_type != sites_type:
                 raise Exception("Site types do not match")
+            if hlist[i].sites_name != sites_name:
+                raise Exception("Site names do not match")
         ham = []
         for i in range(n):
             ham += hlist[i].ham
 
-        return TIHamiltonian(sites_type, ham)
+        return TIHamiltonian(sites_type, sites_name, ham)
+
+    @staticmethod
+    def strlist_interleaved_insertion(sl, char):
+        new_sl = [c for s in sl for c in (s, char)]
+        return "".join(new_sl[:-1])
+
+    def __repr__(self) :
+        if len(self.ham) == 0 :
+            return "Zero"
+        strl = []
+        for (h, c) in self.ham:
+            sl = [str(c)]
+            for k in h:
+                for op in h[k]:
+                    sl.append(f"{self.sites_name[k]}.{op}")
+            strl.append(TIHamiltonian.strlist_interleaved_insertion(sl, " * "))
+        return TIHamiltonian.strlist_interleaved_insertion(strl, "  +  ")
 
 hlist_sum = TIHamiltonian.hlist_sum

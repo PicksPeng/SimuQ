@@ -28,13 +28,14 @@ class BaseQuantumEnvironment:
     def __init__(self):
         self.sites = []
         self.sites_type = []
+        self.sites_name = []
         self.num_sites = 0
 
     def identity(self):
-        return TIHamiltonian.identity(self.sites_type)
+        return TIHamiltonian.identity(self.sites_type, self.sites_name)
 
     def singletonOp(self, index, op):
-        return TIHamiltonian.op(self.sites_type, index, op)
+        return TIHamiltonian.op(self.sites_type, self.sites_name, index, op)
 
 
 class BaseSite:
@@ -48,6 +49,7 @@ class BaseSite:
         self.name = name
         qs.num_sites += 1
         qs.sites.append(self)
+        qs.sites_name.append(name)
 
     def createOp(self, op):
         h = self.qs.singletonOp(self.index, op)

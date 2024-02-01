@@ -6,6 +6,7 @@ constant evolution.
 """
 
 from simuq.environment import BaseQuantumEnvironment, Boson, Fermion, Qubit
+from simuq.hamiltonian import TIHamiltonian
 
 
 class QSystem(BaseQuantumEnvironment):
@@ -24,6 +25,8 @@ class QSystem(BaseQuantumEnvironment):
 
     def add_evolution(self, h, t):
         #h.extend_ham_by_sites()
+        if isinstance(h, (int, float, complex)):
+            h = h * TIHamiltonian.identity(self.sites_type, self.sites_name)
         h.cleanHam()
         self.evos.append((h, t))
 
@@ -68,6 +71,14 @@ class QSystem(BaseQuantumEnvironment):
             name_list.append(site.name)
         return name_list
 
+    def __repr__(self):
+        strl = ["Quantum system:\n", "- Sites: "]
+        all_names = self.print_sites()
+        strl += [s for name in all_names for s in (name, " ")]
+        strl.append("\n- Sequentially evolves:\n")
+        for (h, t) in self.evos:
+            strl += [f"    Time = {t},  TIHamiltonian = ", h.__repr__(), "\n"]
+        return "".join(strl)
 
 if __name__ == "__main__":
     # This is to keep the classes under qsystem.

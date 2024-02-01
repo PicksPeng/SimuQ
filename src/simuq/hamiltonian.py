@@ -19,6 +19,7 @@ from copy import copy, deepcopy
 from collections.abc import MutableMapping
 
 from simuq.expression import Expression
+from simuq.config import Config
 
 class productHamiltonian(MutableMapping):
     """ A defaultdict-like object to speed up local Hamiltonian calculation.
@@ -175,6 +176,12 @@ class TIHamiltonian:
             i += 1
 
     def cleanHam(self, tol=1e-6):
+        
+        if Config.value('TIHamiltonian_tol') is not None:
+            tol = Config.value('TIHamiltonian_tol')
+
+        print(tol)
+        
         self.operAlgebra()
 
         hamdic = dict([])

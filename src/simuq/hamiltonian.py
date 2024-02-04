@@ -180,8 +180,6 @@ class TIHamiltonian:
         if Config.value('TIHamiltonian_tol') is not None:
             tol = Config.value('TIHamiltonian_tol')
 
-        print(tol)
-        
         self.operAlgebra()
 
         hamdic = dict([])

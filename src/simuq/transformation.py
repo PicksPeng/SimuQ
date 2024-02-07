@@ -1,4 +1,6 @@
 from math import sqrt
+from collections import defaultdict
+import itertools
 import numpy as np
 
 from simuq.environment import Boson, Fermion, Qubit
@@ -122,7 +124,7 @@ def oh_transform(qs, truncation_levels=3):
 
 
 def tfim_3to2_transform(qs, penalty):
-    """Transforming 3-local transverse-field Ising model (TFIM) to 2-local TFIM
+    """Transform 3-local transverse-field Ising model (TFIM) to 2-local TFIM
     using 2nd order perturbation theory.
     Here 3-local TFIM means
         H = \sum_ijk J_ijk Z_i Z_j Z_k
@@ -133,6 +135,7 @@ def tfim_3to2_transform(qs, penalty):
         H = \sum_ij J_ij Z_i Z_j
             + \sum_i J_i Z_i
             + \sum_i h_i X_i
+
     Parameters
     ----------
     qs : QSystem
@@ -198,3 +201,139 @@ def tfim_3to2_transform(qs, penalty):
     new_qs.add_evolution(new_h, t)
 
     return new_qs, new_sites
+
+
+def ising_3to2_transform(qs, penalty, variant):
+    """Transform 3-local Ising model to 2-local Ising model (i.e. quadratization of pseudo-Boolean functions).
+    Here 3-local Ising model means
+        H = \sum_ijk J_ijk Z_i Z_j Z_k
+            + \sum_ij J_ij Z_i Z_j
+            + \sum_i   J_i Z_i
+    and 2-local Ising model means
+        H = \sum_ij J_ij Z_i Z_j
+            + \sum_i J_i Z_i
+
+    Parameters
+    ----------
+    qs : QSystem
+        quantum system to be transformed
+    penalty : float
+        penalty coefficient
+    variant : str
+        specify which variant of the transformation is called, must be one of:
+        "sub", "min_sel"
+
+    Returns
+    -------
+    QSystem, list[Qubit]
+        transformed quantum system, along with the list of new qubits
+    """
+    if penalty <= 0:
+        raise ValueError("penalty must be positive")
+    if len(qs.evos) != 1:
+        raise NotImplementedError("Only a single evolution is supported for now")
+
+    if variant == "sub":
+        new_qs, new_qubits = _ising_3to2_transform_sub(qs, penalty)
+    elif variant == "min_sel":
+        raise NotImplementedError
+    else:
+        raise ValueError("Unknown value of `variant`")
+
+    return new_qs, new_qubits
+
+def _ising_3to2_transform_sub(qs, penalty):
+    """Transform 3-local Ising model to 2-local Ising model, using the technique of substitution.
+
+    Procedure: Convert all Pauli Z's to number operators `n := (1-Z) / 2`; select the pair `{n_i, n_j}` 
+    that appears most often among all the 3-local terms, replace it with `n_a` acting on an ancillary 
+    qubit `a`, and add a penalty term to realize constraint `n_i n_j |g> = n_a |g>` for any ground state 
+    `|g>`; repeat until no more 3-local terms remain; convert number operators back to Pauli Z's.
+
+    For the exact form of the penalty term, we use the formula from
+    https://docs.dwavesys.com/docs/latest/handbook_reformulating.html#example-boolean-variables.
+    """
+    h, t = qs.evos[0]
+
+    # ---- convert Pauli Z to number operator ---
+    # coefficients of 3-local, 2-local, and 1-local terms.
+    coeff_nnn, coeff_nn, coeff_n = defaultdict(float), defaultdict(float), defaultdict(float)
+    # e.g. coeff_nnn[frozenset({i, j, k})] is coefficient in front of n_i * n_j * n_k.
+    # e.g. coeff_nn[frozenset({i, j})] is coefficient in front of n_i * n_j.
+    # e.g. coeff_n[i] is coefficient in front of n_i.
+    for prod, c in h.ham:
+        inds, paulistr = list(prod.keys()), "".join(prod.values())
+        if paulistr == "": # ignoring terms proportional to the identity
+            continue
+        elif paulistr == "Z": # replacing Z -> 1 - 2n
+            coeff_n[inds[0]] += -2 * c
+        elif paulistr == "ZZ": # replacing Z_i*Z_j -> 1 - 2(n_i+n_j) + 4n_i*n_j
+            for i in inds:
+                coeff_n[i] += -2 * c
+            coeff_nn[frozenset(inds)] += 4 * c
+        elif paulistr == "ZZZ": # replacing Z_i*Z_j*Z_k -> 1 - 2(n_i+n_j+n_k) + 4(n_i*n_j+n_i*n_k+n_j*n_k) - 8n_i*n_j*n_k
+            for i in inds:
+                coeff_n[i] += -2 * c
+            for pair in itertools.combinations(inds, 2):
+                coeff_nn[frozenset(pair)] += 4 * c
+            coeff_nnn[frozenset(inds)] += -8 * c
+        else:
+            raise Exception("Invalid Hamiltonian")
+
+    # --- count frequency of each pair appearing in 3-local terms ---
+    pair2freq = defaultdict(int)
+    # e.g. pair2freq[frozenset([i,j])] is number of 3-local terms in which qubits i and j both appear
+    for triple in coeff_nnn.keys():
+        for pair in itertools.combinations(triple, 2):
+            pair2freq[frozenset(pair)] += 1
+
+    # --- reduce 3-local nnn to 2-local interactions ---
+    pair2anc = dict()
+    # e.g. pair2anc[frozenset([i,j])] records which ancillary qubit is used to substitute n_i*n_j
+    nq = qs.num_sites # num of qubits
+    while len(coeff_nnn) > 0:
+        # find the pair {i,j} with largest frequency
+        ij, _ = max(pair2freq.items(), key=lambda x:x[1])
+        i, j = ij
+        # introduce an ancillary qubit, whose number operator n_a will substitute n_i*n_j
+        pair2anc[ij] = a = nq
+        nq += 1
+        # update coeff and pair2freq
+        for ijk in coeff_nnn.keys():
+            if ij.issubset(ijk):
+                k = list(ijk - ij)[0]
+                coeff_nn[frozenset([a, k])] += coeff_nnn[ijk]
+                del coeff_nnn[ijk]
+                ik, jk = frozenset([i, k]), frozenset([j, k])
+                pair2freq[ik] -= 1
+                if pair2freq[ik] == 0:
+                    del pair2freq[ik]
+                pair2freq[jk] -= 1
+                if pair2freq[jk] == 0:
+                    del pair2freq[jk]
+        del pair2freq[ij]
+    assert len(pair2freq) == 0
+
+    # --- add penalty terms ---
+    for ij, a in pair2anc.items():
+        i, j = ij
+        ia, ja = frozenset([i, a]), frozenset([j, a])
+        # To make sure that n_i * n_j = n_a on the ground space, add a penalty term:
+        # penalty * (n_i * n_j - 2 (n_i + n_j) n_a + 3 n_a)
+        coeff_nn[ij] += penalty
+        coeff_nn[ia] += -2 * penalty
+        coeff_nn[ja] += -2 * penalty
+        coeff_n[a] += 3 * penalty
+
+    # ---- convert number operator to Pauli Z ---
+    new_qs = QSystem()
+    new_qubits = [Qubit(new_qs) for _ in range(nq)]
+    new_h = 0
+    for i, c in coeff_n.items(): # replacing n_i -> (1 - Z_i) / 2
+        new_h += (1/2) * c * (1 - new_qubits[i].Z)
+    for ij, c in coeff_nn.items(): # replacing n_i * n_j -> (1 - Z_i) * (1 - Z_j) / 4
+        i, j = ij
+        new_h += (1/4) * c * (1 - new_qubits[i].Z) * (1 - new_qubits[j].Z)
+    new_qs.add_evolution(new_h, t)
+
+    return new_qs, new_qubits

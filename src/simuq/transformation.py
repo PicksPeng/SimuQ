@@ -206,7 +206,7 @@ def tfim_3to2_transform(qs, penalty):
     return new_qs, new_sites
 
 
-def ising_3to2_transform(variant, qs, penalty=None):
+def ising_3to2_transform(qs, variant, penalty=None, peek=None):
     """Transform 3-local Ising model to 2-local Ising model (i.e. quadratization of 
     pseudo-Boolean functions), such that ground space is preserved (some variants 
     require that `penalty` be sufficiently large).
@@ -221,13 +221,17 @@ def ising_3to2_transform(variant, qs, penalty=None):
 
     Parameters
     ----------
+    qs : QSystem
+        quantum system to be transformed
     variant : str
         specify which variant of the transformation is called, must be one of:
         "sub", "min_sel"
-    qs : QSystem
-        quantum system to be transformed
     penalty : float
-        penalty coefficient, used by variant "sub"
+        penalty coefficient, must be supplied for variant "sub", will be ignored 
+        for variant "min_sel".
+    peek : dict
+        store auxilliary information about the transformation. This could be 
+        useful for debug purposes.
 
     Returns
     -------
@@ -236,14 +240,15 @@ def ising_3to2_transform(variant, qs, penalty=None):
     """
     if len(qs.evos) != 1:
         raise NotImplementedError("Only a single evolution is supported for now")
+    if peek is not None:
+        if not isinstance(peek, dict):
+            raise ValueError("peek has to be a dict")
 
     if variant == "sub":
         if penalty is None or penalty <= 0:
             raise ValueError("penalty must be positive")
-        new_qs, new_qubits = _ising_3to2_transform_sub(qs, penalty)
+        new_qs, new_qubits = _ising_3to2_transform_sub(qs, penalty, peek)
     elif variant == "min_sel":
-        if penalty is not None:
-            raise ValueError("penalty not needed")
         new_qs, new_qubits = _ising_3to2_transform_min_sel(qs)
     else:
         raise ValueError("Unknown value of `variant`")
@@ -251,7 +256,7 @@ def ising_3to2_transform(variant, qs, penalty=None):
     return new_qs, new_qubits
 
 
-def _ising_3to2_transform_sub(qs, penalty):
+def _ising_3to2_transform_sub(qs, penalty, peek=None):
     """Transform 3-local Ising model to 2-local Ising model, using the technique of substitution,
     such that ground space is preserved when `penalty` is sufficiently large.
     New ancillary qubits will be numbered after the original computational qubits.
@@ -270,6 +275,10 @@ def _ising_3to2_transform_sub(qs, penalty):
         quantum system to be transformed
     penalty : float
         penalty coefficient
+    peek : dict
+        store auxilliary information about the transformation. This could be useful for debug purposes.
+        peek["pair2anc"] will be a dict that maps frozenset([i,j]) to index of the ancillary qubit used
+        to substitute n_i*n_j.
 
     Returns
     -------
@@ -315,6 +324,9 @@ def _ising_3to2_transform_sub(qs, penalty):
                     del pair2freq[jk]
         del pair2freq[ij]
     assert len(pair2freq) == 0
+
+    if peek is not None:
+        peek["pair2anc"] = pair2anc
 
     # --- add penalty terms ---
     for ij, a in pair2anc.items():

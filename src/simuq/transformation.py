@@ -256,29 +256,7 @@ def _ising_3to2_transform_sub(qs, penalty):
     h, t = qs.evos[0]
 
     # ---- convert Pauli Z to number operator ---
-    # coefficients of 3-local, 2-local, and 1-local terms.
-    coeff_nnn, coeff_nn, coeff_n = defaultdict(float), defaultdict(float), defaultdict(float)
-    # e.g. coeff_nnn[frozenset({i, j, k})] is coefficient in front of n_i * n_j * n_k.
-    # e.g. coeff_nn[frozenset({i, j})] is coefficient in front of n_i * n_j.
-    # e.g. coeff_n[i] is coefficient in front of n_i.
-    for prod, c in h.ham:
-        inds, paulistr = list(prod.keys()), "".join(prod.values())
-        if paulistr == "": # ignoring terms proportional to the identity
-            continue
-        elif paulistr == "Z": # replacing Z -> 1 - 2n
-            coeff_n[inds[0]] += -2 * c
-        elif paulistr == "ZZ": # replacing Z_i*Z_j -> 1 - 2(n_i+n_j) + 4n_i*n_j
-            for i in inds:
-                coeff_n[i] += -2 * c
-            coeff_nn[frozenset(inds)] += 4 * c
-        elif paulistr == "ZZZ": # replacing Z_i*Z_j*Z_k -> 1 - 2(n_i+n_j+n_k) + 4(n_i*n_j+n_i*n_k+n_j*n_k) - 8n_i*n_j*n_k
-            for i in inds:
-                coeff_n[i] += -2 * c
-            for pair in itertools.combinations(inds, 2):
-                coeff_nn[frozenset(pair)] += 4 * c
-            coeff_nnn[frozenset(inds)] += -8 * c
-        else:
-            raise Exception("Invalid Hamiltonian")
+    coeff_nnn, coeff_nn, coeff_n = _helper_func_convert_zzz_to_nnn(h)
 
     # --- count frequency of each pair appearing in 3-local terms ---
     pair2freq = defaultdict(int)
@@ -328,12 +306,80 @@ def _ising_3to2_transform_sub(qs, penalty):
     # ---- convert number operator to Pauli Z ---
     new_qs = QSystem()
     new_qubits = [Qubit(new_qs) for _ in range(nq)]
-    new_h = 0
-    for i, c in coeff_n.items(): # replacing n_i -> (1 - Z_i) / 2
-        new_h += (1/2) * c * (1 - new_qubits[i].Z)
-    for ij, c in coeff_nn.items(): # replacing n_i * n_j -> (1 - Z_i) * (1 - Z_j) / 4
-        i, j = ij
-        new_h += (1/4) * c * (1 - new_qubits[i].Z) * (1 - new_qubits[j].Z)
+    new_h = _helper_func_convert_nn_to_zz(new_qubits, coeff_nn, coeff_n)
     new_qs.add_evolution(new_h, t)
 
     return new_qs, new_qubits
+
+def _helper_func_convert_zzz_to_nnn(h):
+    """Helper function used in `ising_3to2_transform()` to reexpress a 3-local 
+    Ising Hamiltonian in terms of number operators.
+    Caution: terms proportional to the identity will be dropped.
+
+    Parameters
+    ----------
+    h : TIHamiltonian
+        3-local Ising Hamiltonian
+
+    Returns
+    -------
+    coeff_nnn : defaultdict(float)
+        coefficients of 3-local terms,
+        e.g. `coeff_nn[frozenset([i, j, k])]` is coefficient in front of `n_i * n_j * n_k`.
+    coeff_nn : defaultdict(float)
+        coefficients of 2-local terms,
+        e.g. `coeff_nn[frozenset([i, j])]` is coefficient in front of `n_i * n_j`.
+    coeff_n : defaultdict(float)
+        coefficients of 1-local terms,
+        e.g. `coeff_n[i]` is coefficient in front of `n_i`.
+    """
+    coeff_nnn, coeff_nn, coeff_n = defaultdict(float), defaultdict(float), defaultdict(float)
+
+    for prod, c in h.ham:
+        inds, paulistr = list(prod.keys()), "".join(prod.values())
+        if paulistr == "": # ignoring terms proportional to the identity
+            continue
+        elif paulistr == "Z": # replacing Z -> 1 - 2n
+            coeff_n[inds[0]] += -2 * c
+        elif paulistr == "ZZ": # replacing Z_i*Z_j -> 1 - 2(n_i+n_j) + 4n_i*n_j
+            for i in inds:
+                coeff_n[i] += -2 * c
+            coeff_nn[frozenset(inds)] += 4 * c
+        elif paulistr == "ZZZ": # replacing Z_i*Z_j*Z_k -> 1 - 2(n_i+n_j+n_k) + 4(n_i*n_j+n_i*n_k+n_j*n_k) - 8n_i*n_j*n_k
+            for i in inds:
+                coeff_n[i] += -2 * c
+            for pair in itertools.combinations(inds, 2):
+                coeff_nn[frozenset(pair)] += 4 * c
+            coeff_nnn[frozenset(inds)] += -8 * c
+        else:
+            raise ValueError("Invalid Hamiltonian")
+
+    return coeff_nnn, coeff_nn, coeff_n
+
+def _helper_func_convert_nn_to_zz(qubits, coeff_nn, coeff_n):
+    """Helper function used in `ising_3to2_transform()` to construct a 2-local 
+    Ising Hamiltonian based on coefficients of number operators.
+
+    Parameters
+    ----------
+    qubits : list[Qubit]
+        list of qubits on which the Hamiltonian acts on.
+    coeff_nn : defaultdict(float)
+        coefficients of 2-local terms,
+        e.g. `coeff_nn[frozenset([i, j])]` is coefficient in front of `n_i * n_j`.
+    coeff_n : defaultdict(float)
+        coefficients of 1-local terms,
+        e.g. `coeff_n[i]` is coefficient in front of `n_i`.
+
+    Returns
+    -------
+    h : TIHamiltonian
+        3-local Ising Hamiltonian
+    """
+    h = 0
+    for i, c in coeff_n.items(): # replacing n_i -> (1 - Z_i) / 2
+        h += (1/2) * c * (1 - qubits[i].Z)
+    for ij, c in coeff_nn.items(): # replacing n_i * n_j -> (1 - Z_i) * (1 - Z_j) / 4
+        i, j = ij
+        h += (1/4) * c * (1 - qubits[i].Z) * (1 - qubits[j].Z)
+    return h

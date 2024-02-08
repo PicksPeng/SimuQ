@@ -125,7 +125,9 @@ def oh_transform(qs, truncation_levels=3):
 
 def tfim_3to2_transform(qs, penalty):
     """Transform 3-local transverse-field Ising model (TFIM) to 2-local TFIM
-    using 2nd order perturbation theory.
+    using 2nd order perturbation theory, such that the former effectively emerges 
+    in the low-energy subspace of the latter (provided that `penalty` is 
+    sufficiently large).
     Here 3-local TFIM means
         H = \sum_ijk J_ijk Z_i Z_j Z_k
             + \sum_ij J_ij Z_i Z_j
@@ -135,6 +137,7 @@ def tfim_3to2_transform(qs, penalty):
         H = \sum_ij J_ij Z_i Z_j
             + \sum_i J_i Z_i
             + \sum_i h_i X_i
+    New ancillary qubits will be numbered after the original computational qubits.
 
     Parameters
     ----------

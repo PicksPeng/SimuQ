@@ -250,6 +250,7 @@ def ising_3to2_transform(variant, qs, penalty=None):
 
     return new_qs, new_qubits
 
+
 def _ising_3to2_transform_sub(qs, penalty):
     """Transform 3-local Ising model to 2-local Ising model, using the technique of substitution,
     such that ground space is preserved when `penalty` is sufficiently large.
@@ -299,7 +300,8 @@ def _ising_3to2_transform_sub(qs, penalty):
         pair2anc[ij] = a = nq
         nq += 1
         # update coeff and pair2freq
-        for ijk in coeff_nnn.keys():
+        all_triples = list(coeff_nnn.keys())
+        for ijk in all_triples:
             if ij.issubset(ijk):
                 k = list(ijk - ij)[0]
                 coeff_nn[frozenset([a, k])] += coeff_nnn[ijk]

@@ -203,8 +203,10 @@ def tfim_3to2_transform(qs, penalty):
     return new_qs, new_sites
 
 
-def ising_3to2_transform(qs, penalty, variant):
-    """Transform 3-local Ising model to 2-local Ising model (i.e. quadratization of pseudo-Boolean functions).
+def ising_3to2_transform(variant, qs, penalty=None):
+    """Transform 3-local Ising model to 2-local Ising model (i.e. quadratization of 
+    pseudo-Boolean functions), such that ground space is preserved (some variants 
+    require that `penalty` be sufficiently large).
     Here 3-local Ising model means
         H = \sum_ijk J_ijk Z_i Z_j Z_k
             + \sum_ij J_ij Z_i Z_j
@@ -212,38 +214,43 @@ def ising_3to2_transform(qs, penalty, variant):
     and 2-local Ising model means
         H = \sum_ij J_ij Z_i Z_j
             + \sum_i J_i Z_i
+    New ancillary qubits will be numbered after the original computational qubits.
 
     Parameters
     ----------
-    qs : QSystem
-        quantum system to be transformed
-    penalty : float
-        penalty coefficient
     variant : str
         specify which variant of the transformation is called, must be one of:
         "sub", "min_sel"
+    qs : QSystem
+        quantum system to be transformed
+    penalty : float
+        penalty coefficient, used by variant "sub"
 
     Returns
     -------
     QSystem, list[Qubit]
         transformed quantum system, along with the list of new qubits
     """
-    if penalty <= 0:
-        raise ValueError("penalty must be positive")
     if len(qs.evos) != 1:
         raise NotImplementedError("Only a single evolution is supported for now")
 
     if variant == "sub":
+        if penalty is None or penalty <= 0:
+            raise ValueError("penalty must be positive")
         new_qs, new_qubits = _ising_3to2_transform_sub(qs, penalty)
     elif variant == "min_sel":
-        raise NotImplementedError
+        if penalty is not None:
+            raise ValueError("penalty not needed")
+        new_qs, new_qubits = _ising_3to2_transform_min_sel(qs)
     else:
         raise ValueError("Unknown value of `variant`")
 
     return new_qs, new_qubits
 
 def _ising_3to2_transform_sub(qs, penalty):
-    """Transform 3-local Ising model to 2-local Ising model, using the technique of substitution.
+    """Transform 3-local Ising model to 2-local Ising model, using the technique of substitution,
+    such that ground space is preserved when `penalty` is sufficiently large.
+    New ancillary qubits will be numbered after the original computational qubits.
 
     Procedure: Convert all Pauli Z's to number operators `n := (1-Z) / 2`; select the pair `{n_i, n_j}` 
     that appears most often among all the 3-local terms, replace it with `n_a` acting on an ancillary 
@@ -252,6 +259,18 @@ def _ising_3to2_transform_sub(qs, penalty):
 
     For the exact form of the penalty term, we use the formula from
     https://docs.dwavesys.com/docs/latest/handbook_reformulating.html#example-boolean-variables.
+
+    Parameters
+    ----------
+    qs : QSystem
+        quantum system to be transformed
+    penalty : float
+        penalty coefficient
+
+    Returns
+    -------
+    QSystem, list[Qubit]
+        transformed quantum system, along with the list of new qubits
     """
     h, t = qs.evos[0]
 
@@ -311,6 +330,66 @@ def _ising_3to2_transform_sub(qs, penalty):
 
     return new_qs, new_qubits
 
+
+def _ising_3to2_transform_min_sel(qs):
+    """Transform 3-local Ising model to 2-local Ising model, using the technique of minimum selection,
+    such that ground space is preserved. New ancillary qubits will be numbered after the original 
+    computational qubits.
+
+    Procedure: Convert all Pauli Z's to number operators `n := (1-Z) / 2`; replace each 3-local term 
+    `n_i * n_j * n_k` by some degree-2 polynomial `p(n_i, n_j, n_k, n_a)` where `a` is an ancillary 
+    qubit; convert number operators back to Pauli Z's.
+
+    For the exact form of the degree-2 polynomial, we use the formula from
+    https://docs.dwavesys.com/docs/latest/handbook_reformulating.html#polynomial-reduction-by-minimum-selection.
+
+    Parameters
+    ----------
+    qs : QSystem
+        quantum system to be transformed
+
+    Returns
+    -------
+    QSystem, list[Qubit]
+        transformed quantum system, along with the list of new qubits
+    """
+    h, t = qs.evos[0]
+
+    # ---- convert Pauli Z to number operator ---
+    coeff_nnn, coeff_nn, coeff_n = _helper_func_convert_zzz_to_nnn(h)
+
+    # --- reduce 3-local nnn to 2-local interactions ---
+    nq = qs.num_sites # num of qubits
+    for ijk, c in coeff_nnn.items():
+        i, j, k = ijk
+        a = nq
+        nq += 1
+        if c < 0:
+            coeff_n[a] += -2 * c
+            coeff_nn[frozenset([i, a])] += c
+            coeff_nn[frozenset([j, a])] += c
+            coeff_nn[frozenset([k, a])] += c
+        else:
+            coeff_n[i] += -c
+            coeff_n[j] += -c
+            coeff_n[k] += -c
+            coeff_n[a] += -c
+            coeff_nn[frozenset([i, j])] += c
+            coeff_nn[frozenset([i, k])] += c
+            coeff_nn[frozenset([j, k])] += c
+            coeff_nn[frozenset([i, a])] += c
+            coeff_nn[frozenset([j, a])] += c
+            coeff_nn[frozenset([k, a])] += c
+
+    # ---- convert number operator to Pauli Z ---
+    new_qs = QSystem()
+    new_qubits = [Qubit(new_qs) for _ in range(nq)]
+    new_h = _helper_func_convert_nn_to_zz(new_qubits, coeff_nn, coeff_n)
+    new_qs.add_evolution(new_h, t)
+
+    return new_qs, new_qubits
+
+
 def _helper_func_convert_zzz_to_nnn(h):
     """Helper function used in `ising_3to2_transform()` to reexpress a 3-local 
     Ising Hamiltonian in terms of number operators.
@@ -355,6 +434,7 @@ def _helper_func_convert_zzz_to_nnn(h):
             raise ValueError("Invalid Hamiltonian")
 
     return coeff_nnn, coeff_nn, coeff_n
+
 
 def _helper_func_convert_nn_to_zz(qubits, coeff_nn, coeff_n):
     """Helper function used in `ising_3to2_transform()` to construct a 2-local 

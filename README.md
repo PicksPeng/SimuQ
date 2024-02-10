@@ -117,6 +117,8 @@ For examples of SimuQ usage, refer to the notebooks in the [tutorials folder](ht
 
 `src/simuq/qiskit/`: The Qiskit provider using IBM Quantum.
 
+`src/simuq/dwave/`: The D-Wave provider using D-Wave Leap.
+
 `src/simuq/qutip/`: The QuTiP provider using QuTiP.
 
 ## Related projects

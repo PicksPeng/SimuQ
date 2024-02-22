@@ -15,7 +15,7 @@ import logging
 import networkx as nx
 import numpy as np
 
-from simuq.hamiltonian import TIHamiltonian
+from simuq.hamiltonian import TIHamiltonian, productHamiltonian
 
 logging.basicConfig(level=logging.CRITICAL)
 
@@ -146,18 +146,21 @@ def solve_aligned(
         """
 
     def to_mprod(tprod):
-        ret = ["" for j in range(mach.num_sites)]
+        ret = productHamiltonian()
         for k in range(qs.num_sites):
             ret[ali[k]] = tprod[k]
         return ret
 
     def is_id(tprod):
+        return tprod == productHamiltonian()
+        """
         ret = True
         for i in range(mach.num_sites):
             if not tprod[i] == "":
                 ret = False
                 break
         return ret
+        """
 
     def build_eqs_old(ins_locator, switch_locator=None):
         eqs = []

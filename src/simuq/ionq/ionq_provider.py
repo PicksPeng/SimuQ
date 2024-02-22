@@ -2,6 +2,7 @@ from simuq.aais import heisenberg
 from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
+import time
 
 
 class IonQProvider(BaseProvider):
@@ -130,7 +131,7 @@ class IonQProvider(BaseProvider):
 
         return self.task
 
-    def results(self, job_id=None, verbose=0):
+    def results(self, job_id=None, wait=None, verbose=0):
         if job_id is None:
             if self.task is not None:
                 job_id = self.task["id"]
@@ -143,14 +144,25 @@ class IonQProvider(BaseProvider):
             "Authorization": "apiKey " + self.API_key,
         }
 
-        response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
-        res = response.json()
+        if wait == None :
+            response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
+            res = response.json()
 
-        if res["status"] != "completed":
-            if verbose >= 0:
-                print("Job is not completed")
-                print(res)
-            return None
+            if res["status"] != "completed":
+                if verbose >= 0:
+                    print("Job is not completed")
+                    print(res)
+                return None
+        elif isinstance(wait, int) or wait == True:
+            if wait == True :
+                wait = 5
+            response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
+            res = response.json()
+
+            while res["status"] != "completed":
+                time.sleep(wait)
+                response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
+                res = response.json()                
 
         def layout_rev(res):
             n = len(self.layout)

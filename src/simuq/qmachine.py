@@ -80,7 +80,7 @@ class QMachine(BaseQuantumEnvironment):
     def extend_instruction_sites(self):
         for line in self.lines:
             for ins in line.inss:
-                ins.h.extend_sites(self.sites_type)
+                ins.h.extend_sites(self.sites_type, self.sites_name)
 
     def add_signal_line(self):
         line = SignalLine()

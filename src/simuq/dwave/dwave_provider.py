@@ -50,11 +50,11 @@ class DWaveProvider(BaseProvider):
         return numDifferent
 
 
-    def run(self, shots = 100):
+    def run(self, shots = 100, solver="Advantage_system6.4"):
         self.shots = shots
         if self.prog is None:
             raise Exception("No compiled job in record.")
-        qpu = DWaveSampler(token=self.api_key, solver="Advantage_system6.3")
+        qpu = DWaveSampler(token=self.api_key, solver=solver)
         sampler = EmbeddingComposite(qpu)
         h, J, anneal_schedule = self.prog
         response = sampler.sample_ising(h, J,

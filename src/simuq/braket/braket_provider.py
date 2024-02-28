@@ -6,8 +6,8 @@ from braket.circuits import Circuit
 from braket.devices import LocalSimulator
 
 from simuq import _version
-from simuq.aais import heisenberg, rydberg1d_global, rydberg2d_global
-from simuq.braket.braket_ionq_transpiler import BraketIonQTranspiler
+from simuq.aais import heisenberg, two_pauli, rydberg1d_global, rydberg2d_global
+from simuq.braket.braket_ionq_transpiler import BraketIonQTranspiler, BraketIonQTranspiler_2Pauli
 from simuq.braket.braket_rydberg_transpiler import BraketRydbergTranspiler
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
@@ -16,9 +16,9 @@ from simuq.solver import generate_as
 class BraketProvider(BaseProvider):
     def __init__(self):
         self.backend_aais = dict()
-        self.backend_aais[("ionq", "Harmony")] = ["heisenberg"]
-        self.backend_aais[("ionq", "Aria-1")] = ["heisenberg"]
-        self.backend_aais[("ionq", "Aria-2")] = ["heisenberg"]
+        self.backend_aais[("ionq", "Harmony")] = ["heisenberg", "two_pauli"]
+        self.backend_aais[("ionq", "Aria-1")] = ["heisenberg", "two_pauli"]
+        self.backend_aais[("ionq", "Aria-2")] = ["heisenberg", "two_pauli"]
         self.backend_aais[("quera", "Aquila")] = [
             "rydberg1d_global",
             "rydberg2d_global",
@@ -40,6 +40,7 @@ class BraketProvider(BaseProvider):
         aais,
         tol=0.01,
         trotter_num=6,
+        trotter_mode=1,
         state_prep=None,
         meas_prep=None,
         no_main_body=False,
@@ -117,18 +118,29 @@ class BraketProvider(BaseProvider):
             if aais == "heisenberg":
                 mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
                 transpiler = BraketIonQTranspiler()
+            elif aais == "two_pauli" or "2pauli":
+                mach = two_pauli.generate_qmachine(qs.num_sites, e=None)
+                transpiler = BraketIonQTranspiler_2Pauli()
+            else :
+                raise NotImplementedError
+
+            
+            if trotter_mode == "random":
+                trotter_args = {"num": trotter_num, "order": 1, "sequential": False, "randomized": True}
+            else:
+                trotter_args = {"num": trotter_num, "order": trotter_mode, "sequential": True, "randomized": False}
 
             layout, sol_gvars, boxes, edges = generate_as(
                 qs,
                 mach,
-                trotter_num,
+                trotter_args=trotter_args,
                 solver="least_squares",
                 solver_args={"tol": tol},
                 override_layout=[i for i in range(qs.num_sites)],
                 verbose=verbose,
             )
 
-            self.prog = transpiler.transpile(qs.num_sites, sol_gvars, boxes, edges)
+            self.prog = transpiler.transpile(qs.num_sites, sol_gvars, boxes, edges, trotter_args=trotter_args)
 
             if state_prep is not None:
                 self.prog = state_prep.copy().add(self.prog)

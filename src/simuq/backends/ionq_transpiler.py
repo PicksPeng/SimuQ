@@ -35,12 +35,12 @@ class IonQTranspiler(Transpiler, ABC):
         pass
 
     @staticmethod
-    def clean_as(n, boxes, edges, circ: IonQCircuit, randomized=False) -> IonQCircuit:
+    def clean_as(n, boxes, edges, circ: IonQCircuit, trotter_args) -> IonQCircuit:
         link = [(i, j) for i in range(n) for j in range(i + 1, n)]
         dg = nx.DiGraph()
         dg.add_nodes_from([i for i in range(len(boxes))])
         dg.add_edges_from(edges)
-        if randomized:
+        if trotter_args["randomized"]:
             topo_order = randomized_topo_sort(dg)
         else:
             topo_order = list(nx.topological_sort(dg))
@@ -64,25 +64,6 @@ class IonQTranspiler(Transpiler, ABC):
                                 * np.array([[0, cosphi - 1j * sinphi], [cosphi + 1j * sinphi, 0]])
                             )
                             circ._add_unitary(q, U)
-
-                            """
-                            circ.rz(q, phi)
-
-                            # Rx(q, rot)
-                            turns = rot / (2 * np.pi)
-                            if abs(turns - 0.25) < 1e-6:
-                                circ.gpi2(q, 0)
-                            elif abs(turns - 0.75) < 1e-6:
-                                circ.gpi2(q, np.pi)
-                            elif abs(turns - 0.5) < 1e-6:
-                                circ.gpi(q, 0)
-                            else:
-                                circ.gpi2(q, 3 * np.pi / 2)
-                                circ.rz(q, rot)
-                                circ.gpi2(q, np.pi / 2)
-
-                            circ.rz(q, -phi)
-                            """
                     else:
                         q = line
                         # expm(-i*(rot/2)*Z)
@@ -116,10 +97,10 @@ class IonQTranspiler(Transpiler, ABC):
         self, n, sol_gvars, boxes, edges, *generate_circuit_args, **generate_circuit_kwargs
     ):
         n = len(n) if isinstance(n, list) else n
-        if "randomized" in generate_circuit_kwargs:
-            randomized = generate_circuit_kwargs["randomized"]
-            del generate_circuit_kwargs["randomized"]
+        if "trotter_args" in generate_circuit_kwargs:
+            trotter_args = generate_circuit_kwargs["trotter_args"]
+            del generate_circuit_kwargs["trotter_args"]
         else:
-            randomized = False
+            trotter_args = {"randomized":False}
         circ = self.generate_circuit(n, *generate_circuit_args, **generate_circuit_kwargs)
-        return self.clean_as(n, boxes, edges, circ, randomized)
+        return self.clean_as(n, boxes, edges, circ, trotter_args)

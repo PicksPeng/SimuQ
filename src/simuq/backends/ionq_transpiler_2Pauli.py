@@ -31,21 +31,20 @@ def randomized_topo_sort(G):
     return ret
 
 
-class IonQTranspiler(Transpiler, ABC):
+class IonQTranspiler_2Pauli(Transpiler, ABC):
     @abstractmethod
     def generate_circuit(self, n: int, *args, **kwargs) -> IonQCircuit:
         pass
 
     @staticmethod
-    def clean_as(n, boxes, edges, circ: IonQCircuit, trotter_args, randomized=False) -> IonQCircuit:
-        print(n, boxes, edges)
+    def clean_as(n, boxes, edges, circ: IonQCircuit, trotter_args) -> IonQCircuit:
         link = [(i, j) for i in range(n) for j in range(i + 1, n)]
         dg = nx.DiGraph()
         dg.add_nodes_from([i for i in range(len(boxes))])
         dg.add_edges_from(edges)
         seen_params = {}
         precision = 1e-5
-        if randomized:
+        if trotter_args["randomized"]:
             topo_order = randomized_topo_sort(dg)
         else:
             topo_order = list(nx.topological_sort(dg))
@@ -93,7 +92,6 @@ class IonQTranspiler(Transpiler, ABC):
                         decomposed_params = decompose_ham(params)
                         seen_params[key] = decomposed_params
                     n_terms = decomposed_params.shape[0]
-                    print(decomposed_params, decomposed_params.tolist())
 
                     def apply_linear_tensor(decomposed_params_in_term):
                         u0, theta0 = rotate_to_x(decomposed_params_in_term[0, :])
@@ -130,18 +128,17 @@ class IonQTranspiler(Transpiler, ABC):
         sol_gvars,
         boxes,
         edges,
-        trotter_args,
         *generate_circuit_args,
         **generate_circuit_kwargs
     ):
         n = len(n) if isinstance(n, list) else n
-        if "randomized" in generate_circuit_kwargs:
-            randomized = generate_circuit_kwargs["randomized"]
-            del generate_circuit_kwargs["randomized"]
+        if "trotter_args" in generate_circuit_kwargs:
+            trotter_args = generate_circuit_kwargs["trotter_args"]
+            del generate_circuit_kwargs["trotter_args"]
         else:
-            randomized = False
+            trotter_args = {"order":1, "mode":1, "sequential":True, "randomized":False}
         circ = self.generate_circuit(n, *generate_circuit_args, **generate_circuit_kwargs)
-        return self.clean_as(n, boxes, edges, circ, trotter_args, randomized)
+        return self.clean_as(n, boxes, edges, circ, trotter_args)
 
 
 def rotate_to_x(params):
@@ -162,8 +159,7 @@ def rotate_to_x(params):
     return unitary, theta
 
 
-def decompose_ham(thetas):
-    print(thetas)
+def decompose_ham(thetas, verbose = 0):
     # change this to scipy
     X = np.array([[0, 1], [1, 0]], dtype=np.complex128)
     Y = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
@@ -232,7 +228,8 @@ def decompose_ham(thetas):
             x0=x0,
         )
         if res.fun < 0.01:
-            print("success with ", i, " terms")
+            if verbose > 1 :
+                print("success with ", i, " terms")
             success = True
             break
     if not success:

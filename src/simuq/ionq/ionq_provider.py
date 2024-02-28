@@ -1,5 +1,5 @@
-from simuq.aais import heisenberg
-from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler
+from simuq.aais import heisenberg, two_pauli
+from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler, IonQAPITranspiler_2Pauli
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
 import time
@@ -53,13 +53,14 @@ class IonQProvider(BaseProvider):
         if aais == "heisenberg":
             mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
             comp = IonQAPITranspiler().transpile
+        elif aais == "two_pauli" or "2pauli":
+            mach = two_pauli.generate_qmachine(qs.num_sites, e=None)
+            comp = IonQAPITranspiler_2Pauli().transpile
 
         if trotter_mode == "random":
-            trotter_args = {"num": trotter_num, "order": 1, "sequential": False}
-            randomized = True
+            trotter_args = {"num": trotter_num, "order": 1, "sequential": False, "randomized": True}
         else:
-            trotter_args = {"num": trotter_num, "order": trotter_mode, "sequential": True}
-            randomized = False
+            trotter_args = {"num": trotter_num, "order": trotter_mode, "sequential": True, "randomized": False}
 
         layout, sol_gvars, boxes, edges = generate_as(
             qs,
@@ -75,7 +76,7 @@ class IonQProvider(BaseProvider):
             sol_gvars,
             boxes,
             edges,
-            randomized=randomized,
+            trotter_args=trotter_args,
             backend="qpu." + backend,
             noise_model=backend,
         )
@@ -87,7 +88,7 @@ class IonQProvider(BaseProvider):
             self.prog.add(meas_prep)
 
         self.prog = self.prog.optimize()
-
+        self.prog_obj = self.prog
         self.prog = self.prog.job
 
         self.layout = layout

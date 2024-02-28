@@ -60,6 +60,9 @@ class productHamiltonian(MutableMapping):
             l.append((k, self.d[k]))
         return l
 
+    def to_tuple(self) :
+        return tuple(self.to_list())
+
     def __eq__(self, other) :
         keys = set(self.d.keys()).union(other.d.keys())
         for k in keys :
@@ -75,11 +78,6 @@ class productHamiltonian(MutableMapping):
 
     def __repr__(self) :
         return f"<productHamiltonian d={self.d}>"
-
-    def to_tuple(self) :
-        site_idx = list(self.d.keys())
-        site_idx.sort()
-        return tuple([(k, self.d[k]) for k in site_idx])
 
 
 class TIHamiltonian:
@@ -189,8 +187,7 @@ class TIHamiltonian:
 
         hamdic = dict([])
         for h, coef in self.ham:
-            #htup = tuple(h)
-            htup = tuple(h.to_list())
+            htup = h.to_tuple()
             if htup not in hamdic:
                 hamdic[htup] = coef
             else:
@@ -199,17 +196,7 @@ class TIHamiltonian:
         self.ham = []
         for htup in hamdic:
             if isinstance(hamdic[htup], Expression) or abs(hamdic[htup]) > tol:
-                #self.ham.append((list(htup), hamdic[htup]))
                 self.ham.append((productHamiltonian(from_list=htup), hamdic[htup]))
-
-    """
-    def extend_ham_by_sites(self):
-        for i in range(len(self.ham)):
-            (h, coef) = self.ham[i]
-            if len(h) < len(self.sites_type):
-                h += [""] * (len(self.sites_type) - len(h))
-                self.ham[i] = (h, coef)
-    """
 
     def extend_sites(self, new_sites_type, new_sites_name):
         if new_sites_type is self.sites_type :
@@ -218,18 +205,9 @@ class TIHamiltonian:
             return
         if len(new_sites_type) <= len(self.sites_type):
             return
-        """ Delete type check for efficiency
-        for i in range(len(self.sites_type)):
-            if self.sites_type[i] != new_sites_type[i]:
-                raise Exception("Sites type inconsistent!")
-        """
         add_num = len(new_sites_type) - len(self.sites_type)
         self.sites_type = new_sites_type
         self.sites_name = new_sites_name
-        """
-        new_ham = [(self.ham[i][0] + [""] * add_num, self.ham[i][1]) for i in range(len(self.ham))]
-        self.ham = new_ham
-        """
         if self.saved_t_sites is not None:
             self.saved_t_sites += [0 for j in range(add_num)]
 
@@ -298,25 +276,7 @@ class TIHamiltonian:
     @staticmethod
     def strlist_mul(sites_type, a, b):
 
-        """
         # Use a suffix sum to calculate the number of fermionic operators after site i.
-        num_ferm_ope_backward = [0 for i in range(len(sites_type))]
-        for i in range(len(sites_type) - 1, 0, -1):
-            num_ferm_ope_backward[i - 1] = num_ferm_ope_backward[i]
-            if sites_type[i] == "fermion":
-                num_ferm_ope_backward[i - 1] += len(a[i])
-
-        for i in range(len(sites_type)):
-            if sites_type[i] == "qubit":
-                c.append(a[i] + b[i])
-            elif sites_type[i] == "boson":
-                c.append(a[i] + b[i])
-            elif sites_type[i] == "fermion":
-                c.append(a[i] + b[i])
-                if num_ferm_ope_backward[i] % 2 == 1 and len(b[i]) % 2 == 1:
-                    coef *= -1
-        """
-
         keys = list(set(a.keys()).union(b.keys()))
         keys.sort()
         num_ferm_ope_backward = [0 for i in range(len(keys))]
@@ -351,8 +311,6 @@ class TIHamiltonian:
         # need more typing restrictions
         if isinstance(other, (int, float, complex, Expression)):
             return self.scalar_mul(other)
-        #self.extend_ham_by_sites()
-        #other.extend_ham_by_sites()
         self.sync_sites(other)
         self.cleanHam()
         other.cleanHam()
@@ -416,11 +374,6 @@ class TIHamiltonian:
             return self.saved_t_sites
         ret = [0 for i in range(len(self.sites_type))]
         for prod, t in self.ham:
-            """
-            for i in range(len(self.sites_type)):
-                if prod[i] != "":
-                    ret[i] = 1
-            """
             for i in prod:
                 if prod[i] != "":
                     ret[i] = 1

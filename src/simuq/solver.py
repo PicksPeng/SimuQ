@@ -26,39 +26,11 @@ logger = logging.getLogger()
 def locate_switch_evo(mach, evo_index):
     return len(mach.gvars) + evo_index * (mach.num_inss + len(mach.lvars))
 
-
-def switch_term(mach, evo_index, ins_index, mc, total_evo_num):
-    return lambda x: x[locate_timevar(mach, total_evo_num, evo_index)] * (
-        x[locate_switch_evo(mach, evo_index) + ins_index]
-        * mc.exp_eval(
-            x[: len(mach.gvars)],
-            x[
-                locate_switch_evo(mach, evo_index)
-                + mach.num_inss : locate_switch_evo(mach, evo_index + 1)
-            ],
-        )
-    )
-
-
-"""
-def switch_fun(mach, evo_index, ins_index):
-    return lambda x: x[locate_switch_evo(mach, evo_index) + ins_index]
-"""
-
-
 def locate_nonswitch_evo(mach, evo_index):
     return len(mach.gvars) + evo_index * len(mach.lvars)
 
-
 def locate_nonswitch_timevar(mach, evo_index, total_evo_num):
     return len(mach.gvars) + total_evo_num * len(mach.lvars) + evo_index
-
-
-def non_switch_term(mach, evo_index, ins_index, mc, total_evo_num):
-    return lambda x: x[locate_nonswitch_timevar(mach, evo_index, total_evo_num)] * mc.exp_eval(
-        x[: len(mach.gvars)],
-        x[locate_nonswitch_evo(mach, evo_index) : locate_nonswitch_evo(mach, evo_index + 1)],
-    )
 
 
 # Functions to locate local variables.
@@ -68,7 +40,6 @@ def locate_evo(mach, evo_index):
 
 def locate_lvar(mach, evo_index, lvar_index):
     return locate_evo(mach, evo_index) + mach.num_inss + lvar_index
-
 
 def locate_timevar(mach, total_evo_num, evo_index):
     return len(mach.gvars) + total_evo_num * (mach.num_inss + len(mach.lvars)) + evo_index
@@ -83,13 +54,8 @@ def ins_fun(mach, evo_index, ins_index, mc, total_evo_num):
         )
     )
 
-
 def locate_switch(mach, evo_index, ins_index):
     return locate_switch_evo(mach, evo_index) + ins_index
-
-
-def switch_fun(mach, evo_index, ins_index):
-    return lambda x: x[locate_switch(mach, evo_index, ins_index)]
 
 
 # Equation builder and solver when an alignment is supplied.

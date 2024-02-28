@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 import networkx as nx
 import numpy as np
 import scipy as sp
+from qiskit import QuantumCircuit
+from scipy.optimize import dual_annealing
 
 from simuq.backends.ionq_circuit import IonQCircuit
 from simuq.transpiler import Transpiler
-from qiskit import QuantumCircuit
-from scipy.optimize import dual_annealing
 
 
 def randomized_topo_sort(G):
@@ -101,15 +101,15 @@ class IonQTranspiler_2Pauli(Transpiler, ABC):
                         circ._add_unitary(q1, u1)
 
                         circ.ms(q0, q1, 0, 0, theta0 * theta1 / trotter_num)
-                        
+
                         circ._add_unitary(q0, u0.conj().transpose())
                         circ._add_unitary(q1, u1.conj().transpose())
-                    
+
                     if trotter_mode == "first_order" or n_terms == 1:
                         for _ in range(trotter_num):
                             for term_idx in range(n_terms):
                                 apply_linear_tensor(decomposed_params[term_idx])
-                                
+
                     elif trotter_mode == "second_order":
                         for trotter_id in range(trotter_num):
                             for term_idx in range(n_terms):
@@ -123,20 +123,14 @@ class IonQTranspiler_2Pauli(Transpiler, ABC):
         return circ.optimize()
 
     def transpile(
-        self,
-        n,
-        sol_gvars,
-        boxes,
-        edges,
-        *generate_circuit_args,
-        **generate_circuit_kwargs
+        self, n, sol_gvars, boxes, edges, *generate_circuit_args, **generate_circuit_kwargs
     ):
         n = len(n) if isinstance(n, list) else n
         if "trotter_args" in generate_circuit_kwargs:
             trotter_args = generate_circuit_kwargs["trotter_args"]
             del generate_circuit_kwargs["trotter_args"]
         else:
-            trotter_args = {"order":1, "mode":1, "sequential":True, "randomized":False}
+            trotter_args = {"order": 1, "mode": 1, "sequential": True, "randomized": False}
         circ = self.generate_circuit(n, *generate_circuit_args, **generate_circuit_kwargs)
         return self.clean_as(n, boxes, edges, circ, trotter_args)
 
@@ -159,7 +153,7 @@ def rotate_to_x(params):
     return unitary, theta
 
 
-def decompose_ham(thetas, verbose = 0):
+def decompose_ham(thetas, verbose=0):
     # change this to scipy
     X = np.array([[0, 1], [1, 0]], dtype=np.complex128)
     Y = np.array([[0, -1j], [1j, 0]], dtype=np.complex128)
@@ -196,10 +190,36 @@ def decompose_ham(thetas, verbose = 0):
         params = params.reshape(-1, 5)
         n_terms = params.shape[0]
         guess = create_zero_ham()
+        commutator_loss = 0
+        H_list = []
         for i in range(n_terms):
-            guess += create_tensor_ham(
-                params[i, 0], params[i, 1], params[i, 2], params[i, 3], params[i, 4]
+            H_list.append(
+                create_tensor_ham(
+                    params[i, 0], params[i, 1], params[i, 2], params[i, 3], params[i, 4]
+                )
             )
+        for i in range(n_terms):
+            for j in range(n_terms):
+                if i == j:
+                    continue
+                else:
+                    commutator_loss += np.linalg.norm(H_list[i] @ H_list[j] - H_list[j] @ H_list[i])
+            guess += H_list[i]
+        return np.linalg.norm(guess - H) + sum(params[:, 0] ** 2) * 0.01 + commutator_loss * 0.01
+
+    def calc_loss_no_penalty(params):
+        params = params.reshape(-1, 5)
+        n_terms = params.shape[0]
+        H_list = []
+        guess = create_zero_ham()
+        for i in range(n_terms):
+            H_list.append(
+                create_tensor_ham(
+                    params[i, 0], params[i, 1], params[i, 2], params[i, 3], params[i, 4]
+                )
+            )
+        for i in range(n_terms):
+            guess += H_list[i]
         return np.linalg.norm(guess - H)
 
     def transform_params(params):
@@ -227,8 +247,8 @@ def decompose_ham(thetas, verbose = 0):
             bounds=bounds,
             x0=x0,
         )
-        if res.fun < 0.01:
-            if verbose > 1 :
+        if calc_loss_no_penalty(res.x) < 0.01:
+            if verbose > 1:
                 print("success with ", i, " terms")
             success = True
             break

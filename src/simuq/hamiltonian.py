@@ -76,6 +76,11 @@ class productHamiltonian(MutableMapping):
     def __repr__(self) :
         return f"<productHamiltonian d={self.d}>"
 
+    def to_tuple(self) :
+        site_idx = list(self.d.keys())
+        site_idx.sort()
+        return tuple([(k, self.d[k]) for k in site_idx])
+
 
 class TIHamiltonian:
     """The time-independent Hamiltonian

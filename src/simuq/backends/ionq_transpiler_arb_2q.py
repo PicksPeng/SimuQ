@@ -38,6 +38,7 @@ class IonQTranspiler(Transpiler, ABC):
 
     @staticmethod
     def clean_as(n, boxes, edges, circ: IonQCircuit, trotter_args, randomized=False) -> IonQCircuit:
+        print(n, boxes, edges)
         link = [(i, j) for i in range(n) for j in range(i + 1, n)]
         dg = nx.DiGraph()
         dg.add_nodes_from([i for i in range(len(boxes))])
@@ -92,59 +93,35 @@ class IonQTranspiler(Transpiler, ABC):
                         decomposed_params = decompose_ham(params)
                         seen_params[key] = decomposed_params
                     n_terms = decomposed_params.shape[0]
+                    print(decomposed_params, decomposed_params.tolist())
+
+                    def apply_linear_tensor(decomposed_params_in_term):
+                        u0, theta0 = rotate_to_x(decomposed_params_in_term[0, :])
+                        u1, theta1 = rotate_to_x(decomposed_params_in_term[1, :])
+
+                        circ._add_unitary(q0, u0)
+                        circ._add_unitary(q1, u1)
+
+                        circ.ms(q0, q1, 0, 0, theta0 * theta1 / trotter_num)
+                        
+                        circ._add_unitary(q0, u0.conj().transpose())
+                        circ._add_unitary(q1, u1.conj().transpose())
+                    
                     if trotter_mode == "first_order" or n_terms == 1:
                         for _ in range(trotter_num):
                             for term_idx in range(n_terms):
-                                u0, theta0 = rotate_to_x(decomposed_params[term_idx, 0, :])
-                                circ._add_unitary(q0, u0)
-                                u1, theta1 = rotate_to_x(decomposed_params[term_idx, 1, :])
-                                circ._add_unitary(q1, u1)
-
-                                circ.ms(
-                                    q0,
-                                    q1,
-                                    0,
-                                    0,
-                                    theta0 * theta1 / trotter_num,
-                                )
-                                circ._add_unitary(q0, u0.conj().transpose())
-                                circ._add_unitary(q1, u1.conj().transpose())
+                                apply_linear_tensor(decomposed_params[term_idx])
+                                
                     elif trotter_mode == "second_order":
                         for trotter_id in range(trotter_num):
                             for term_idx in range(n_terms):
                                 if trotter_id % 2 == 0:
                                     term_idx = n_terms - 1 - term_idx
-                                u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
-                                circ._add_unitary(q0, u0)
-                                u1, theta1 = rotate_to_x(decomposed_params[1, :, term_idx])
-                                circ._add_unitary(q1, u1)
-
-                                circ.ms(
-                                    q0,
-                                    q1,
-                                    0,
-                                    0,
-                                    theta0 * theta1 / trotter_num,
-                                )
-                                circ._add_unitary(q0, u0.conj().transpose())
-                                circ._add_unitary(q1, u1.conj().transpose())
+                                apply_linear_tensor(decomposed_params[term_idx])
                     elif trotter_mode == "random":
                         for _ in range(trotter_num):
                             for term_idx in np.random.permutation(n_terms):
-                                u0, theta0 = rotate_to_x(decomposed_params[0, :, term_idx])
-                                circ._add_unitary(q0, u0)
-                                u1, theta1 = rotate_to_x(decomposed_params[1, :, term_idx])
-                                circ._add_unitary(q1, u1)
-
-                                circ.ms(
-                                    q0,
-                                    q1,
-                                    0,
-                                    0,
-                                    theta0 * theta1 / trotter_num,
-                                )
-                                circ._add_unitary(q0, u0.conj().transpose())
-                                circ._add_unitary(q1, u1.conj().transpose())
+                                apply_linear_tensor(decomposed_params[term_idx])
         return circ.optimize()
 
     def transpile(

@@ -67,6 +67,7 @@ class DWaveProvider(BaseProvider):
         self.time_on_machine = response.info['timing']['qpu_access_time'] * 1e-6
         self.avg_qpu_time = response.info['timing']['qpu_access_time'] * 10e-6 / self.shots
         self.num_occurrences = list(response.data_vectors['num_occurrences'])
+        return response
 
     def isingToqubo(self, h, J):
         n = len(h)

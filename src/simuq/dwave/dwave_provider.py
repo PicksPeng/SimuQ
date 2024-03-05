@@ -50,11 +50,11 @@ class DWaveProvider(BaseProvider):
         return numDifferent
 
 
-    def run(self, shots = 100):
+    def run(self, shots = 100, solver="Advantage_system6.4"):
         self.shots = shots
         if self.prog is None:
             raise Exception("No compiled job in record.")
-        qpu = DWaveSampler(token=self.api_key, solver="Advantage_system6.3")
+        qpu = DWaveSampler(token=self.api_key, solver=solver)
         sampler = EmbeddingComposite(qpu)
         h, J, anneal_schedule = self.prog
         response = sampler.sample_ising(h, J,
@@ -67,6 +67,7 @@ class DWaveProvider(BaseProvider):
         self.time_on_machine = response.info['timing']['qpu_access_time'] * 1e-6
         self.avg_qpu_time = response.info['timing']['qpu_access_time'] * 10e-6 / self.shots
         self.num_occurrences = list(response.data_vectors['num_occurrences'])
+        return response
 
     def isingToqubo(self, h, J):
         n = len(h)

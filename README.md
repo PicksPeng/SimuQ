@@ -3,7 +3,7 @@
 [![Latest Version](https://img.shields.io/pypi/v/simuq.svg)](https://pypi.python.org/pypi/simuq)
 [![Supported Python Versions](https://img.shields.io/pypi/pyversions/simuq.svg)](https://pypi.python.org/pypi/simuq)
 
-**SimuQ** is a framework for programming quantum simulations, compile them with analog pulses, and deploy the pulse schedules on real or simulated quantum devices.
+**SimuQ** is a framework for programming quantum simulations, compiling them with analog pulses, and deploying the pulse schedules on real or simulated quantum devices.
 
 Our [project website](https://pickspeng.github.io/SimuQ/) includes use cases of SimuQ.
 
@@ -13,7 +13,7 @@ We illustrate our design and benefits in our [arXiv paper](https://arxiv.org/abs
 
 We recommend Python 3.9 or greater since many optional dependencies have a minimum Python version requirement.
 
-We encourage using `pip` for SimuQ installation. To install the core components of SimuQ, run the following command in shell:
+We encourage using `pip` for SimuQ installation. To install the core components of SimuQ, run the following command in the shell:
 
 ```bash
 pip install simuq
@@ -67,7 +67,7 @@ pip install "simuq[dwave]"
 
 Note that this extra now has package dependency conflicts with the `[braket]` extra. Hence, users cannot simultaneously run SimuQ through D-Wave providers and Braket providers, and users need to choose which extra to install, if any. This is a known issue for the hardware providers and may need a period of time to be fixed.
 
-The programming of Hamiltonian systems for D-Wave devices is also different. Due to the limited controllability of D-Wave's devices, currently the programming is limited to the final Hamiltonian of the evolution, and the annealing schedule can be directly passed to D-Wave providers in compilation. 
+The programming of Hamiltonian systems for D-Wave devices is also different. Due to the limited controllability of D-Wave's devices, currently, the programming is limited to the final Hamiltonian of the evolution, and the annealing schedule can be directly passed to D-Wave providers in compilation. 
 
 ### QuTiP
 
@@ -79,7 +79,7 @@ pip install "simuq[qutip]"
 
 ### Installing from source
 
-You can also install from source by cloning this repository and running a pip install command in the root directory of the repository:
+You can also install from the source by cloning this repository and running a pip install command in the root directory of the repository:
 
 ```bash
 git clone git@github.com:PicksPeng/SimuQ.git

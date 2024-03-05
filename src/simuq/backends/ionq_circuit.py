@@ -2,6 +2,7 @@ import cmath
 from abc import ABC, abstractmethod
 
 import numpy as np
+import scipy as sp
 
 
 def to_turns(phi):
@@ -44,6 +45,65 @@ class IonQCircuit(ABC):
             self.ms_quarter(q0, q1, phi0, phi1 + np.pi, 2 * np.pi - theta)
         return self
 
+    def hadamard(self, q):
+        self.gpi2(q, 1.5 * np.pi)
+        self.rz(q, np.pi)
+        return self
+
+    def rx(self, q, theta):
+        X = np.array([[0, 1], [1, 0]])
+        self._add_unitary(q, sp.linalg.expm(-1j * theta / 2 * X))
+        return self
+
+    def ry(self, q, theta):
+        Y = np.array([[0, -1j], [1j, 0]])
+        self._add_unitary(q, sp.linalg.expm(-1j * theta / 2 * Y))
+        return self
+
+    def rxx(self, q0, q1, theta):
+        self.ms(q0, q1, 0, 0, theta)
+        return self
+
+    # CNOT: control q0, X q1
+    def cnot(self, q0, q1):
+        self.hadamard(q0)
+        self.rxx(q0, q1, 1.5 * np.pi)
+        self.hadamard(q0)
+        self.rz(q0, 0.5 * np.pi)
+        self.gpi2(q1, 0)
+        return self
+
+    def ryy(self, q0, q1, theta):
+        self.ms(q0, q1, 0.5 * np.pi, 0.5 * np.pi, theta)
+        return self
+
+    def rzz(self, q0, q1, theta):
+        self.gpi2(q0, np.pi)
+        self.gpi2(q1, np.pi)
+        self.ryy(q0, q1, theta)
+        self.gpi2(q0, 0)
+        self.gpi2(q1, 0)
+        return self
+
+    def rPP(self, P0, P1, q0, q1, theta):
+        phi0, phi1 = 0, 0
+        if P0 == "Y":
+            phi0 = 0.5 * np.pi
+        elif P0 == "Z":
+            phi0 = 0.5 * np.pi
+            self.gpi2(q0, np.pi)
+        if P1 == "Y":
+            phi1 = 0.5 * np.pi
+        elif P1 == "Z":
+            phi1 = 0.5 * np.pi
+            self.gpi2(q1, np.pi)
+        self.ms(q0, q1, phi0, phi1, theta)
+        if P0 == "Z":
+            self.gpi2(q0, 0)
+        if P1 == "Z":
+            self.gpi2(q1, 0)
+        return self
+
     @abstractmethod
     def ms_quarter(self, q0, q1, phi0, phi1, theta):
         pass
@@ -72,8 +132,13 @@ class IonQCircuit(ABC):
     @staticmethod
     # _GPi(theta)_Rz(phi*2)_ = GPi(theta + phi)
     def _decomp_gpirz(U):
-        if isclose(U[0, 0], 0) and isclose(U[1, 1], 0) and isclose(U[0, 1], np.conjugate(U[1, 0])):
-            return np.angle(U[1, 0]), 0
+        if (
+            isclose(U[0, 0], 0)
+            and isclose(U[1, 1], 0)
+            and isclose(abs(U[0, 1]), 1)
+            and isclose(abs(U[1, 0]), 1)
+        ):
+            return np.angle(U[1, 0] / U[0, 1]) / 2, 0
         return None
 
     @staticmethod
@@ -184,6 +249,34 @@ class IonQCircuit(ABC):
     def copy(self):
         pass
 
+    def to_matrix(self):
+        from qiskit import QuantumCircuit
+        from qiskit.quantum_info import Operator
+
+        print(self.job)
+        n = self.job["input"]["qubits"]
+        circ = QuantumCircuit(n)
+
+        from qiskit.circuit.library import RZGate
+        from qiskit_ionq import GPI2Gate, GPIGate, IonQProvider, MSGate
+
+        for ind, gate in enumerate(self.job["input"]["circuit"]):
+            if gate["gate"] == "gpi":
+                circ.append(GPIGate(gate["phase"]), [n - 1 - gate["target"]])
+            elif gate["gate"] == "gpi2":
+                circ.append(GPI2Gate(gate["phase"]), [n - 1 - gate["target"]])
+            elif gate["gate"] == "ms":
+                circ.append(
+                    MSGate(gate["phases"][1], gate["phases"][0], gate["angle"]),
+                    list(n - 1 - np.array(gate["targets"])),
+                )
+            else:
+                raise Exception("Unknown gate:", gate["gate"])
+        # for q in range(self.job["input"]["qubits"]):
+        #     circ.append(RZGate(-self.accum_phase[q]), [n - 1 - q])
+
+        return Operator(circ).to_matrix()
+
     # @staticmethod
     # # _GPi(theta)_GPi2(-psi+theta)_ = _GPi2(psi+theta)_GPi(theta)_
     # # _GPi2(psi+theta)_GPi(theta)_Rz(phi*2)_ = _GPi2(psi+theta)_GPi(theta+phi)_
@@ -210,30 +303,6 @@ class IonQCircuit(ABC):
 
 
 """
-    def to_matrix(self):
-        from qiskit import QuantumCircuit
-        from qiskit.quantum_info import Operator
-
-        n = self.job["body"]["qubits"]
-        circ = QuantumCircuit(n)
-
-        from qiskit.circuit.library import RZGate
-        from qiskit_ionq import GPI2Gate, GPIGate, IonQProvider, MSGate
-
-        for ind, gate in enumerate(self.job["body"]["circuit"]):
-            if gate["gate"] == "gpi":
-                circ.append(GPIGate(gate["phase"]), [n - 1 - gate["target"]])
-            elif gate["gate"] == "gpi2":
-                circ.append(GPI2Gate(gate["phase"]), [n - 1 - gate["target"]])
-            elif gate["gate"] == "ms":
-                circ.append(MSGate(gate["phases"][1], gate["phases"][0], gate["angle"]), list(n - 1 - np.array(gate["targets"])))
-            else:
-                raise Exception("Unknown gate:", gate["gate"])
-        for q in range(self.job["body"]["qubits"]):
-            circ.append(RZGate(-self.accum_phase[q]), [n - 1 - q])
-
-        return Operator(circ).to_matrix()
-
 def random_circ(n, m) :
     if n <= 1 :
         raise Exception("n must be > 1.")

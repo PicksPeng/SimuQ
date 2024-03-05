@@ -2,23 +2,8 @@ import numpy as np
 
 from simuq.environment import Qubit
 from simuq.expression import Expression
-from simuq.hamiltonian import TIHamiltonian
+from simuq.hamiltonian import hlist_sum
 from simuq.qmachine import QMachine
-
-
-def ham_sum(hlist):
-    n = len(hlist)
-    if n == 0:
-        return 0
-    sites_type = hlist[0].sites_type
-    for i in range(n):
-        if hlist[i].sites_type != sites_type:
-            raise Exception("Site types do not match")
-    ham = []
-    for i in range(n):
-        ham += hlist[i].ham
-
-    return TIHamiltonian(sites_type, ham)
 
 
 C_6 = 862690 * 2.0 * np.pi
@@ -53,7 +38,7 @@ def generate_qmachine(n=3, inits=None):
         for j in range(i):
             dsqr = (x[i][0] - x[j][0]) ** 2 + (x[i][1] - x[j][1]) ** 2
             hlist.append((C_6 / (dsqr**3)) * noper[i] * noper[j])
-    sys_h = ham_sum(hlist)
+    sys_h = hlist_sum(hlist)
 
     rydberg.set_sys_ham(sys_h)
 

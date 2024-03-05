@@ -1,7 +1,8 @@
-from simuq.aais import heisenberg
-from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler
+from simuq.aais import heisenberg, two_pauli
+from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler, IonQAPITranspiler_2Pauli
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
+import time
 
 
 class IonQProvider(BaseProvider):
@@ -52,13 +53,14 @@ class IonQProvider(BaseProvider):
         if aais == "heisenberg":
             mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
             comp = IonQAPITranspiler().transpile
+        elif aais == "two_pauli" or "2pauli":
+            mach = two_pauli.generate_qmachine(qs.num_sites, e=None)
+            comp = IonQAPITranspiler_2Pauli().transpile
 
         if trotter_mode == "random":
-            trotter_args = {"num": trotter_num, "order": 1, "sequential": False}
-            randomized = True
+            trotter_args = {"num": trotter_num, "order": 1, "sequential": False, "randomized": True}
         else:
-            trotter_args = {"num": trotter_num, "order": trotter_mode, "sequential": True}
-            randomized = False
+            trotter_args = {"num": trotter_num, "order": trotter_mode, "sequential": True, "randomized": False}
 
         layout, sol_gvars, boxes, edges = generate_as(
             qs,
@@ -74,7 +76,7 @@ class IonQProvider(BaseProvider):
             sol_gvars,
             boxes,
             edges,
-            randomized=randomized,
+            trotter_args=trotter_args,
             backend="qpu." + backend,
             noise_model=backend,
         )
@@ -86,7 +88,7 @@ class IonQProvider(BaseProvider):
             self.prog.add(meas_prep)
 
         self.prog = self.prog.optimize()
-
+        self.prog_obj = self.prog
         self.prog = self.prog.job
 
         self.layout = layout
@@ -130,7 +132,7 @@ class IonQProvider(BaseProvider):
 
         return self.task
 
-    def results(self, job_id=None, verbose=0):
+    def results(self, job_id=None, wait=None, verbose=0):
         if job_id is None:
             if self.task is not None:
                 job_id = self.task["id"]
@@ -143,14 +145,25 @@ class IonQProvider(BaseProvider):
             "Authorization": "apiKey " + self.API_key,
         }
 
-        response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
-        res = response.json()
+        if wait == None :
+            response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
+            res = response.json()
 
-        if res["status"] != "completed":
-            if verbose >= 0:
-                print("Job is not completed")
-                print(res)
-            return None
+            if res["status"] != "completed":
+                if verbose >= 0:
+                    print("Job is not completed")
+                    print(res)
+                return None
+        elif isinstance(wait, int) or wait == True:
+            if wait == True :
+                wait = 5
+            response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
+            res = response.json()
+
+            while res["status"] != "completed":
+                time.sleep(wait)
+                response = requests.get("https://api.ionq.co/v0.2/jobs/" + job_id, headers=headers)
+                res = response.json()                
 
         def layout_rev(res):
             n = len(self.layout)

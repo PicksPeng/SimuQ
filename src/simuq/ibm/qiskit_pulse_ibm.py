@@ -14,7 +14,7 @@ def get_n_link(backend):
     instruction_schedule_map = defaults.instruction_schedule_map
 
     def get_control_qubit(q1, q2):  # Control performs Z
-        cx_sched = instruction_schedule_map.get("cx", qubits=(q1, q2))
+        cx_sched = instruction_schedule_map.get("ecr", qubits=(q1, q2))
         supported = False
         for time, inst in cx_sched.instructions:
             if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):

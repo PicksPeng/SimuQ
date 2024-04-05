@@ -115,9 +115,9 @@ class IBMProvider(BaseProvider):
             else:
                 raise Exception("No submitted job in record.")
         if on_simulator:
-            job = self.simulator.retrieve_job(job_id)
+            job = self.provider.job(job_id)
         else:
-            job = self.backend.retrieve_job(job_id)
+            job = self.provider.job(job_id)
         status = job.status()
         if status.name == "QUEUED":
             print("Job is not completed")

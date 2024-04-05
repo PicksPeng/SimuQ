@@ -1,22 +1,28 @@
-from qiskit import IBMQ
+import qiskit
+from qiskit import transpile
+from qiskit_ibm_runtime import QiskitRuntimeService
 
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
 
+
 class IBMProvider(BaseProvider):
-    def __init__(self, api_key=None, hub="ibm-q", group="open", project="main", from_file=None):
+    def __init__(self, api_key=None, from_file=None):
         if from_file is not None:
             with open(from_file, "r") as f:
                 api_key = f.readline().strip()
         self.api_key = api_key
-        self.provider = IBMQ.enable_account(api_key, hub=hub, group=group, project=project)
+        QiskitRuntimeService.save_account(channel="ibm_quantum", token=api_key, overwrite=True)
+        self.provider = QiskitRuntimeService()
         super().__init__()
 
     def supported_backends(self):
+
         print(self.provider.backends())
 
     def get_fake_backend(self, backend):
-        from qiskit.providers.fake_provider import FakeWashington, FakeGuadalupe
+        from qiskit_ibm_runtime.fake_provider import FakeGuadalupe, FakeWashington
+
         if backend == "ibmq_washington":
             return FakeWashington()
         elif backend == "ibmq_guadalupe":
@@ -35,7 +41,7 @@ class IBMProvider(BaseProvider):
         use_pulse=True,
         state_prep=None,
         use_fake_backend=False,
-        with_measure=True
+        with_measure=True,
     ):
         if not use_fake_backend:
             self.backend = self.provider.get_backend(backend)
@@ -69,7 +75,7 @@ class IBMProvider(BaseProvider):
             boxes,
             edges,
             use_pulse=use_pulse,
-            with_measure=with_measure
+            with_measure=with_measure,
         )
         from qiskit import transpile as transpile_qiskit
 
@@ -80,8 +86,6 @@ class IBMProvider(BaseProvider):
             self.prog = self.prog.compose(state_prep, qubits=layout, front=True)
 
     def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
-        from qiskit import execute
-
         if on_simulator:
             if with_noise:
                 from qiskit_aer.noise import NoiseModel
@@ -96,9 +100,10 @@ class IBMProvider(BaseProvider):
                 self.simulator.options.update_options(noise_model=noise_model)
             else:
                 self.simulator = self.provider.get_backend("ibmq_qasm_simulator")
-            job = execute(self.prog, shots=shots, backend=self.simulator)
+            job = self.simulator.run(self.prog, shots=shots)
         else:
-            job = execute(self.prog, shots=shots, backend=self.backend)
+            self.prog = transpile(self.prog, backend=self.backend)
+            job = self.backend.run(self.prog, shots=shots)
         self.task = job
         if verbose >= 0:
             print(self.task)

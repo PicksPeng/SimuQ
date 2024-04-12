@@ -68,7 +68,7 @@ def clean_as(boxes, edges, backend, with_measure=True):
                 else:
                     circ.rzz(theta, q0, q1)
     if with_measure:
-        circ.measure_all()
+        circ.measure_active()
     return circ
 
 

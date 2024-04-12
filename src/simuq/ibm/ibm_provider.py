@@ -1,5 +1,6 @@
 import qiskit
 from qiskit import transpile
+from qiskit_aer import AerSimulator
 from qiskit_ibm_runtime import QiskitRuntimeService
 
 from simuq.provider import BaseProvider
@@ -20,16 +21,6 @@ class IBMProvider(BaseProvider):
 
         print(self.provider.backends())
 
-    def get_fake_backend(self, backend):
-        from qiskit_ibm_runtime.fake_provider import FakeGuadalupe, FakeWashington
-
-        if backend == "ibmq_washington":
-            return FakeWashington()
-        elif backend == "ibmq_guadalupe":
-            return FakeGuadalupe()
-        else:
-            raise Exception("Unsupported backend")
-
     def compile(
         self,
         qs,
@@ -40,14 +31,11 @@ class IBMProvider(BaseProvider):
         verbose=0,
         use_pulse=True,
         state_prep=None,
-        use_fake_backend=False,
         with_measure=True,
     ):
-        if not use_fake_backend:
-            self.backend = self.provider.get_backend(backend)
-        else:
-            self.backend = self.get_fake_backend(backend)
-        nsite = self.backend.configuration().n_qubits
+
+        self.backend = self.provider.backend(backend)
+        nsite = self.backend.num_qubits
 
         if qs.num_sites > nsite:
             raise Exception("Device has less sites than the target quantum system.")
@@ -85,24 +73,11 @@ class IBMProvider(BaseProvider):
         if state_prep is not None:
             self.prog = self.prog.compose(state_prep, qubits=layout, front=True)
 
-    def run(self, shots=4096, on_simulator=False, with_noise=False, verbose=0):
+    def run(self, shots=4096, on_simulator=False, verbose=0):
         if on_simulator:
-            if with_noise:
-                from qiskit_aer.noise import NoiseModel
-
-                self.simulator = self.provider.get_backend("ibmq_qasm_simulator")
-
-                try:
-                    noise_model = NoiseModel.from_backend(self.backend).to_dict()
-                except:
-                    raise Exception("This backend's noise model is not available.")
-
-                self.simulator.options.update_options(noise_model=noise_model)
-            else:
-                self.simulator = self.provider.get_backend("ibmq_qasm_simulator")
-            job = self.simulator.run(self.prog, shots=shots)
+            self.backend_sim = AerSimulator(method="statevector")
+            job = self.backend_sim.run(self.prog, shots=shots)
         else:
-            self.prog = transpile(self.prog, backend=self.backend)
             job = self.backend.run(self.prog, shots=shots)
         self.task = job
         if verbose >= 0:
@@ -115,7 +90,7 @@ class IBMProvider(BaseProvider):
             else:
                 raise Exception("No submitted job in record.")
         if on_simulator:
-            job = self.provider.job(job_id)
+            job = self.task
         else:
             job = self.provider.job(job_id)
         status = job.status()

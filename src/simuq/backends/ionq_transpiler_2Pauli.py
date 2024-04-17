@@ -3,7 +3,6 @@ from abc import ABC, abstractmethod
 import networkx as nx
 import numpy as np
 import scipy as sp
-from qiskit import QuantumCircuit
 from scipy.optimize import dual_annealing
 
 from simuq.backends.ionq_circuit import IonQCircuit

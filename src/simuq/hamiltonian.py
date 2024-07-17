@@ -15,32 +15,34 @@ Pauli basis products are symbolically calculated, so
 that commutativity test is possible.
 """
 
-from copy import copy, deepcopy
 from collections.abc import MutableMapping
+from copy import copy, deepcopy
 
-from simuq.expression import Expression
 from simuq.config import Config
+from simuq.expression import Expression
+
 
 class productHamiltonian(MutableMapping):
-    """ A defaultdict-like object to speed up local Hamiltonian calculation.
-        Does not expand with queries.
+    """A defaultdict-like object to speed up local Hamiltonian calculation.
+    Does not expand with queries.
     """
-    def __init__(self, from_list = None) :
-        self.default = ''
+
+    def __init__(self, from_list=None):
+        self.default = ""
         self.d = dict()
-        if from_list :
-            for (k, v) in from_list :
+        if from_list:
+            for k, v in from_list:
                 self.d[k] = v
 
-    def __getitem__(self, key) :
-        if key in self.d :
+    def __getitem__(self, key):
+        if key in self.d:
             return self.d[key]
-        else :
+        else:
             return self.default
 
     def __setitem__(self, key, newvalue):
         self.d[key] = newvalue
-        if newvalue == self.default :
+        if newvalue == self.default:
             del self.d[key]
 
     def __delitem__(self, key):
@@ -52,31 +54,31 @@ class productHamiltonian(MutableMapping):
     def __len__(self):
         return len(self.d)
 
-    def to_list(self) :
+    def to_list(self):
         keys = list(self.d.keys())
         keys.sort()
         l = []
-        for k in keys :
+        for k in keys:
             l.append((k, self.d[k]))
         return l
 
-    def to_tuple(self) :
+    def to_tuple(self):
         return tuple(self.to_list())
 
-    def __eq__(self, other) :
+    def __eq__(self, other):
         keys = set(self.d.keys()).union(other.d.keys())
-        for k in keys :
-            if self[k] != other[k] :
+        for k in keys:
+            if self[k] != other[k]:
                 return False
         return True
 
-    def keys(self) :
+    def keys(self):
         return self.d.keys()
 
-    def values(self) :
+    def values(self):
         return self.d.values()
 
-    def __repr__(self) :
+    def __repr__(self):
         return f"<productHamiltonian d={self.d}>"
 
 
@@ -102,7 +104,7 @@ class TIHamiltonian:
         self.sites_name = sites_name
         self.ham = ham
         self.saved_t_sites = None
-        #self.cleanHam()
+        # self.cleanHam()
 
     @classmethod
     def empty(cls, sites_type, sites_name):
@@ -111,28 +113,28 @@ class TIHamiltonian:
 
     @classmethod
     def identity(cls, sites_type, sites_name):
-        #num_sites = len(sites_type)
-        #prod = ["" for i in range(num_sites)]
+        # num_sites = len(sites_type)
+        # prod = ["" for i in range(num_sites)]
         prod = productHamiltonian()
         ham = [(prod, 1)]
         return cls(sites_type, sites_name, ham)
 
     @classmethod
     def op(cls, sites_type, sites_name, index, op):
-        #num_sites = len(sites_type)
-        #prod = ["" for i in range(num_sites)]
+        # num_sites = len(sites_type)
+        # prod = ["" for i in range(num_sites)]
         prod = productHamiltonian()
         prod[index] = op
         ham = [(prod, 1)]
         return cls(sites_type, sites_name, ham)
 
     def operAlgebra(self):
-        #self.extend_ham_by_sites()
+        # self.extend_ham_by_sites()
 
         i = 0
         while i < len(self.ham):
             (h, coef) = self.ham[i]
-            #for j in range(len(h)):
+            # for j in range(len(h)):
             keys = list(h.keys())
             for j in keys:
                 if self.sites_type[j] == "qubit":
@@ -156,7 +158,7 @@ class TIHamiltonian:
                     elif h[j] == "XZ":
                         h[j] = "Y"
                         coef *= -1j
-            #for j in range(len(h)):
+            # for j in range(len(h)):
             keys = list(h.keys())
             for j in keys:
                 if self.sites_type[j] == "boson":
@@ -179,9 +181,9 @@ class TIHamiltonian:
             i += 1
 
     def cleanHam(self, tol=1e-6):
-        
-        if Config.value('TIHamiltonian_tol') is not None:
-            tol = Config.value('TIHamiltonian_tol')
+
+        if Config.value("TIHamiltonian_tol") is not None:
+            tol = Config.value("TIHamiltonian_tol")
 
         self.operAlgebra()
 
@@ -199,9 +201,9 @@ class TIHamiltonian:
                 self.ham.append((productHamiltonian(from_list=htup), hamdic[htup]))
 
     def extend_sites(self, new_sites_type, new_sites_name):
-        if new_sites_type is self.sites_type :
+        if new_sites_type is self.sites_type:
             return
-        if new_sites_type == self.sites_type :
+        if new_sites_type == self.sites_type:
             return
         if len(new_sites_type) <= len(self.sites_type):
             return
@@ -231,7 +233,7 @@ class TIHamiltonian:
         ham = copy(self.ham)
         ham += other.ham
         h = TIHamiltonian(self.sites_type, self.sites_name, ham)
-        #h.cleanHam()
+        # h.cleanHam()
         return h
 
     def __radd__(self, other):
@@ -256,7 +258,7 @@ class TIHamiltonian:
         ham = copy(self.ham)
         ham += other.__neg__().ham
         h = TIHamiltonian(self.sites_type, self.sites_name, ham)
-        #h.cleanHam()
+        # h.cleanHam()
         return h
 
     def __rsub__(self, other):
@@ -381,7 +383,12 @@ class TIHamiltonian:
         return ret
 
     def to_qiskit_opflow(self):
-        from qiskit.opflow import I, X, Y, Z
+        from qiskit.quantum_info import Pauli
+
+        X = Pauli("X")
+        Y = Pauli("Y")
+        Z = Pauli("Z")
+        I = Pauli("I")
 
         def strlist_to_oplist(l):
             ret = []
@@ -454,16 +461,17 @@ class TIHamiltonian:
         new_sl = [c for s in sl for c in (s, char)]
         return "".join(new_sl[:-1])
 
-    def __repr__(self) :
-        if len(self.ham) == 0 :
+    def __repr__(self):
+        if len(self.ham) == 0:
             return "Zero"
         strl = []
-        for (h, c) in self.ham:
+        for h, c in self.ham:
             sl = [str(c)]
             for k in h:
                 for op in h[k]:
                     sl.append(f"{self.sites_name[k]}.{op}")
             strl.append(TIHamiltonian.strlist_interleaved_insertion(sl, " * "))
         return TIHamiltonian.strlist_interleaved_insertion(strl, "  +  ")
+
 
 hlist_sum = TIHamiltonian.hlist_sum

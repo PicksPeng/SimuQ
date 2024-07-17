@@ -2,8 +2,8 @@ import warnings
 
 import numpy as np
 from qiskit import IBMQ, QuantumCircuit, QuantumRegister, schedule, transpile
-from qiskit.providers.aer import PulseSimulator, QasmSimulator
-from qiskit.providers.aer.pulse import PulseSystemModel
+from qiskit_aer import PulseSimulator, QasmSimulator
+from qiskit_aer.pulse import PulseSystemModel
 
 warnings.filterwarnings("ignore")
 

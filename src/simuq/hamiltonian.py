@@ -289,15 +289,15 @@ class TIHamiltonian:
 
         c = productHamiltonian()
         coef = 1
-
-        for i in keys:
+        
+        for idx, i in enumerate(keys):
             if sites_type[i] == "qubit":
                 c[i] = a[i] + b[i]
             elif sites_type[i] == "boson":
                 c[i] = a[i] + b[i]
             elif sites_type[i] == "fermion":
                 c[i] = a[i] + b[i]
-                if num_ferm_ope_backward[i] % 2 == 1 and len(b[i]) % 2 == 1:
+                if num_ferm_ope_backward[idx] % 2 == 1 and len(b[i]) % 2 == 1:
                     coef *= -1
 
         return (c, coef)

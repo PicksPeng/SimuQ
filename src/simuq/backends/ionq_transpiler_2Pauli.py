@@ -95,7 +95,6 @@ class IonQTranspiler_2Pauli(Transpiler, ABC):
                     def apply_linear_tensor(decomposed_params_in_term):
                         u0, theta0 = rotate_to_x(decomposed_params_in_term[0, :])
                         u1, theta1 = rotate_to_x(decomposed_params_in_term[1, :])
-
                         circ._add_unitary(q0, u0)
                         circ._add_unitary(q1, u1)
 
@@ -140,17 +139,18 @@ def rotate_to_x(params):
     X = np.array([[0, 1], [1, 0]])
     Y = np.array([[0, -1j], [1j, 0]])
     Z = np.array([[1, 0], [0, -1]])
-    Hadmard = 1 / np.sqrt(2) * np.array([[1, 1], [1, -1]])
-    ham = params[0] * X + params[1] * Y + params[2] * Z
-    eigvals, eigvecs = np.linalg.eigh(ham)
-    if eigvals[0] > eigvals[1]:
-        unitary = eigvecs
-    else:
-        unitary = eigvecs @ X
-    unitary = Hadmard @ unitary.conj().T
-    assert np.allclose(unitary @ unitary.conj().T, np.eye(2))
-    return unitary, theta
-
+    ham=params[0]*X+params[1]*Y+params[2]*Z
+    def get_unitary(theta,phi,lbd):
+        return np.array([[np.cos(theta),-np.exp(1j*lbd)*np.sin(theta)],[np.exp(1j*phi)*np.sin(theta),np.exp(1j*(phi+lbd))*np.cos(theta)]])
+    def loss(angles):
+        unitary=get_unitary(angles[0],angles[1],angles[2])
+        u1=unitary.conj().T@sp.linalg.expm(-1j*X)@unitary
+        u2=sp.linalg.expm(-1j*ham)
+        loss=np.linalg.norm(u1-u2)
+        return loss
+                            
+    res = sp.optimize.minimize(loss, [theta,0,0], bounds=[(0,2*np.pi),(0,2*np.pi),(0,2*np.pi)])
+    return get_unitary(res.x[0],res.x[1],res.x[2]),theta
 
 def decompose_ham(thetas, verbose=0):
     # change this to scipy
@@ -240,16 +240,19 @@ def decompose_ham(thetas, verbose=0):
         bounds = np.array(
             [(0, 5), (0, np.pi), (0, np.pi), (0, np.pi), (0, np.pi)] * i, dtype=np.float64
         )
-        x0 = np.random.rand(5 * i) * np.array([5, np.pi, np.pi, np.pi, np.pi] * i, dtype=np.float64)
-        res = dual_annealing(
-            calc_loss,
-            bounds=bounds,
-            x0=x0,
-        )
-        if calc_loss_no_penalty(res.x) < 0.01:
-            if verbose > 1:
-                print("success with ", i, " terms")
-            success = True
+        for _ in range(10):
+            x0 = np.random.rand(5 * i) * np.array([5, np.pi, np.pi, np.pi, np.pi] * i, dtype=np.float64)
+            res = dual_annealing(
+                calc_loss,
+                bounds=bounds,
+                x0=x0,
+            )
+            if calc_loss_no_penalty(res.x) < 0.01:
+                if verbose > 1:
+                    print("success with ", i, " terms")
+                success = True
+                break
+        if success:
             break
     if not success:
         raise Exception("decomposition failed")

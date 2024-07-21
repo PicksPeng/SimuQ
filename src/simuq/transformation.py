@@ -1,6 +1,7 @@
-from math import sqrt
-from collections import defaultdict
 import itertools
+from collections import defaultdict
+from math import sqrt
+
 import numpy as np
 
 from simuq.environment import Boson, Fermion, Qubit
@@ -124,7 +125,7 @@ def oh_transform(qs, truncation_levels=3):
 
 
 def tfim_3to2_transform(qs, penalty):
-    """Transform 3-local transverse-field Ising model (TFIM) to 2-local TFIM
+    r"""Transform 3-local transverse-field Ising model (TFIM) to 2-local TFIM
     using 2nd order perturbation theory, such that the former effectively emerges 
     in the low-energy subspace of the latter (provided that `penalty` is 
     sufficiently large).
@@ -207,7 +208,7 @@ def tfim_3to2_transform(qs, penalty):
 
 
 def ising_3to2_transform(qs, variant, penalty=None, peek=None):
-    """Transform 3-local Ising model to 2-local Ising model (i.e. quadratization of 
+    r"""Transform 3-local Ising model to 2-local Ising model (i.e. quadratization of 
     pseudo-Boolean functions), such that ground space is preserved (some variants 
     require that `penalty` be sufficiently large).
     Here 3-local Ising model means

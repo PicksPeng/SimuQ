@@ -13,7 +13,7 @@ from qiskit.circuit.library.standard_gates import (
     RZZGate,
 )
 from qiskit.dagcircuit import DAGCircuit
-from qiskit.pulse import Drag, DriveChannel, GaussianSquare, Play, Schedule, ShiftPhase
+from qiskit.pulse import Drag, DriveChannel, GaussianSquare, Play, Schedule, ShiftPhase, builder
 from qiskit.pulse.instruction_schedule_map import CalibrationPublisher
 from qiskit.transpiler import PassManager
 from qiskit.transpiler.basepasses import TransformationPass
@@ -108,7 +108,7 @@ class RXCalibrationBuilder(CalibrationBuilder):
     def rescale_gaussian_inst(instruction, theta):
         pulse_ = instruction.pulse
         amp_scale = (1 + theta / np.pi) % 2 - 1
-        return Play(
+        builder.play(
             Drag(
                 amp=pulse_.amp * amp_scale * 2,
                 sigma=pulse_.sigma,
@@ -128,8 +128,9 @@ class RXCalibrationBuilder(CalibrationBuilder):
         if theta == 0.0:
             return rx_theta
         inst = x_sched.instructions[0][1]
-        x1 = self.rescale_gaussian_inst(inst, theta)
-        return rx_theta.append(x1)
+        with builder.build(default_alignment="sequential", name="rx(%.3f)" % theta) as rx_theta:
+            self.rescale_gaussian_inst(inst, theta)
+        return rx_theta
 
 
 class RXXCalibrationBuilder(TransformationPass):
@@ -144,7 +145,7 @@ class RXXCalibrationBuilder(TransformationPass):
         return isinstance(node_op, RXXGate)
 
     def get_control_qubit(self, q1, q2):  # Control performs Z
-        cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
+        cx_sched = self._inst_map.get("ecr", qubits=(q1, q2))
 
         for time, inst in cx_sched.instructions:
             if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
@@ -194,7 +195,7 @@ class RZZCalibrationBuilder(TransformationPass):
         return isinstance(node_op, RZZGate)
 
     def get_control_qubit(self, q1, q2):  # Control performs Z
-        cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
+        cx_sched = self._inst_map.get("ecr", qubits=(q1, q2))
 
         for time, inst in cx_sched.instructions:
             if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):
@@ -244,7 +245,7 @@ class RYYCalibrationBuilder(TransformationPass):
         return isinstance(node_op, RYYGate)
 
     def get_control_qubit(self, q1, q2):  # Control performs Z
-        cx_sched = self._inst_map.get("cx", qubits=(q1, q2))
+        cx_sched = self._inst_map.get("ecr", qubits=(q1, q2))
 
         for time, inst in cx_sched.instructions:
             if isinstance(inst.channel, DriveChannel) and not isinstance(inst, ShiftPhase):

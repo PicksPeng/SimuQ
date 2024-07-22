@@ -32,14 +32,13 @@ setup(
         "qiskit": [
             "matplotlib",
             "qiskit",
-            "qiskit-ibmq-provider",
+            "qiskit-ibm-runtime",
+            "qiskit-aer",
         ],
         "qutip": [
             "qutip",
         ],
-        "dwave": [
-            "dwave-system"
-        ],
+        "dwave": ["dwave-system"],
         "all": ["simuq[braket, ionq, qiskit, qutip, dev]"],
         "dev": ["tox"],
     },

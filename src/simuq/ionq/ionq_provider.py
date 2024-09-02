@@ -77,7 +77,7 @@ class IonQProvider(BaseProvider):
             boxes,
             edges,
             trotter_args=trotter_args,
-            backend="qpu." + backend,
+            backend="qpu." + str(backend),
             noise_model=backend,
         )
 

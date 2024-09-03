@@ -1,5 +1,6 @@
 from simuq.aais import heisenberg, two_pauli
 from simuq.ionq.ionq_api_transpiler import IonQAPITranspiler, IonQAPITranspiler_2Pauli
+from simuq.ionq.ionq_solver import generate_as_ionq
 from simuq.provider import BaseProvider
 from simuq.solver import generate_as
 import time
@@ -50,27 +51,33 @@ class IonQProvider(BaseProvider):
         if qs.num_sites > nsite:
             raise Exception("Device has less sites than the target quantum system.")
 
-        if aais == "heisenberg":
-            mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
-            comp = IonQAPITranspiler().transpile
-        elif aais == "two_pauli" or "2pauli":
-            mach = two_pauli.generate_qmachine(qs.num_sites, e=None)
-            comp = IonQAPITranspiler_2Pauli().transpile
-
         if trotter_mode == "random":
             trotter_args = {"num": trotter_num, "order": 1, "sequential": False, "randomized": True}
         else:
             trotter_args = {"num": trotter_num, "order": trotter_mode, "sequential": True, "randomized": False}
 
-        layout, sol_gvars, boxes, edges = generate_as(
-            qs,
-            mach,
-            trotter_args=trotter_args,
-            solver="least_squares",
-            solver_args={"tol": tol},
-            override_layout=[i for i in range(qs.num_sites)],
-            verbose=verbose,
-        )
+        if aais == "heisenberg":
+            mach = heisenberg.generate_qmachine(qs.num_sites, e=None)
+            comp = IonQAPITranspiler().transpile
+
+        elif aais == "two_pauli" or "2pauli":
+            mach = two_pauli.generate_qmachine(qs.num_sites, e=None)
+            comp = IonQAPITranspiler_2Pauli().transpile
+
+        sol_gvars = []
+        boxes, edges = generate_as_ionq(qs, mach, aais, trotter_args)
+        layout = [i for i in range(qs.num_sites)]
+        trotter_args["num"] = 1
+
+        # layout, sol_gvars, boxes, edges = generate_as(
+        #     qs,
+        #     mach,
+        #     trotter_args=trotter_args,
+        #     solver="least_squares",
+        #     solver_args={"tol": tol},
+        #     override_layout=[i for i in range(qs.num_sites)],
+        #     verbose=verbose,
+        # )
         self.prog = comp(
             qs.num_sites,
             sol_gvars,

@@ -36,7 +36,7 @@ setup(
             "qiskit-aer",
         ],
         "qutip": [
-            "qutip",
+            "qutip<5",
         ],
         "dwave": ["dwave-system"],
         "all": ["simuq[braket, ionq, qiskit, qutip, dev]"],

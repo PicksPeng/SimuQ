@@ -170,7 +170,7 @@ def decompose_ham(thetas, verbose=0):
         + thetas[8] * np.kron(Z, Z)
     )
     total_amp = np.sqrt(np.trace(H @ H.conj().T).real)
-
+    H = H / total_amp
     def create_tensor_ham(amp, theta1, theta2, phi1, phi2):
         H1 = amp * (
             np.cos(theta1) * X
@@ -238,10 +238,10 @@ def decompose_ham(thetas, verbose=0):
     success = False
     for i in range(1, 4):
         bounds = np.array(
-            [(0, 5), (0, np.pi), (0, np.pi), (0, np.pi), (0, np.pi)] * i, dtype=np.float64
+            [(0, 5), (0, np.pi), (0, 2*np.pi), (0, np.pi), (0, 2*np.pi)] * i, dtype=np.float64
         )
         for _ in range(10):
-            x0 = np.random.rand(5 * i) * np.array([5, np.pi, np.pi, np.pi, np.pi] * i, dtype=np.float64)
+            x0 = np.random.rand(5 * i) * np.array([5, np.pi, 2*np.pi, np.pi, 2*np.pi] * i, dtype=np.float64)
             res = dual_annealing(
                 calc_loss,
                 bounds=bounds,
@@ -256,4 +256,4 @@ def decompose_ham(thetas, verbose=0):
             break
     if not success:
         raise Exception("decomposition failed")
-    return transform_params(res.x)
+    return transform_params(res.x)*total_amp
